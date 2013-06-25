@@ -1,0 +1,9 @@
+FAQ
+--------------------------------------------------------------------------
+Q:	Key '/desktop/gnome/interface/monospacefontname' not found in GConf.
+A:	Solution from "https://bugs.archlinux.org/task/6410":
+	gconftool-2 --type=string --set /desktop/gnome/interface/monospace_font_name "Bitstream Vera Sans Mono 9"
+
+	Appears to be an issue with non-Gnome Arch installations. GConf is basically a key-value, almost registry-like, service; this error means the key at the specified path has not been set, so you can run the above to set it. If that doesn't work, you can install gconf-edit, go to add a new key to / and put the key-name as the full-path above.
+
+
