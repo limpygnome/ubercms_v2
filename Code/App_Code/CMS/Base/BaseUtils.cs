@@ -31,7 +31,7 @@ using UberLib.Connector;
 
 namespace CMS
 {
-	public static class Utils
+	public static class BaseUtils
 	{
 		public static string executeSQL(string path, Connector conn)
 		{

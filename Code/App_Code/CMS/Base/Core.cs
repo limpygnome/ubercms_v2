@@ -26,6 +26,7 @@
  * *****************************************************************************
  */
 using System;
+using System.IO;
 using UberLib.Connector;
 using UberLib.Connector.Connectors;
 
@@ -35,7 +36,7 @@ namespace CMS
 	{
 		public static class Core
 		{
-			// Enums
+			// Enums ***************************************************************************************************
 			enum State
 			{
 				Failed,
@@ -47,17 +48,19 @@ namespace CMS
 			{
 				MySQL
 			}
-			// Fields
+			// Fields - Runtime ****************************************************************************************
 			private static string				basePath;							// The base path to the CMS on disk.
 			private static State				currentState = State.Stopped;		// The current state of the core.
 			private static DatabaseType			dbType;								// The type of database connector to create (faster than checking config value each time).
+			private static string 				errorMessage;						// Used to store the exception message when loading the core (if one occurs).
+			// Fields - Services/Connections/Data **********************************************************************
 			private static Connector			connector;							// The core connector.
 			private static Plugins				plugins;							// Plugin management.
 			private static EmailQueue			emailQueue;							// E-mail queue sending service.
 			private static Templates			templates;							// Template storage and rendering.
 			private static Settings				settingsDisk;						// Disk, read-only, settings.
-			private static string 				errorMessage;						// Used to store the exception message when loading the core (if one occurs).
-			// Methods - starting/stopping
+			private static Settings				settings;							// The main settings for the CMS, stored in the database.
+			// Methods - starting/stopping *****************************************************************************
 			public static void start()
 			{
 				lock(typeof(Core))
@@ -72,6 +75,8 @@ namespace CMS
 							basePath = basePath.Remove(basePath.Length - 1, 1);
 						basePath.Replace("\\", "/");
 						// Load the configuration file
+						if(!File.Exists(basePath + "/CMS.config"))
+							currentState = State.NotInstalled;
 						if((settingsDisk = Settings.loadFromDisk(ref errorMessage, basePath + "/CMS.config")) == null)
 							currentState = State.Failed;
 						else
@@ -83,19 +88,19 @@ namespace CMS
 								dbType = DatabaseType.MySQL;
 								break;
 							default:
-								errorMessage = "Invalid provider specified in configuration file!";
-								currentState = State.Failed;
+								fail("Invalid provider specified in configuration file!");
 								break;
 							}
 							connector = createConnector(true);
 							if(connector == null)
-							{
-								errorMessage = "Failed to create connector to database server (connection issue)!";
-								currentState = State.Failed;
-							}
+								fail("Failed to create connector to database server (connection issue)!");
 							else
 							{
 								// Setup services
+								if((emailQueue = EmailQueue.create()) == null)
+									fail("Failed to start e-mail queue service!");
+								else
+									currentState = State.Running;
 							}
 						}
 					}
@@ -110,10 +115,15 @@ namespace CMS
 				lock(typeof(Core))
 				{
 					// Dispose
+					connector.Disconnect();
+					connector = null;
 					plugins = null;
+					if(emailQueue != null)
+						emailQueue.stop();
 					emailQueue = null;
 					templates = null;
 					settingsDisk = null;
+					settings = null;
 				}
 			}
 			public static void fail(string reason)
@@ -122,7 +132,7 @@ namespace CMS
 				stop();
 				currentState = State.Failed;
 			}
-			// Methods - database
+			// Methods - Database **************************************************************************************
 			public static Connector createConnector(bool persist)
 			{
 				switch(dbType)
@@ -144,12 +154,47 @@ namespace CMS
 					throw new Exception("Could not create connector, core failure!");
 				}
 			}
-			// Methods - properties
+			// Methods - Properties ************************************************************************************
 			public static string BasePath
 			{
 				get
 				{
 					return basePath;
+				}
+			}
+			public static Connector Connector
+			{
+				get
+				{
+					return connector;
+				}
+			}
+			public static Settings SettingsDisk
+			{
+				get
+				{
+					return settingsDisk;
+				}
+			}
+			public static Settings Settings
+			{
+				get
+				{
+					return settings;
+				}
+			}
+			public static Plugins Plugins
+			{
+				get
+				{
+					return plugins;
+				}
+			}
+			public static EmailQueue EmailQueue
+			{
+				get
+				{
+					return emailQueue;
 				}
 			}
 		}

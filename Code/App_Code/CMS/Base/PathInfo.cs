@@ -21,7 +21,10 @@
  *                      2013-06-25     Created initial class.
  * 
  * *****************************************************************************
- * Used to parse url-rewriting/request data 
+ * Used to parse url-rewriting/request data. Plugins are invoked based on either
+ * the first directory in the URL, the module-handler variable, being matched or
+ * the full-path. Thus a plugin A could own /exmaple and plugin B could own
+ * /exmaple/test by having a higher priority.
  * *****************************************************************************
  */
 using System;
@@ -34,8 +37,9 @@ namespace CMS
 		public class PathInfo
 		{
 			// Variables
-			public string moduleHandler;
-			public string[] subDirs;
+			private string 		moduleHandler;
+			private string[] 	subDirs;
+			private string 		fullPath;
 			// Constructors
 			public PathInfo(string pathData)
 			{
@@ -57,7 +61,14 @@ namespace CMS
 						subDirs[i-1] = exp[i];
 				}
 				else
-					moduleHandler = "default_here";
+					moduleHandler = Core.Settings["core/default_handler"];
+				// Build full-path
+				StringBuilder sb = new StringBuilder();
+				sb.Append(moduleHandler).Append("/");
+				foreach(string s in subDirs)
+					sb.Append(s).Append("/");
+				sb.Remove(sb.Length - 1, 1);
+				fullPath = sb.ToString();
 			}
 			// Methods - Accessors
 			public string getPathInfo()
@@ -72,6 +83,28 @@ namespace CMS
 				}
 				sb.Append(" : sub-dir count: '" + subDirs.Length + "'");
 				return sb.ToString();
+			}
+			// Methods - Properties
+			public string ModuleHandler
+			{
+				get
+				{
+					return this.moduleHandler;
+				}
+			}
+			public string[] SubDirectories
+			{
+				get
+				{
+					return this.subDirs;
+				}
+			}
+			public string FullPath
+			{
+				get
+				{
+					return this.fullPath;
+				}
 			}
 		}
 	}

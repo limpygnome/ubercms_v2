@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS cms_plugin_handlers
 	request_end VARCHAR(1) DEFAULT 0,
 	page_error VARCHAR(1) DEFAULT 0,
 	page_not_found VARCHAR(1) DEFAULT 0,
-	periodic_task INT DEFAULT 0,
+	cycle_interval INT DEFAULT 0,
 );
 CREATE TABLE IF NOT EXISTS cms_settings
 (
@@ -60,3 +60,7 @@ CREATE TABLE IF NOT EXISTS cms_email_queue
 	body TEXT,
 	html VARCHAR(1) DEFAULT 1
 );
+
+-- Insert core settings
+INSERT INTO cms_settings (path, pluginid, value, description) VALUES('core/default_handler', NULL, 'home', 'The default module-handler for the home-page/an empty request path.');
+

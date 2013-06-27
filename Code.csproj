@@ -49,6 +49,7 @@
   </ProjectExtensions>
   <ItemGroup>
     <Folder Include="Code\App_Code\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Code\Default.aspx.cs">
@@ -58,10 +59,11 @@
     <Compile Include="Code\App_Code\CMS\Base\PathInfo.cs" />
     <Compile Include="Code\App_Code\CMS\Base\Plugins.cs" />
     <Compile Include="Code\App_Code\CMS\Base\Core.cs" />
-    <Compile Include="Code\App_Code\CMS\Base\Utils.cs" />
     <Compile Include="Code\App_Code\CMS\Base\EmailQueue.cs" />
     <Compile Include="Code\App_Code\CMS\Base\Templates.cs" />
     <Compile Include="Code\App_Code\CMS\Base\Settings.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Plugin.cs" />
+    <Compile Include="Code\App_Code\CMS\Base\BaseUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Code\Global.asax" />
