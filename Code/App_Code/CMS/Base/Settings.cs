@@ -173,7 +173,7 @@ namespace CMS
 					if(n.Name != "#text")
 					{
 						nodes = true;
-						loadProcessNode(ref settings, path + "\\" + n.Name, n);
+						loadProcessNode(ref settings, path + "/" + n.Name, n);
 					}
 				if(!nodes)
 					settings.config.Add(path, new SettingsNode(node.InnerText));
@@ -244,7 +244,14 @@ namespace CMS
 			{
 				get
 				{
-					return config[key].Value;
+					try
+					{
+						return config[key].Value;
+					}
+					catch(KeyNotFoundException)
+					{
+						throw new KeyNotFoundException("Key '" + key + "' not found!");
+					}
 				}
 				set
 				{

@@ -53,6 +53,7 @@ namespace CMS
 				this.response = response;
 				stopwatch = new Stopwatch();
 				this.session = new Dictionary<string, string>();
+				connector = Core.createConnector(false);
 			}
 			// Methods
 			public void timingStart()
@@ -65,30 +66,59 @@ namespace CMS
 				session["BENCH_MARK_MS"] = stopwatch.ElapsedMilliseconds.ToString();
 				session["BENCH_MARK_S"] = ((float)stopwatch.ElapsedMilliseconds / 1000.0f).ToString();
 			}
+			public void dispose()
+			{
+				connector.Disconnect();
+			}
+			// Methods - Accessors
+			/// <summary>
+			/// Indicates if a session (session in terms of processing this request) key has been defined.
+			/// </summary>
+			/// <returns>True if defined, false if not defined.</returns>
+			/// <param name="key">Key.</param>
+			public bool isKeySet(string key)
+			{
+				return session.ContainsKey(key);
+			}
 			// Methods - Properties
 			public string this[string key]
 			{
 				get
 				{
-					return session[key];
+					return session.ContainsKey(key) ? session[key] : "";
 				}
 				set
 				{
 					session[key] = value;
 				}
 			}
-			// Methods - Accessors
-			public HttpRequest getRequest()
+			public HttpRequest Request
 			{
-				return request;
+				get
+				{
+					return request;
+				}
 			}
-			public HttpResponse getResponse()
+			public HttpResponse Response
 			{
-				return response;
+				get
+				{
+					return response;
+				}
 			}
-			public PathInfo getPathInfo()
+			public PathInfo PathInfo
 			{
-				return pathInfo;
+				get
+				{
+					return pathInfo;
+				}
+			}
+			public Connector Connector
+			{
+				get
+				{
+					return connector;
+				}
 			}
 		}
 	}

@@ -39,27 +39,45 @@ public partial class _Default : System.Web.UI.Page
 {
     protected void Page_Load(object sender, EventArgs e)
     {
-		// Setup request data (parse path, etc)
-		Data data = new Data(Request, Response, Request.QueryString["path"]);
-		// Start recording the time taken to process the request
-		data.timingStart();
-		// Create a connection to the database
-		MySQL m = new MySQL();
-		m.Settings_Host = "10.0.0.1";
-		m.Settings_User = "arch";
-		m.Settings_Database = "arch";
-		m.Connect();
-		m.Disconnect();
-		// Lookup handler
+		// Check the status of the core
+		if(Core.State != Core.CoreState.Running)
+		{
+			switch(Core.State)
+			{
+			case Core.CoreState.Failed:
+				Response.Write("Core failure: '" + Core.ErrorMessage + "'.");
+				break;
+			case Core.CoreState.NotInstalled:
+				Response.Redirect("/install");
+				break;
+			case Core.CoreState.Stopped:
+				Response.Write("Core is not running.");
+				break;
+			default:
+				Response.Write("Unknown core state; core is not running!");
+				break;
+			}
+		}
+		else
+		{
+			// Setup request data (parse path, database connection, etc)
+			Data data = new Data(Request, Response, Request.QueryString["path"]);
+			// Start recording the time taken to process the request
+			data.timingStart();
+			// Load base template
+			data["Page"] = Core.Templates.get(data.Connector, "core/page");
+			// Lookup handler
 
-		// Invoke handler
+			// Invoke handler
 
-		// Stop timing the request
-		data.timingEnd();
-		// Format content
-
-		// Dispose the request
-		Response.Write("base path: '" + Core.BasePath + "'<br />");
-		Response.Write("<br /><br />" + data["BENCH_MARK_MS"] + " m/s");
+			// Stop timing the request
+			data.timingEnd();
+			// Format content and output to client
+			StringBuilder output = new StringBuilder(data["Page"]);
+			Core.Templates.render(ref output, ref data);
+			Response.Write(output.ToString());
+			// Dispose the request
+			data.dispose();
+		}
     }
 }

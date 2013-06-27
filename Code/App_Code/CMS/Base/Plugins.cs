@@ -37,7 +37,9 @@ namespace CMS
 		public class Plugins
 		{
 			// Fields
-			private Dictionary<int,Plugin> plugins;
+			private Dictionary<int,Plugin> plugins;			// Map of pluginid to plugin.
+			private Plugin[] pluginsPageNotFound;			// Cache of plugins capable of handling a page not found
+			private Plugin[] pluginsPageError;				// Cache of plugins capable of handling a page error.
 			// Methods - Constructors
 			private Plugins()
 			{
@@ -66,6 +68,14 @@ namespace CMS
 						return null;
 				}
 				return result;
+			}
+			public Plugin[] getPageNotFoundHandlers()
+			{
+				return pluginsPageNotFound;
+			}
+			public Plugin[] getPageErrorHandlers()
+			{
+				return pluginsPageError;
 			}
 			// Methods - Accessors
 			public Plugin this[int pluginid]

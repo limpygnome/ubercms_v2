@@ -37,20 +37,20 @@ namespace CMS
 		public static class Core
 		{
 			// Enums ***************************************************************************************************
-			enum State
+			public enum CoreState
 			{
 				Failed,
 				Running,
 				Stopped,
 				NotInstalled
 			}
-			enum DatabaseType
+			public enum DatabaseType
 			{
 				MySQL
 			}
 			// Fields - Runtime ****************************************************************************************
 			private static string				basePath;							// The base path to the CMS on disk.
-			private static State				currentState = State.Stopped;		// The current state of the core.
+			private static CoreState			currentState = CoreState.Stopped;	// The current state of the core.
 			private static DatabaseType			dbType;								// The type of database connector to create (faster than checking config value each time).
 			private static string 				errorMessage;						// Used to store the exception message when loading the core (if one occurs).
 			// Fields - Services/Connections/Data **********************************************************************
@@ -65,7 +65,7 @@ namespace CMS
 			{
 				lock(typeof(Core))
 				{
-					if(currentState == State.Running || currentState == State.NotInstalled)
+					if(currentState == CoreState.Running || currentState == CoreState.NotInstalled)
 						return;
 					try
 					{
@@ -76,9 +76,9 @@ namespace CMS
 						basePath.Replace("\\", "/");
 						// Load the configuration file
 						if(!File.Exists(basePath + "/CMS.config"))
-							currentState = State.NotInstalled;
+							currentState = CoreState.NotInstalled;
 						if((settingsDisk = Settings.loadFromDisk(ref errorMessage, basePath + "/CMS.config")) == null)
-							currentState = State.Failed;
+							currentState = CoreState.Failed;
 						else
 						{
 							// Setup connector
@@ -99,14 +99,16 @@ namespace CMS
 								// Setup services
 								if((emailQueue = EmailQueue.create()) == null)
 									fail("Failed to start e-mail queue service!");
+								else if((templates = Templates.create()) == null)
+									fail("Failed to load templates!");
 								else
-									currentState = State.Running;
+									currentState = CoreState.Running;
 							}
 						}
 					}
 					catch(Exception ex)
 					{
-						currentState = State.Failed;
+						currentState = CoreState.Failed;
 					}
 				}
 			}
@@ -124,13 +126,15 @@ namespace CMS
 					templates = null;
 					settingsDisk = null;
 					settings = null;
+					// Update state
+					currentState = CoreState.Stopped;
 				}
 			}
 			public static void fail(string reason)
 			{
-				errorMessage = reason;
 				stop();
-				currentState = State.Failed;
+				errorMessage = reason;
+				currentState = CoreState.Failed;
 			}
 			// Methods - Database **************************************************************************************
 			public static Connector createConnector(bool persist)
@@ -139,11 +143,11 @@ namespace CMS
 				{
 				case DatabaseType.MySQL:
 					MySQL m = new MySQL();
-					m.Settings_Host = settingsDisk["database/host"];
-					m.Settings_Port = settingsDisk.getInteger("database/port");
-					m.Settings_User = settingsDisk["database/user"];
-					m.Settings_Pass = settingsDisk["database/pass"];
-					m.Settings_Database = settingsDisk["database/db"];
+					m.Settings_Host = settingsDisk["settings/database/host"];
+					m.Settings_Port = settingsDisk.getInteger("settings/database/port");
+					m.Settings_User = settingsDisk["settings/database/user"];
+					m.Settings_Pass = settingsDisk["settings/database/pass"];
+					m.Settings_Database = settingsDisk["settings/database/db"];
 					m.Settings_Connection_String += "Charset=utf8;";
 					m.Settings_Timeout_Connection = 864000; // 10 days
 					m.Settings_Timeout_Command = 3600; // 1 hour
@@ -160,6 +164,20 @@ namespace CMS
 				get
 				{
 					return basePath;
+				}
+			}
+			public static CoreState State
+			{
+				get
+				{
+					return currentState;
+				}
+			}
+			public static string ErrorMessage
+			{
+				get
+				{
+					return errorMessage;
 				}
 			}
 			public static Connector Connector
@@ -195,6 +213,13 @@ namespace CMS
 				get
 				{
 					return emailQueue;
+				}
+			}
+			public static Templates Templates
+			{
+				get
+				{
+					return templates;
 				}
 			}
 		}
