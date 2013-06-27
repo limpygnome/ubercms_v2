@@ -2,9 +2,11 @@
 <script runat="server">
     void Application_Start(object sender, EventArgs e) 
     {
+    	CMS.Base.Core.start();
     }
     void Application_End(object sender, EventArgs e) 
     {
+    	CMS.Base.Core.stop();
     }
     void Application_Error(object sender, EventArgs e) 
     {

@@ -1,4 +1,4 @@
-﻿/*                       ____               ____________
+/*                       ____               ____________
  *                      |    |             |            |
  *                      |    |             |    ________|
  *                      |    |             |   |
@@ -21,45 +21,48 @@
  *                      2013-06-25     Created initial class.
  * 
  * *****************************************************************************
- * The entry-point for clients to be served by the main CMS.
+ * A utility class of commonly used code.
  * *****************************************************************************
  */
 using System;
-using System.Collections.Generic;
-using System.Web;
+using System.IO;
 using System.Text;
-using System.Diagnostics;
-
 using UberLib.Connector;
-using UberLib.Connector.Connectors;
 
-using CMS.Base;
-
-public partial class _Default : System.Web.UI.Page
+namespace CMS
 {
-    protected void Page_Load(object sender, EventArgs e)
-    {
-		// Setup request data (parse path, etc)
-		Data data = new Data(Request, Response, Request.QueryString["path"]);
-		// Start recording the time taken to process the request
-		data.timingStart();
-		// Create a connection to the database
-		MySQL m = new MySQL();
-		m.Settings_Host = "10.0.0.1";
-		m.Settings_User = "arch";
-		m.Settings_Database = "arch";
-		m.Connect();
-		m.Disconnect();
-		// Lookup handler
-
-		// Invoke handler
-
-		// Stop timing the request
-		data.timingEnd();
-		// Format content
-
-		// Dispose the request
-		Response.Write("base path: '" + Core.BasePath + "'<br />");
-		Response.Write("<br /><br />" + data["BENCH_MARK_MS"] + " m/s");
-    }
+	public static class Utils
+	{
+		public static string executeSQL(string path, Connector conn)
+		{
+			try
+			{
+				if (!File.Exists(path))
+					throw new Exception("SQL script '" + path + "' could not be found!");
+				else
+				{
+					StringBuilder statements = new StringBuilder();
+					// Build the new list of statements to be executed by stripping out any comments
+					string data = File.ReadAllText(path).Replace("\r", string.Empty);
+					int commentIndex;
+					foreach (string line in data.Split('\n'))
+					{
+						commentIndex = line.IndexOf("--");
+						if (commentIndex == -1)
+							statements.Append(line).Append("\r\n");
+						else if (commentIndex < line.Length)
+							statements.Append(line.Substring(0, commentIndex)).Append("\r\n");
+					}
+					// Execute the statements
+					conn.Query_Execute(statements.ToString());
+					return null;
+				}
+			}
+			catch (Exception ex)
+			{
+				return "Failed to execute SQL file '" + path + "' - " + ex.Message + " - " + ex.GetBaseException().Message + "!";
+			}
+		}
+	}
 }
+
