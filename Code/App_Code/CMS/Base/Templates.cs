@@ -164,7 +164,7 @@ namespace CMS
 			{
 				Templates templates = new Templates();
 				// Check if to cache templates
-				if(templates.loadFromCache = Core.Settings["templates/cache"].Equals("1"))
+				if(templates.loadFromCache = Core.SettingsDisk["settings/templates/cache"].Equals("1"))
 				{
 					// Copy the templates from the database
 					foreach(ResultRow template in Core.Connector.Query_Read("SELECT path, html FROM cms_templates"))

@@ -165,11 +165,11 @@ namespace CMS
 			{
 				EmailQueue queue = new EmailQueue();
 				// Load configuration
-				queue.mailHost = Core.Settings["settings/mail/host"];
-				queue.mailPort = int.Parse(Core.Settings["settings/mail/port"]);
-				queue.mailUsername = Core.Settings["settings/mail/username"];
-				queue.mailPassword = Core.Settings["settings/mail/password"];
-				queue.mailAddress = Core.Settings["settings/mail/email"];
+				queue.mailHost = Core.SettingsDisk["settings/mail/host"];
+				queue.mailPort = int.Parse(Core.SettingsDisk["settings/mail/port"]);
+				queue.mailUsername = Core.SettingsDisk["settings/mail/username"];
+				queue.mailPassword = Core.SettingsDisk["settings/mail/password"];
+				queue.mailAddress = Core.SettingsDisk["settings/mail/email"];
 				if(queue.mailHost.Length != 0 && queue.mailUsername.Length != 0 && queue.mailAddress.Length != 0)
 				{
 					queue.enabled = true;

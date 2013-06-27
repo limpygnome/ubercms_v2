@@ -82,7 +82,7 @@ namespace CMS
 						else
 						{
 							// Setup connector
-							switch(settingsDisk["database/provider"])
+							switch(settingsDisk["settings/database/provider"])
 							{
 							case "mysql":
 								dbType = DatabaseType.MySQL;
@@ -108,7 +108,7 @@ namespace CMS
 					}
 					catch(Exception ex)
 					{
-						currentState = CoreState.Failed;
+						fail("Exceptiom thrown whilst loading core '" + ex.Message + "'!");
 					}
 				}
 			}
