@@ -91,7 +91,7 @@ namespace CMS
 				try
 				{
 					Plugins plugins = new Plugins();
-
+                    // Load each plugin
 					return plugins;
 				}
 				catch(Exception ex)

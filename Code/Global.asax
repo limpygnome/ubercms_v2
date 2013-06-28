@@ -13,13 +13,17 @@
     }
     void Application_BeginRequest(object sender, EventArgs e)
     {
-#if !APACHE
+#if IIS
+        string page = System.Web.HttpContext.Current.Request.AbsoluteUri;
 		string path = System.Web.HttpContext.Current.Request.Path;
+        // Check if it's just the main-page
+        if(path == "/Default.aspx")
+            path = "";
 		// Check for excluded directories
-		if(path.StartsWith("/content") || path.StartsWith("/mirror") || path.StartsWith("/install") || path.StartsWith("favicon.ico"))
+		else if(path.StartsWith("/content") || path.StartsWith("/mirror") || path.StartsWith("/install") || path.StartsWith("favicon.ico"))
 			return;
         // Rewrite path to Default.aspx
-        System.Web.HttpContext.Current.RewritePath("Default.aspx?path=" + path, true);
+        System.Web.HttpContext.Current.RewritePath(Request.ApplicationPath + "Default.aspx?path=" + path, true);
 #endif
     }
 </script>

@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS cms_plugin_handlers
 	request_end VARCHAR(1) DEFAULT 0,
 	page_error VARCHAR(1) DEFAULT 0,
 	page_not_found VARCHAR(1) DEFAULT 0,
-	cycle_interval INT DEFAULT 0,
+	cycle_interval INT DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS cms_settings
 (
@@ -49,8 +49,18 @@ CREATE TABLE IF NOT EXISTS cms_urlrewriting
 CREATE TABLE IF NOT EXISTS cms_templates
 (
 	path VARCHAR(128) PRIMARY KEY,
+	pluginid INT,
+	FOREIGN KEY(`pluginid`) REFERENCES `cms_plugins`(`pluginid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	description TEXT,
 	html TEXT
+);
+CREATE TABLE IF NOT EXISTS cms_template_handlers
+(
+	path VARCHAR(128) PRIMARY KEY,
+	pluginid INT,
+	FOREIGN KEY(`pluginid`) REFERENCES `cms_plugins`(`pluginid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	classpath TEXT,
+	function_name TEXT
 );
 CREATE TABLE IF NOT EXISTS cms_email_queue
 (

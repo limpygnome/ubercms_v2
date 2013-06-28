@@ -1,3 +1,31 @@
+/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ * 
+ *      File:           Plugins.cs
+ *      Path:           /App_Code/CMS/Plugin/Plugin.cs
+ * 
+ *      Change-Log:
+ *                      2013-06-28      Added handler information.
+ *                      2013-06-27      Created initial class.
+ * 
+ * *****************************************************************************
+ * Base class for all plugins. This contains information about the plugin and
+ * functions to be implemented as handlers.
+ * *****************************************************************************
+ */
 using System;
 using CMS.Base;
 using UberLib.Connector;
@@ -18,6 +46,7 @@ namespace CMS
 			// Fields **************************************************************************************************
 			private int pluginid;
 			private PluginState state;
+            private PluginHandlerInfo handlerInfo;
 			// Methods - Abstract - State ******************************************************************************
 			/// <summary>
 			/// Invoked when the plugin is to be enabled; no checking of the plugin state is required. Return
@@ -98,6 +127,13 @@ namespace CMS
 					return state;
 				}
 			}
+            public PluginHandlerInfo HandlerInfo
+            {
+                get
+                {
+                    return handlerInfo;
+                }
+            }
 		}
 	}
 }

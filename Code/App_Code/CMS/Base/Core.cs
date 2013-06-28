@@ -117,7 +117,8 @@ namespace CMS
 				lock(typeof(Core))
 				{
 					// Dispose
-					connector.Disconnect();
+                    if(connector != null)
+					    connector.Disconnect();
 					connector = null;
 					plugins = null;
 					if(emailQueue != null)
@@ -157,6 +158,7 @@ namespace CMS
 					fail("Failed to create a connector - unknown type!");
 					throw new Exception("Could not create connector, core failure!");
 				}
+                return null;
 			}
 			// Methods - Properties ************************************************************************************
 			public static string BasePath

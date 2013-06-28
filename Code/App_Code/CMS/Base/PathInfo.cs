@@ -48,20 +48,36 @@ namespace CMS
 			// Methods
 			public void parse(string pathData)
 			{
-				// Remove starting /
-				if(pathData.Length > 0 && pathData[0] == '/')
-					pathData = pathData.Substring(1);
-				// Process tokens
-				string[] exp = pathData.Split('/');
-				if(exp.Length > 0)
-				{
-					moduleHandler = exp[0];
-					subDirs = new string[exp.Length - 1];
-					for(int i = 1; i < exp.Length; i++)
-						subDirs[i-1] = exp[i];
-				}
-				else
-					moduleHandler = Core.Settings["core/default_handler"];
+                // Check against null reference
+                if (pathData == null)
+                {
+                    moduleHandler = Core.SettingsDisk["settings/core/default_handler"];
+                    subDirs = new string[0];
+                }
+                else
+                {
+                    // Remove starting /
+                    if (pathData.Length > 0 && pathData[0] == '/')
+                        pathData = pathData.Substring(1);
+                    // Process tokens
+                    string[] exp = pathData.Split('/');
+                    if (exp.Length > 0)
+                    {
+                        moduleHandler = exp[0];
+                        subDirs = new string[exp.Length - 1];
+                        for (int i = 1; i < exp.Length; i++)
+                            subDirs[i - 1] = exp[i];
+                        // Check against empty paths
+                        if (moduleHandler.Length == 0)
+                        {
+                            moduleHandler = Core.SettingsDisk["settings/core/default_handler"];
+                            if(subDirs.Length != 0) // Protection against invalid paths
+                                subDirs = new string[0];
+                        }
+                    }
+                    else
+                        moduleHandler = Core.SettingsDisk["settings/core/default_handler"];
+                }
 				// Build full-path
 				StringBuilder sb = new StringBuilder();
 				sb.Append(moduleHandler).Append("/");

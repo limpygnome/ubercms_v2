@@ -67,7 +67,7 @@ public partial class _Default : System.Web.UI.Page
 			// Load base template
 			data["Page"] = Core.Templates.get(data.Connector, "core/page");
 			// Lookup handler
-
+            
 			// Invoke handler
 
 			// Stop timing the request

@@ -83,6 +83,13 @@ namespace CMS
 				// Prepare the query for polling the database
 				int messageThroughPut = Core.SettingsDisk["settings/mail/message_throughput"].Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_throughput"]) : 5;
 				int messagePollDelay = Core.SettingsDisk["settings/mail/message_poll_delay"].Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_poll_delay"]) : 100;
+                if (messagePollDelay < 0 || messageThroughPut < 1)
+                {
+                    stop();
+                    // Protection in-case aborting the thread failed
+                    cyclerThread = null;
+                    return;
+                }
 				string queryPollMessages = "SELECT email, subject, body, html FROM cms_email_queue ORDER BY emailid ASC LIMIT " + messageThroughPut;
 				// Poll for messages
 				Result msgs;
@@ -167,8 +174,8 @@ namespace CMS
 				// Load configuration
 				queue.mailHost = Core.SettingsDisk["settings/mail/host"];
 				queue.mailPort = int.Parse(Core.SettingsDisk["settings/mail/port"]);
-				queue.mailUsername = Core.SettingsDisk["settings/mail/username"];
-				queue.mailPassword = Core.SettingsDisk["settings/mail/password"];
+				queue.mailUsername = Core.SettingsDisk["settings/mail/user"];
+				queue.mailPassword = Core.SettingsDisk["settings/mail/pass"];
 				queue.mailAddress = Core.SettingsDisk["settings/mail/email"];
 				if(queue.mailHost.Length != 0 && queue.mailUsername.Length != 0 && queue.mailAddress.Length != 0)
 				{

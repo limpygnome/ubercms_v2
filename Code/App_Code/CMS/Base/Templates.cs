@@ -30,6 +30,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Reflection;
 using UberLib.Connector;
 
 namespace CMS
@@ -38,13 +39,17 @@ namespace CMS
 	{
 		public class Templates
 		{
+            // Delegates ***********************************************************************************************
+            public delegate string TemplateFunction(Data data, string[] args);
 			// Fields **************************************************************************************************
-			private bool loadFromCache;							// Indicates if to load templates from cache, else templates will be loaded straight from the database.
-			private Dictionary<string,string> primaryCache;		// Used to cache copies of templates from the database for reduced I/O.
+			private bool loadFromCache;							        // Indicates if to load templates from cache, else templates will be loaded straight from the database.
+			private Dictionary<string,string> primaryCache;		        // Used to cache copies of templates from the database for reduced I/O.
+            private Dictionary<string,TemplateFunction> functions;     // Function name,function delegate; used for template function calls.
 			// Methods - Constructors **********************************************************************************
 			private Templates()
 			{
 				primaryCache = new Dictionary<string, string>();
+                functions = new Dictionary<string, TemplateFunction>();
 			}
 			// Methods
 			public void render(ref StringBuilder text, ref Data data)
@@ -124,9 +129,18 @@ namespace CMS
 							text.Replace(m.Value, string.Empty);
 					}
 				}
-				// Find replacement tags
-				foreach (Match m in Regex.Matches(text.ToString(), @"<!--([a-zA-Z0-9_]*)-->"))
-					text.Replace(m.Value, data[m.Groups[1].Value]);
+                // Find fucntion callbacks
+                foreach (Match m in Regex.Matches(text.ToString(), @"<!--([a-zA-Z0-9_]*)\(([a-zA-Z0-9_,]*)\)-->"))
+                {
+                    if (functions.ContainsKey(m.Groups[1].Value))
+                        text.Replace(m.Value, functions[m.Groups[1].Value](data, m.Groups[2].Value.Split(','))); // Group 1 = function name, group 2 = params i.e. a,b,c,..,n
+                    else
+                        text.Replace(m.Value, "Function '" + m.Groups[1].Value + "' undefined!");
+                    text.Replace(m.Value, data[m.Groups[1].Value]);
+                }
+				// Find replacement tags (for replacing sections of text with elements)
+                foreach (Match m in Regex.Matches(text.ToString(), @"<!--([a-zA-Z0-9_]*)-->"))
+                    text.Replace(m.Value, data[m.Groups[1].Value]);
 				// Check if to iterate again - check we haven't surpassed max tree-level and we found a match i.e. data changed
 				currTree++;
 				if (matches.Count > 0 && currTree < treeMax)
@@ -170,6 +184,23 @@ namespace CMS
 					foreach(ResultRow template in Core.Connector.Query_Read("SELECT path, html FROM cms_templates"))
 						templates.primaryCache.Add(template["path"], template["html"]);
 				}
+                // Load function mappings
+                Assembly ass = Assembly.GetExecutingAssembly();
+                foreach (ResultRow function in Core.Connector.Query_Read("SELECT path, classpath, function_name FROM cms_template_handlers"))
+                {
+                    Type t = ass.GetType(function["classpath"], false);
+                    // Check we found the type - ignore if we haven't, function calls will state it's not defined (informing the developer)
+                    if (t != null)
+                    {
+                        MethodInfo m = t.GetMethod(function["function_name"]);
+                        if (m != null)
+                        {
+                            // Convert to delegate and add to function mappings
+                            TemplateFunction f = new TemplateFunction(Delegate.CreateDelegate(typeof(TemplateFunction), m) as TemplateFunction);
+                            templates.functions.Add(function["path"], f);
+                        }
+                    }
+                }
 				return templates;
 			}
 		}
