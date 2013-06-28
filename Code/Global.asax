@@ -14,7 +14,6 @@
     void Application_BeginRequest(object sender, EventArgs e)
     {
 #if IIS
-        string page = System.Web.HttpContext.Current.Request.AbsoluteUri;
 		string path = System.Web.HttpContext.Current.Request.Path;
         // Check if it's just the main-page
         if(path == "/Default.aspx")

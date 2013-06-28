@@ -34,6 +34,7 @@ using UberLib.Connector;
 using UberLib.Connector.Connectors;
 
 using CMS.Base;
+using CMS.Plugins;
 
 public partial class _Default : System.Web.UI.Page
 {
@@ -45,7 +46,7 @@ public partial class _Default : System.Web.UI.Page
 			switch(Core.State)
 			{
 			case Core.CoreState.Failed:
-				Response.Write("Core failure: '" + Core.ErrorMessage + "'.");
+				Response.Write("Core failure: '" + HttpUtility.HtmlEncode(Core.ErrorMessage) + "'.");
 				break;
 			case Core.CoreState.NotInstalled:
 				Response.Redirect("/install");
@@ -64,18 +65,43 @@ public partial class _Default : System.Web.UI.Page
 			Data data = new Data(Request, Response, Request.QueryString["path"]);
 			// Start recording the time taken to process the request
 			data.timingStart();
-			// Load base template
-			data["Page"] = Core.Templates.get(data.Connector, "core/page");
-			// Lookup handler
-            
-			// Invoke handler
-
+            // Invoke request-start handlers
+            foreach (Plugin p in Core.Plugins.HandlerCache_RequestStart)
+                p.handler_requestStart(data);
+			// Lookup and invoke possible request handler's
+            bool handled = false;
+            foreach (Plugin p in Core.Plugins.findRequestHandlers(data.PathInfo, data.Connector))
+            {
+                if (handled = p.handler_handleRequest(data))
+                    break;
+            }
+            // Check the request was handled - else page not found!
+            if (!handled)
+            {
+                foreach (Plugin p in Core.Plugins.HandlerCache_PageNotFound)
+                {
+                    if (handled = p.handler_handlePageNotFound(data))
+                        break;
+                }
+                // Set an error message if the page has still not been handled
+                if (!handled)
+                    data["Content"] = "Page could not be found; no handler could serve the request!";
+            }
+            // Invoke request-end handlers
+            foreach(Plugin p in Core.Plugins.HandlerCache_RequestEnd)
+                p.handler_requestEnd(data);
+            // Check if to specify page
+            if(!data.isKeySet("page"))
+                data["Page"] = Core.Templates.get(data.Connector, "core/page");
 			// Stop timing the request
 			data.timingEnd();
-			// Format content and output to client
-			StringBuilder output = new StringBuilder(data["Page"]);
-			Core.Templates.render(ref output, ref data);
-			Response.Write(output.ToString());
+			// Render content and output to client
+            if (data.OutputContent)
+            {
+                StringBuilder output = new StringBuilder(data["Page"]);
+                Core.Templates.render(ref output, ref data);
+                Response.Write(output.ToString());
+            }
 			// Dispose the request
 			data.dispose();
 		}

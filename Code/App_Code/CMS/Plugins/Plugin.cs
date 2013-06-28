@@ -47,6 +47,15 @@ namespace CMS
 			private int pluginid;
 			private PluginState state;
             private PluginHandlerInfo handlerInfo;
+            private DateTime lastCycled;
+            // Methods - Constructors **********************************************************************************
+            public Plugin(int pluginid, PluginState state, PluginHandlerInfo handlerInfo)
+            {
+                this.pluginid = pluginid;
+                this.state = state;
+                this.handlerInfo = handlerInfo;
+                this.lastCycled = DateTime.MinValue;
+            }
 			// Methods - Abstract - State ******************************************************************************
 			/// <summary>
 			/// Invoked when the plugin is to be enabled; no checking of the plugin state is required. Return
@@ -90,7 +99,7 @@ namespace CMS
 			public void handler_cmsEnd(Connector conn)
 			{
 			}
-			public void handler_cmsCycle(Data data)
+			public void handler_cmsCycle()
 			{
 			}
 			// Methods - Abstract - Handlers - Requests ****************************************************************
@@ -132,6 +141,13 @@ namespace CMS
                 get
                 {
                     return handlerInfo;
+                }
+            }
+            public DateTime LastCycled
+            {
+                get
+                {
+                    return lastCycled;
                 }
             }
 		}

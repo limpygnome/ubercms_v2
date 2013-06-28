@@ -1,5 +1,17 @@
+About
+---------------------------------------------------------------------------------->
+
+Request Variables
+---------------------------------------------------------------------------------->
+Variables can be set in the Data (CMS.Base.Data) object, which can be rendered on the page or used as indicators for template if-statement control blocks. These variables are also used for outputting content. List of reserved/special request variable names:
+> 'Page' - the page outputted to the client.
+> 'Header' - the area within 'Page' where meta-header content can be appended.
+> 'Content' - the area within the 'Page' where content can be appended.
+
+The above names are only guidelines, except for 'Page' (which is sent to the client at the end of the request) and 'Content', which is set if a page cannot be found and no page-not-found handler handles the request. 'Page' will also be set with the template at 'core/page' before rendering and outputtign the content to the client (after request-end handlers), unless the variable has already been set.
+
 FAQ
---------------------------------------------------------------------------
+---------------------------------------------------------------------------------->
 Q:	Key '/desktop/gnome/interface/monospacefontname' not found in GConf.
 A:	Solution from "https://bugs.archlinux.org/task/6410":
 	gconftool-2 --type=string --set /desktop/gnome/interface/monospace_font_name "Bitstream Vera Sans Mono 9"
@@ -7,3 +19,5 @@ A:	Solution from "https://bugs.archlinux.org/task/6410":
 	Appears to be an issue with non-Gnome Arch installations. GConf is basically a key-value, almost registry-like, service; this error means the key at the specified path has not been set, so you can run the above to set it. If that doesn't work, you can install gconf-edit, go to add a new key to / and put the key-name as the full-path above.
 
 
+Authors
+---------------------------------------------------------------------------------->

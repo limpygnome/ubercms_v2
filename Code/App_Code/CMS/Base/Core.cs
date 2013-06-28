@@ -96,13 +96,15 @@ namespace CMS
 								fail("Failed to create connector to database server (connection issue)!");
 							else
 							{
-								// Setup services
-								if((emailQueue = EmailQueue.create()) == null)
-									fail("Failed to start e-mail queue service!");
-								else if((templates = Templates.create()) == null)
-									fail("Failed to load templates!");
-								else
-									currentState = CoreState.Running;
+								// Setup services/data
+                                if ((emailQueue = EmailQueue.create()) == null)
+                                    fail("Failed to start e-mail queue service!");
+                                else if ((templates = Templates.create()) == null)
+                                    fail("Failed to load templates!");
+                                else if ((plugins = Plugins.load(connector, ref errorMessage)) == null)
+                                    fail(errorMessage.Length == 0 ? "Failed to load plugins!" : errorMessage);
+                                else
+                                    currentState = CoreState.Running;
 							}
 						}
 					}
@@ -158,7 +160,6 @@ namespace CMS
 					fail("Failed to create a connector - unknown type!");
 					throw new Exception("Could not create connector, core failure!");
 				}
-                return null;
 			}
 			// Methods - Properties ************************************************************************************
 			public static string BasePath

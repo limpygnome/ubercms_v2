@@ -138,7 +138,7 @@ namespace CMS
                         text.Replace(m.Value, "Function '" + m.Groups[1].Value + "' undefined!");
                     text.Replace(m.Value, data[m.Groups[1].Value]);
                 }
-				// Find replacement tags (for replacing sections of text with elements)
+				// Find replacement tags (for replacing sections of text with request variables)
                 foreach (Match m in Regex.Matches(text.ToString(), @"<!--([a-zA-Z0-9_]*)-->"))
                     text.Replace(m.Value, data[m.Groups[1].Value]);
 				// Check if to iterate again - check we haven't surpassed max tree-level and we found a match i.e. data changed

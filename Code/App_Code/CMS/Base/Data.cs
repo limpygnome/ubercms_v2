@@ -39,11 +39,12 @@ namespace CMS
 		public class Data
 		{
 			// Variables
+            private bool                            outputContent;      // Indicates if the content should be written to the client.
 			private PathInfo 						pathInfo;			// Information about the request path.
 			private HttpRequest 					request;			// ASP.NET request object.
 			private HttpResponse 					response;			// ASP.NET response object.
 			private Stopwatch						stopwatch;			// Used to measure the current request's process speed.
-			private Dictionary<string, string>		session;			// Used to store key-value pair's for the current request session.
+			private Dictionary<string, string>		variables;			// Used to store request variables.
 			private Connector						connector;			// The database connector.
 			// Methods - Constructors
 			public Data(HttpRequest request, HttpResponse response, string pathData)
@@ -52,7 +53,8 @@ namespace CMS
 				this.request = request;
 				this.response = response;
 				stopwatch = new Stopwatch();
-				this.session = new Dictionary<string, string>();
+				this.variables = new Dictionary<string, string>();
+                this.outputContent = true;
 				connector = Core.createConnector(false);
 			}
 			// Methods
@@ -63,8 +65,8 @@ namespace CMS
 			public void timingEnd()
 			{
 				stopwatch.Stop();
-				session["BENCH_MARK_MS"] = stopwatch.ElapsedMilliseconds.ToString();
-				session["BENCH_MARK_S"] = ((float)stopwatch.ElapsedMilliseconds / 1000.0f).ToString();
+                variables["BENCH_MARK_MS"] = stopwatch.ElapsedMilliseconds.ToString();
+                variables["BENCH_MARK_S"] = ((float)stopwatch.ElapsedMilliseconds / 1000.0f).ToString();
 			}
 			public void dispose()
 			{
@@ -72,26 +74,44 @@ namespace CMS
 			}
 			// Methods - Accessors
 			/// <summary>
-			/// Indicates if a session (session in terms of processing this request) key has been defined.
+			/// Indicates if a variable has been defined.
 			/// </summary>
 			/// <returns>True if defined, false if not defined.</returns>
 			/// <param name="key">Key.</param>
 			public bool isKeySet(string key)
 			{
-				return session.ContainsKey(key);
+				return variables.ContainsKey(key);
 			}
 			// Methods - Properties
 			public string this[string key]
 			{
 				get
 				{
-					return session.ContainsKey(key) ? session[key] : "";
+                    return variables.ContainsKey(key) ? variables[key] : "";
 				}
 				set
 				{
-					session[key] = value;
+                    variables[key] = value;
 				}
 			}
+            public Dictionary<string, string> Variables
+            {
+                get
+                {
+                    return variables;
+                }
+            }
+            public bool OutputContent
+            {
+                get
+                {
+                    return outputContent;
+                }
+                set
+                {
+                    outputContent = value;
+                }
+            }
 			public HttpRequest Request
 			{
 				get
