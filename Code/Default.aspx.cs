@@ -18,7 +18,8 @@
  *      Path:           /Default.aspx.cs
  * 
  *      Change-Log:
- *                      2013-06-25     Created initial class.
+ *                      2013-06-25      Created initial class.
+ *                      2013-06-30      Finished initial class.
  * 
  * *****************************************************************************
  * The entry-point for clients to be served by the main CMS.
@@ -63,33 +64,46 @@ public partial class _Default : System.Web.UI.Page
 		{
 			// Setup request data (parse path, database connection, etc)
 			Data data = new Data(Request, Response, Request.QueryString["path"]);
+            // Debug-mode options should go here (before timing)
+#if DEBUG
+            Core.Templates.reload(data.Connector);  // Reloads all of the cached templates
+#endif
 			// Start recording the time taken to process the request
 			data.timingStart();
-            // Invoke request-start handlers
-            foreach (Plugin p in Core.Plugins.HandlerCache_RequestStart)
-                p.handler_requestStart(data);
-			// Lookup and invoke possible request handler's
-            bool handled = false;
-            foreach (Plugin p in Core.Plugins.findRequestHandlers(data.PathInfo, data.Connector))
+            try
             {
-                if (handled = p.handler_handleRequest(data))
-                    break;
-            }
-            // Check the request was handled - else page not found!
-            if (!handled)
-            {
-                foreach (Plugin p in Core.Plugins.HandlerCache_PageNotFound)
+                // Invoke request-start handlers
+                foreach (Plugin p in Core.Plugins.HandlerCache_RequestStart)
+                    if (p.State == Plugin.PluginState.Enabled)
+                        p.handler_requestStart(data);
+                // Lookup and invoke possible request handler's
+                bool handled = false;
+                foreach (Plugin p in Core.Plugins.findRequestHandlers(data.PathInfo, data.Connector))
                 {
-                    if (handled = p.handler_handlePageNotFound(data))
+                    if (p.State == Plugin.PluginState.Enabled && (handled = p.handler_handleRequest(data)))
                         break;
                 }
-                // Set an error message if the page has still not been handled
+                // Check the request was handled - else page not found!
                 if (!handled)
-                    data["Content"] = "Page could not be found; no handler could serve the request!";
+                {
+                    foreach (Plugin p in Core.Plugins.HandlerCache_PageNotFound)
+                    {
+                        if (p.State == Plugin.PluginState.Enabled && (handled = p.handler_handlePageNotFound(data)))
+                            break;
+                    }
+                    // Set an error message if the page has still not been handled
+                    if (!handled)
+                        data["Content"] = "Page could not be found; no handler could serve the request!";
+                }
+                // Invoke request-end handlers
+                foreach (Plugin p in Core.Plugins.HandlerCache_RequestEnd)
+                    if (p.State == Plugin.PluginState.Enabled)
+                        p.handler_requestEnd(data);
             }
-            // Invoke request-end handlers
-            foreach(Plugin p in Core.Plugins.HandlerCache_RequestEnd)
-                p.handler_requestEnd(data);
+            catch (Exception ex)
+            {
+                Core.Plugins.handlePageError(data, ex);
+            }
             // Check if to specify page
             if(!data.isKeySet("page"))
                 data["Page"] = Core.Templates.get(data.Connector, "core/page");

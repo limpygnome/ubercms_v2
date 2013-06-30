@@ -19,10 +19,11 @@
  * 
  *      Change-Log:
  *                      2013-06-25      Created initial class.
+ *                      2013-06-29      Finished initial class.
  * 
- * *****************************************************************************
+ * *********************************************************************************************************************
  * Used for passing data between the controller and plugins.
- * *****************************************************************************
+ * *********************************************************************************************************************
  */
 using System;
 using System.Collections;
@@ -38,7 +39,7 @@ namespace CMS
 	{
 		public class Data
 		{
-			// Variables
+			// Fields  *************************************************************************************************
             private bool                            outputContent;      // Indicates if the content should be written to the client.
 			private PathInfo 						pathInfo;			// Information about the request path.
 			private HttpRequest 					request;			// ASP.NET request object.
@@ -46,7 +47,7 @@ namespace CMS
 			private Stopwatch						stopwatch;			// Used to measure the current request's process speed.
 			private Dictionary<string, string>		variables;			// Used to store request variables.
 			private Connector						connector;			// The database connector.
-			// Methods - Constructors
+			// Methods - Constructors **********************************************************************************
 			public Data(HttpRequest request, HttpResponse response, string pathData)
 			{
 				this.pathInfo = new PathInfo(pathData);
@@ -57,22 +58,31 @@ namespace CMS
                 this.outputContent = true;
 				connector = Core.createConnector(false);
 			}
-			// Methods
+			// Methods *************************************************************************************************
+            /// <summary>
+            /// Starts timing, for recording the total time taken to serve the request.
+            /// </summary>
 			public void timingStart()
 			{
 				stopwatch.Start();
 			}
+            /// <summary>
+            /// Stops timing the time taken for the current request.
+            /// </summary>
 			public void timingEnd()
 			{
 				stopwatch.Stop();
-                variables["BENCH_MARK_MS"] = stopwatch.ElapsedMilliseconds.ToString();
-                variables["BENCH_MARK_S"] = ((float)stopwatch.ElapsedMilliseconds / 1000.0f).ToString();
+                variables["BenchMark_ms"] = stopwatch.ElapsedMilliseconds.ToString();
+                variables["BenchMark_s"] = ((float)stopwatch.ElapsedMilliseconds / 1000.0f).ToString();
 			}
+            /// <summary>
+            /// Disposes the resources used by this class.
+            /// </summary>
 			public void dispose()
 			{
 				connector.Disconnect();
 			}
-			// Methods - Accessors
+			// Methods - Accessors *************************************************************************************
 			/// <summary>
 			/// Indicates if a variable has been defined.
 			/// </summary>
@@ -82,7 +92,12 @@ namespace CMS
 			{
 				return variables.ContainsKey(key);
 			}
-			// Methods - Properties
+			// Methods - Properties ************************************************************************************
+            /// <summary>
+            /// Set/get a variable.
+            /// </summary>
+            /// <param name="key"></param>
+            /// <returns></returns>
 			public string this[string key]
 			{
 				get
@@ -94,6 +109,9 @@ namespace CMS
                     variables[key] = value;
 				}
 			}
+            /// <summary>
+            /// The collection of variables for the current request.
+            /// </summary>
             public Dictionary<string, string> Variables
             {
                 get
@@ -101,6 +119,10 @@ namespace CMS
                     return variables;
                 }
             }
+            /// <summary>
+            /// Set/get if to output content for the current request; true = write content to client, false = do not write any data to
+            /// the client. Useful for plugins serving files.
+            /// </summary>
             public bool OutputContent
             {
                 get
@@ -112,6 +134,9 @@ namespace CMS
                     outputContent = value;
                 }
             }
+            /// <summary>
+            /// The ASP.NET request object to represent the request data of the current request.
+            /// </summary>
 			public HttpRequest Request
 			{
 				get
@@ -119,6 +144,9 @@ namespace CMS
 					return request;
 				}
 			}
+            /// <summary>
+            /// The ASP.NET response object to represent the response actions and data for the current request.
+            /// </summary>
 			public HttpResponse Response
 			{
 				get
@@ -126,6 +154,9 @@ namespace CMS
 					return response;
 				}
 			}
+            /// <summary>
+            /// Information about the parsed path for the current request.
+            /// </summary>
 			public PathInfo PathInfo
 			{
 				get
@@ -133,6 +164,11 @@ namespace CMS
 					return pathInfo;
 				}
 			}
+            /// <summary>
+            /// The database connector used for database interaction; this should be used by code to serve
+            /// content for the current request only! Core and non-request methods of plugins should use the
+            /// Core.Connector object (which is a persistent connection).
+            /// </summary>
 			public Connector Connector
 			{
 				get

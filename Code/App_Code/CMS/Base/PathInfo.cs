@@ -18,14 +18,14 @@
  *      Path:           /App_Code/CMS/Core/PathInfo.cs
  * 
  *      Change-Log:
- *                      2013-06-25     Created initial class.
+ *                      2013-06-25      Created initial class.
+ *                      2013-06-29      Finished initial class.
  * 
- * *****************************************************************************
- * Used to parse url-rewriting/request data. Plugins are invoked based on either
- * the first directory in the URL, the module-handler variable, being matched or
- * the full-path. Thus a plugin A could own /exmaple and plugin B could own
+ * *********************************************************************************************************************
+ * Used to parse url-rewriting/request data. Plugins are invoked based on either the first directory in the URL, the
+ * module-handler variable, being matched or the full-path. Thus a plugin A could own /exmaple and plugin B could own
  * /exmaple/test by having a higher priority.
- * *****************************************************************************
+ * *********************************************************************************************************************
  */
 using System;
 using System.Text;
@@ -36,22 +36,26 @@ namespace CMS
 	{
 		public class PathInfo
 		{
-			// Variables
-			private string 		moduleHandler;
-			private string[] 	subDirs;
-			private string 		fullPath;
-			// Constructors
+			// Fields **************************************************************************************************
+			private string 		moduleHandler;          // The top-directory of the request.
+			private string[] 	subDirs;                // Subsequent directories of the request, in order from 0 to n.
+			private string 		fullPath;               // The full rebuilt path of the request (excludes query-string data).
+			// Methods - Constructors **********************************************************************************
 			public PathInfo(string pathData)
 			{
 				parse(pathData);
 			}
-			// Methods
+			// Methods *************************************************************************************************
+            /// <summary>
+            /// Parses the current request for its request path.
+            /// </summary>
+            /// <param name="pathData">The data for the current request path.</param>
 			public void parse(string pathData)
 			{
                 // Check against null reference
                 if (pathData == null)
                 {
-                    moduleHandler = Core.SettingsDisk["settings/core/default_handler"];
+                    moduleHandler = Core.SettingsDisk["settings/core/default_handler"].Value;
                     subDirs = new string[0];
                 }
                 else
@@ -70,13 +74,13 @@ namespace CMS
                         // Check against empty paths
                         if (moduleHandler.Length == 0)
                         {
-                            moduleHandler = Core.SettingsDisk["settings/core/default_handler"];
+                            moduleHandler = Core.SettingsDisk["settings/core/default_handler"].Value;
                             if(subDirs.Length != 0) // Protection against invalid paths
                                 subDirs = new string[0];
                         }
                     }
                     else
-                        moduleHandler = Core.SettingsDisk["settings/core/default_handler"];
+                        moduleHandler = Core.SettingsDisk["settings/core/default_handler"].Value;
                 }
 				// Build full-path
 				StringBuilder sb = new StringBuilder();
@@ -86,7 +90,11 @@ namespace CMS
 				sb.Remove(sb.Length - 1, 1);
 				fullPath = sb.ToString();
 			}
-			// Methods - Accessors
+			// Methods - Accessors *************************************************************************************
+            /// <summary>
+            /// Returns debug information about the current path.
+            /// </summary>
+            /// <returns></returns>
 			public string getPathInfo()
 			{
 				StringBuilder sb = new StringBuilder();
@@ -95,12 +103,31 @@ namespace CMS
 				{
 					sb.Append(" sub-dir [" + i + "] '" + subDirs[i] + "'");
 					if(i < subDirs.Length -1)
-						sb.Append(",");
+						sb.Append(" : ");
 				}
 				sb.Append(" : sub-dir count: '" + subDirs.Length + "'");
 				return sb.ToString();
 			}
-			// Methods - Properties
+			// Methods - Properties ************************************************************************************
+            /// <summary>
+            /// Gets the subdirectory at the specified index; returns null if the sub-dir cannot be found.
+            /// </summary>
+            /// <param name="index"></param>
+            /// <returns></returns>
+            public string this[int index]
+            {
+                get
+                {
+                    if (index >= this.subDirs.Length)
+                        return null;
+                    else
+                        return this.subDirs[index];
+                }
+            }
+            /// <summary>
+            /// The top-directory of the request. This is called the module-handler because some plugins can handle
+            /// all requests for a top-directory, regardless of sub-directories.
+            /// </summary>
 			public string ModuleHandler
 			{
 				get
@@ -108,6 +135,9 @@ namespace CMS
 					return this.moduleHandler;
 				}
 			}
+            /// <summary>
+            /// The sub-directories of the request.
+            /// </summary>
 			public string[] SubDirectories
 			{
 				get
@@ -115,6 +145,10 @@ namespace CMS
 					return this.subDirs;
 				}
 			}
+            /// <summary>
+            /// The full-path of the request, excludes query-string data. This is rebuilt from the parsed data for
+            /// safety.
+            /// </summary>
 			public string FullPath
 			{
 				get

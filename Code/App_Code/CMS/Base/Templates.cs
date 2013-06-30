@@ -18,12 +18,13 @@
  *      Path:           /App_Code/CMS/Base/Templates.cs
  * 
  *      Change-Log:
- *                      2013-06-25     Created initial class.
+ *                      2013-06-25      Created initial class.
+ *                      2013-06-29      Finished initial class.
  * 
- * *****************************************************************************
- * Used to load, and possibly cache, HTML templates from the database; this class
- * also transforms the custom markup syntax.
- * *****************************************************************************
+ * *********************************************************************************************************************
+ * Used to load, and possibly cache, HTML templates from the database; this class also transforms the custom markup
+ * syntax.
+ * *********************************************************************************************************************
  */
 using System;
 using System.Collections;
@@ -37,6 +38,10 @@ namespace CMS
 {
 	namespace Base
 	{
+        /// <summary>
+        /// Used to load, and possibly cache, HTML templates from the database; this class also transforms the custom
+        /// markup syntax.
+        /// </summary>
 		public class Templates
 		{
             // Delegates ***********************************************************************************************
@@ -44,7 +49,7 @@ namespace CMS
 			// Fields **************************************************************************************************
 			private bool loadFromCache;							        // Indicates if to load templates from cache, else templates will be loaded straight from the database.
 			private Dictionary<string,string> primaryCache;		        // Used to cache copies of templates from the database for reduced I/O.
-            private Dictionary<string,TemplateFunction> functions;     // Function name,function delegate; used for template function calls.
+            private Dictionary<string,TemplateFunction> functions;      // Function name,function delegate; used for template function calls.
 			// Methods - Constructors **********************************************************************************
 			private Templates()
 			{
@@ -52,6 +57,11 @@ namespace CMS
                 functions = new Dictionary<string, TemplateFunction>();
 			}
 			// Methods
+            /// <summary>
+            /// Renders the specified text according to the rules of the custom markup syntax.
+            /// </summary>
+            /// <param name="text">The text to be rendered/formatted.</param>
+            /// <param name="data">The data for the current request.</param>
 			public void render(ref StringBuilder text, ref Data data)
 			{
 				render(ref text, 0, 8, ref data);
@@ -140,17 +150,36 @@ namespace CMS
                 }
 				// Find replacement tags (for replacing sections of text with request variables)
                 foreach (Match m in Regex.Matches(text.ToString(), @"<!--([a-zA-Z0-9_]*)-->"))
-                    text.Replace(m.Value, data[m.Groups[1].Value]);
+                    text.Replace(m.Value, data.isKeySet(m.Groups[1].Value) ? data[m.Groups[1].Value] : "Element '" + m.Groups[1].Value + "' undefined!");
 				// Check if to iterate again - check we haven't surpassed max tree-level and we found a match i.e. data changed
 				currTree++;
 				if (matches.Count > 0 && currTree < treeMax)
 					render(ref text, currTree, treeMax, ref data);
 			}
+            /// <summary>
+            /// Reloads the templates held within the collection, if caching is enabled.
+            /// </summary>
+            /// <param name="conn"></param>
+            public void reload(Connector conn)
+            {
+                lock (this)
+                {
+                    if (loadFromCache = Core.SettingsDisk["settings/templates/cache"].Value.Equals("1"))
+                    {
+                        // Clear any previous templates
+                        primaryCache.Clear();
+                        // Copy the templates from the database
+                        foreach (ResultRow template in Core.Connector.Query_Read("SELECT path, html FROM cms_templates"))
+                            primaryCache.Add(template["path"], template["html"]);
+                    }
+                }
+            }
 			// Methods - Accessors *************************************************************************************
 			/// <summary>
-			/// Fetches a template.
+			/// Fetches a template; returns an empty-string if the template is not found.
 			/// </summary>
-			/// <param name="path">Path.</param>
+            /// <param name="conn">Database connector; used if caching is not enabled.</param>
+			/// <param name="path">Path of template.</param>
 			public string get(Connector conn, string path)
 			{
 				return get(conn, path, "");
@@ -158,7 +187,8 @@ namespace CMS
 			/// <summary>
 			/// Fetches a template.
 			/// </summary>
-			/// <param name="path">Path.</param>
+            /// <param name="conn">Database connector; used if caching is not enabled.</param>
+			/// <param name="path">Path of template.</param>
 			/// <param name="alternative">Alternative string to be returned if the template does not exist.</param>
 			public string get(Connector conn, string path, string alternative)
 			{
@@ -177,13 +207,8 @@ namespace CMS
 			public static Templates create()
 			{
 				Templates templates = new Templates();
-				// Check if to cache templates
-				if(templates.loadFromCache = Core.SettingsDisk["settings/templates/cache"].Equals("1"))
-				{
-					// Copy the templates from the database
-					foreach(ResultRow template in Core.Connector.Query_Read("SELECT path, html FROM cms_templates"))
-						templates.primaryCache.Add(template["path"], template["html"]);
-				}
+				// Cache templates
+                templates.reload(Core.Connector);
                 // Load function mappings
                 Assembly ass = Assembly.GetExecutingAssembly();
                 foreach (ResultRow function in Core.Connector.Query_Read("SELECT path, classpath, function_name FROM cms_template_handlers"))

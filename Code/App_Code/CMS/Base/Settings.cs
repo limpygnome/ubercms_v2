@@ -18,11 +18,12 @@
  *      Path:           /Settings.cs
  * 
  *      Change-Log:
- *                      2013-06-27     Created initial class.
+ *                      2013-06-27      Created initial class.
+ *                      2013-06-29      Finished initial class.
  * 
- * *****************************************************************************
- * Handles settings which can be stored on disk or in a database.
- * *****************************************************************************
+ * *********************************************************************************************************************
+ * Handles settings which can be stored on disk or in a database. Thread-safe.
+ * *********************************************************************************************************************
  */
 using System;
 using System.Collections;
@@ -37,106 +38,17 @@ namespace CMS
 {
 	namespace Base
 	{
+        /// <summary>
+        /// Handles settings which can be stored on disk or in a database. Thread-safe.
+        /// </summary>
 		public class Settings
 		{
-			// Sub-Class ***********************************************************************************************
-			public class SettingsNode
-			{
-				// Enums ***********************************************************************************************
-				public enum SettingsNodeState
-				{
-					None,
-					Modified,
-					Added
-				}
-				// Fields **********************************************************************************************
-				private int pluginid;
-				private string value, description;
-				private SettingsNodeState state;
-				// Methods - Constructors ******************************************************************************
-				public SettingsNode(string value)
-				{
-					this.value = value;
-					this.state = SettingsNodeState.None;
-				}
-				public SettingsNode(string value, SettingsNodeState state)
-				{
-					this.state = state;
-				}
-				public SettingsNode(string value, string description, int pluginid)
-				{
-					this.value = value;
-					this.description = description;
-					this.pluginid = pluginid;
-				}
-				public SettingsNode(string value, string description, int pluginid, SettingsNodeState state)
-				{
-					this.value = value;
-					this.description = description;
-					this.pluginid = pluginid;
-					this.state = state;
-				}
-				// Methods - Properties ********************************************************************************
-				public string this[string key]
-				{
-					get
-					{
-						return value;
-					}
-					set
-					{
-						Value = value;
-					}
-				}
-				public SettingsNodeState State
-				{
-					get
-					{
-						return state;
-					}
-				}
-				public int PluginID
-				{
-					get
-					{
-						return pluginid;
-					}
-				}
-				public string Value
-				{
-					get
-					{
-						return value;
-					}
-					set
-					{
-						this.value = value;
-						state = SettingsNodeState.Modified;
-					}
-				}
-				public string Description
-				{
-					get
-					{
-						return description;
-					}
-					set
-					{
-						description = value;
-						state = SettingsNodeState.Modified;
-					}
-				}
-			}
 			// Fields **************************************************************************************************
-			private Dictionary<string, SettingsNode> config; // path of key, value
+			private Dictionary<string, SettingsNode> config; // Path of setting, setting node
 			// Methods - Constructors **********************************************************************************
 			private Settings()
 			{
 				config = new Dictionary<string, SettingsNode>();
-			}
-			public Dictionary<string, SettingsNode> getAllKeys()
-			{
-				return config;
 			}
 			// Methods
 			/// <summary>
@@ -151,9 +63,24 @@ namespace CMS
 					StringBuilder sqlInserted = new StringBuilder("INSERT INTO cms_settings (path, pluginid, value, description) VALUES");
 					int sqlInsertedDefaultLength = sqlInserted.Length;
 					// Iterate keys
-					foreach(KeyValuePair<string, SettingsNode> k in config)
-						if(k.Value.State == SettingsNode.SettingsNodeState.Modified)
-							sqlUpdated.Append("UPDATE cms_settings SET value='" + Utils.Escape(k.Value.Value) + "', description='" + Utils.Escape(k.Value.Description) + "' WHERE path='" + Utils.Escape(k.Key) + "'");
+                    foreach (KeyValuePair<string, SettingsNode> k in config)
+                    {
+                        switch (k.Value.State)
+                        {
+                            case SettingsNode.SettingsNodeState.ModifiedAll:
+                                sqlUpdated.Append("UPDATE cms_settings SET value='" + Utils.Escape(k.Value.Value) + "', description='" + Utils.Escape(k.Value.Description) + "' WHERE path='" + Utils.Escape(k.Key) + "'; ");
+                                break;
+                            case SettingsNode.SettingsNodeState.ModifiedDescription:
+                                sqlUpdated.Append("UPDATE cms_settings SET description='" + Utils.Escape(k.Value.Description) + "' WHERE path='" + Utils.Escape(k.Key) + "'; ");
+                                break;
+                            case SettingsNode.SettingsNodeState.ModifiedValue:
+                                sqlUpdated.Append("UPDATE cms_settings SET value='" + Utils.Escape(k.Value.Value) + "' WHERE path='" + Utils.Escape(k.Key) + "'; ");
+                                break;
+                            case SettingsNode.SettingsNodeState.Added:
+                                sqlInserted.Append("('', '', " + (k.Value.Description == null ? "NULL" : "'" + k.Value.Description + "'") + ", " + (k.Value.Value == null ? "NULL" : "'" + k.Value.Value + "'") + ")");
+                                break;
+                        }
+                    }
 					// Push to the database
 					if(sqlUpdated.Length > 0)
 						conn.Query_Execute(sqlUpdated.ToString());
@@ -165,16 +92,23 @@ namespace CMS
 				}
 			}
 			// Methods - Static ****************************************************************************************
+            /// <summary>
+            /// Processes an XML node from an XML file.
+            /// </summary>
+            /// <param name="settings">The settings object.</param>
+            /// <param name="path">The path of the current XML tree being iterated, the parent of this node.</param>
+            /// <param name="node">The current node to process.</param>
 			private static void loadProcessNode(ref Settings settings, string path, XmlNode node)
 			{
 				// Process child nodes
 				bool nodes = false;
 				foreach(XmlNode n in node.ChildNodes)
-					if(n.Name != "#text")
+					if(n.Name != "#text") // #text is created, in-duplication, as apart of the standard and should be ignored
 					{
 						nodes = true;
 						loadProcessNode(ref settings, path + "/" + n.Name, n);
 					}
+                // Process the current node
 				if(!nodes)
 					settings.config.Add(path, new SettingsNode(node.InnerText));
 			}
@@ -183,7 +117,7 @@ namespace CMS
 			/// </summary>
 			/// <returns>Settings object with loaded configuration.</returns>
 			/// <param name="path">Path to XML configuration file.</param>
-			public static Settings loadFromDisk(ref string errorMessage, string path)
+			public static Settings loadFromDisk(string path)
 			{
 				try
 				{
@@ -199,23 +133,23 @@ namespace CMS
 				}
 				catch(SecurityException)
 				{
-					errorMessage = "Unable to open configuration file at '" + path + "' due to security/permission issues!";
+					Core.ErrorMessage = "Unable to open configuration file at '" + path + "' due to security/permission issues!";
 				}
 				catch(FileNotFoundException)
 				{
-					errorMessage = "Configuration file at path '" + path + "' not found!";
+                    Core.ErrorMessage = "Configuration file at path '" + path + "' not found!";
 				}
 				catch(ArgumentException)
 				{
-					errorMessage = "Empty XML file for path '" + path + "'!";
+                    Core.ErrorMessage = "Empty XML file for path '" + path + "'!";
 				}
 				catch(XmlException)
 				{
-					errorMessage = "Unable to parse XML (possibly invalid) for path '" + path + "'!";
+                    Core.ErrorMessage = "Unable to parse XML (possibly invalid) for path '" + path + "'!";
 				}
 				catch(Exception ex)
 				{
-					errorMessage = "Unknown exception loading settings for path '" + path + "' - '" + ex.Message + "'!";
+                    Core.ErrorMessage = "Unknown exception loading settings for path '" + path + "' - '" + ex.Message + "'!";
 				}
 				return null;
 			}
@@ -224,88 +158,133 @@ namespace CMS
 			/// </summary>
 			/// <returns>Settings object with loaded configuration.</returns>
 			/// <param name="conn">A connector connected to the desired database of which the settings are to be loaded from.</param>
-			public static Settings loadFromDatabase(ref string errorMessage, Connector conn)
+			public static Settings loadFromDatabase(Connector conn)
 			{
 				try
 				{
 					Settings settings = new Settings();
-					Result result = conn.Query_Read("SELECT path, pluginid, value, description FROM cms_settings");
+                    Result result = conn.Query_Read("SELECT * FROM cms_view_settings_load");
 					foreach(ResultRow row in result)
-						settings.config.Add(row["path"], new SettingsNode(row["path"], row["description"], int.Parse(row["pluginid"])));
+						settings.config.Add(row["path"], new SettingsNode(row["path"], row["description"], row["pluginid"].Length == 0 ? 0 : int.Parse(row["pluginid"])));
+                    return settings;
 				}
 				catch(Exception ex)
 				{
-					errorMessage = "Unknown exception loading settings from database ;" + ex.Message + "'!";
+                    Core.ErrorMessage = "Unknown exception loading settings from database: " + ex.Message + "'!";
 				}
 				return null;
 			}
-			// Methods - Properties ************************************************************************************
-			public string this[string key]
-			{
-				get
-				{
-					try
-					{
-						return config[key].Value;
-					}
-					catch(KeyNotFoundException)
-					{
-						throw new KeyNotFoundException("Key '" + key + "' not found!");
-					}
-				}
-				set
-				{
-					lock(this)
-					{
-						if(config.ContainsKey(key))
-							config[key].Value = value;
-						else
-							config.Add(key, new SettingsNode(value, SettingsNode.SettingsNodeState.Added));
-					}
-				}
-			}
 			// Methods - Mutators **************************************************************************************
-			public void updateOrAdd(int pluginid, string path, string description, string value)
+            /// <summary>
+            /// Updates a configuration node; however if the node does not exist, it's added to the collection. Method
+            /// 'save' must be invoked to persist the data to the data-store.
+            /// </summary>
+            /// <param name="pluginid">The owner of the plugin; this will not be updated if the node exists.</param>
+            /// <param name="path">The path of the node.</param>
+            /// <param name="description">A description of the node; can be left null to not be updated.</param>
+            /// <param name="value">The value of the node; can be left null to not be updated.</param>
+            /// <param name="updateOnly">Indicates if to only update the node.</param>
+            /// <param name="throwExceptionNonExistant">Indicates if to throw an exception if the node does not exist; this will throw a KeyNotFound exception.</param>
+			public void updateOrAdd(int pluginid, string path, string description, string value, bool updateOnly, bool throwExceptionNonExistant)
 			{
-				if(config.ContainsKey(path))
-				{
-					SettingsNode n = config[path];
-					n.Description = description;
-					n.Value = value;
-				}
-				else
-					config.Add(path, new SettingsNode(value, description, pluginid, SettingsNode.SettingsNodeState.Added));
+                lock(this)
+                {
+				    if(config.ContainsKey(path))
+				    {
+                        if (description != null)
+                            this[path].Description = description;
+                        if (value != null)
+                            this[path].Value = value;
+				    }
+				    else if(throwExceptionNonExistant)
+                        throw new KeyNotFoundException("Settings node '" + path + "' not found!");
+                    else if(!updateOnly)
+					    config.Add(path, new SettingsNode(value, description, pluginid, SettingsNode.SettingsNodeState.Added));
+                }
 			}
 			// Methods - Accessors *************************************************************************************
-			public bool contains(string key)
+            /// <summary>
+            /// Indicates if a node exists at the specified path.
+            /// </summary>
+            /// <param name="path">The path of the node to check.</param>
+            /// <returns></returns>
+			public bool contains(string path)
 			{
-				return config.ContainsKey(key);
+				return config.ContainsKey(path);
 			}
-			public int getInteger(string key)
+            /// <summary>
+            /// Fetches the value of a node at the specified path as an integer; no integer-safety is present for
+            /// efficiency!
+            /// </summary>
+            /// <param name="path">The path of the node.</param>
+            /// <returns></returns>
+			public int getInteger(string path)
 			{
-				return int.Parse(config[key].Value);
+				return int.Parse(config[path].Value);
 			}
-			public string getDefault(int pluginid, string path, string description, string defaultValue)
+            /// <summary>
+            /// Fetches the value of a node from the collection.
+            /// 
+            /// If the node does not exist, a node is created and the default value is returned.
+            /// </summary>
+            /// <param name="pluginid">The identifier of the plugin which owns the setting.</param>
+            /// <param name="path">The path of the node.</param>
+            /// <param name="description">A description of the node.</param>
+            /// <param name="defaultValue">The default value of the node.</param>
+            /// <returns>The value of the node.</returns>
+			public string get(int pluginid, string path, string description, string defaultValue)
 			{
 				if(config.ContainsKey(path))
 					return config[path].Value;
 				else
 				{
-					updateOrAdd(pluginid, path, description, defaultValue);
+					updateOrAdd(pluginid, path, description, defaultValue, false, false);
 					return defaultValue;
 				}
 			}
-			public int getDefaultInteger(int pluginid, string path, string description, int defaultValue)
+            /// <summary>
+            /// Returns the value of the node at the specified path; if the node does not exist, null is returned.
+            /// </summary>
+            /// <param name="path">The path of the node.</param>
+            /// <returns></returns>
+            public string get(string path)
+            {
+                return config.ContainsKey(path) ? config[path].Value : null;
+            }
+            /// <summary>
+            /// Fetches the value of a node from the collection as an integer.
+            /// 
+            /// If the node does not exist, a node is created and the default value is returned.
+            /// </summary>
+            /// <param name="pluginid">The identifier of the plugin which owns the setting.</param>
+            /// <param name="path">The path of the node.</param>
+            /// <param name="description">A description of the node.</param>
+            /// <param name="defaultValue">The default value of the node.</param>
+            /// <returns>The integer value of the node.</returns>
+			public int getInteger(int pluginid, string path, string description, int defaultValue)
 			{
 				if(config.ContainsKey(path))
 					return int.Parse(config[path].Value);
 				else
 				{
-					updateOrAdd(pluginid, path, description, defaultValue.ToString());
+					updateOrAdd(pluginid, path, description, defaultValue.ToString(), false, false);
 					return defaultValue;
 				}
 			}
-			public int getDefaultInteger(int pluginid, string path, string description, int defaultValue, int min, int max)
+            /// <summary>
+            /// Fetches the value of a node from the collection as an integer with range checking.
+            /// 
+            /// If the node does not exist, a node is created and the default value is returned. If the value is not
+            /// within the range, only the default value is returned (the node is not updated).
+            /// </summary>
+            /// <param name="pluginid">The identifier of the plugin which owns the setting.</param>
+            /// <param name="path">The path of the node.</param>
+            /// <param name="description">A description of the node.</param>
+            /// <param name="defaultValue">The default value of the node.</param>
+            /// <param name="min">The inclusive minimum allowed for the value.</param>
+            /// <param name="max">The inclusive maximum allowed for the value.</param>
+            /// <returns></returns>
+            public int getInteger(int pluginid, string path, string description, int defaultValue, int min, int max)
 			{
 				if(config.ContainsKey(path))
 				{
@@ -317,10 +296,45 @@ namespace CMS
 				}
 				else
 				{
-					updateOrAdd(pluginid, path, description, defaultValue.ToString());
+					updateOrAdd(pluginid, path, description, defaultValue.ToString(), false, false);
 					return defaultValue;
 				}
 			}
+            /// <summary>
+            /// A debug function for outputting the settings. Lines are broken by HTML tag 'br'.
+            /// </summary>
+            /// <returns></returns>
+            public string getDebug()
+            {
+                StringBuilder debug = new StringBuilder();
+                foreach (KeyValuePair<string, SettingsNode> node in config)
+                    debug.Append("'" + node.Key + "'='" + node.Value.Value + "' (plugin ID: '" + node.Value.PluginID + "')<br />");
+                return debug.ToString();
+            }
+            // Methods - Properties ************************************************************************************
+            /// <summary>
+            /// Returns the node at the specified path.
+            /// </summary>
+            /// <param name="path">The path of the node.</param>
+            /// <returns>The node.</returns>
+            public SettingsNode this[string path]
+            {
+                get
+                {
+                    lock(this)
+                        return config.ContainsKey(path) ? config[path] : null;
+                }
+            }
+            /// <summary>
+            /// Returns all of the nodes held by this collection.
+            /// </summary>
+            public Dictionary<string, SettingsNode> KeyValues
+            {
+                get
+                {
+                    return config;
+                }
+            }
 		}
 	}
 }

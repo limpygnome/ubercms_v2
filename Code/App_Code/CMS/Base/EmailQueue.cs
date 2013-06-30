@@ -18,14 +18,14 @@
  *      Path:           /App_Code/CMS/Core/EmailQueue.cs
  * 
  *      Change-Log:
- *                      2013-06-25     Created initial class.
+ *                      2013-06-25      Created initial class.
+ *                      2013-06-29      Finished initial class.
  * 
- * *****************************************************************************
- * An email-queue service for mass-sending e-mails in a seperate thread. This
- * system also saves the buffer of e-mails, to be sent, in the database in-case
- * the web application is interrupted (failure, shutdown, etc). The general idea
+ * *********************************************************************************************************************
+ * An email-queue service for mass-sending e-mails in a seperate thread. This system also saves the buffer of e-mails,
+ * to be sent, in the database in-case the web application is interrupted (failure, shutdown, etc). The general idea
  * is to ensure any e-mails deployed by a plugin are delivered to the mail-server.
- * *****************************************************************************
+ * *********************************************************************************************************************
  */
 using System;
 using System.Collections.Generic;
@@ -81,8 +81,8 @@ namespace CMS
 				client.Port = mailPort;
 				client.Credentials = new NetworkCredential(mailUsername, mailPassword);
 				// Prepare the query for polling the database
-				int messageThroughPut = Core.SettingsDisk["settings/mail/message_throughput"].Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_throughput"]) : 5;
-				int messagePollDelay = Core.SettingsDisk["settings/mail/message_poll_delay"].Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_poll_delay"]) : 100;
+				int messageThroughPut = Core.SettingsDisk["settings/mail/message_throughput"].Value.Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_throughput"].Value) : 5;
+				int messagePollDelay = Core.SettingsDisk["settings/mail/message_poll_delay"].Value.Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_poll_delay"].Value) : 100;
                 if (messagePollDelay < 0 || messageThroughPut < 1)
                 {
                     stop();
@@ -172,11 +172,11 @@ namespace CMS
 			{
 				EmailQueue queue = new EmailQueue();
 				// Load configuration
-				queue.mailHost = Core.SettingsDisk["settings/mail/host"];
-				queue.mailPort = int.Parse(Core.SettingsDisk["settings/mail/port"]);
-				queue.mailUsername = Core.SettingsDisk["settings/mail/user"];
-				queue.mailPassword = Core.SettingsDisk["settings/mail/pass"];
-				queue.mailAddress = Core.SettingsDisk["settings/mail/email"];
+                queue.mailHost = Core.SettingsDisk["settings/mail/host"].Value;
+				queue.mailPort = int.Parse(Core.SettingsDisk["settings/mail/port"].Value);
+				queue.mailUsername = Core.SettingsDisk["settings/mail/user"].Value;
+				queue.mailPassword = Core.SettingsDisk["settings/mail/pass"].Value;
+				queue.mailAddress = Core.SettingsDisk["settings/mail/email"].Value;
 				if(queue.mailHost.Length != 0 && queue.mailUsername.Length != 0 && queue.mailAddress.Length != 0)
 				{
 					queue.enabled = true;

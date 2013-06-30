@@ -8,9 +8,6 @@
     {
     	CMS.Base.Core.stop();
     }
-    void Application_Error(object sender, EventArgs e) 
-    {
-    }
     void Application_BeginRequest(object sender, EventArgs e)
     {
 #if IIS

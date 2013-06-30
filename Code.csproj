@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -10,6 +10,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Code</RootNamespace>
     <AssemblyName>Code</AssemblyName>
+    <UseIISExpress>false</UseIISExpress>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -46,14 +47,31 @@
         <XspParameters Port="8080" Address="127.0.0.1" SslMode="None" SslProtocol="Default" KeyType="None" CertFile="" KeyFile="" PasswordOptions="None" Password="" Verbose="True" />
       </Properties>
     </MonoDevelop>
+    <VisualStudio>
+      <FlavorProperties GUID="{349C5851-65DF-11DA-9384-00065B846F21}">
+        <WebProjectProperties>
+          <UseIIS>False</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>50415</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>
+          </IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
   </ProjectExtensions>
+  <ItemGroup />
   <ItemGroup>
-    <Folder Include="Code\App_Code\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\" />
-  </ItemGroup>
-  <ItemGroup>
+    <Compile Include="Code\App_Code\CMS\Plugins\PluginHandlerInfo.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Test\Test.cs" />
     <Compile Include="Code\Default.aspx.cs">
       <DependentUpon>Code\Default.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Code\App_Code\CMS\Base\Data.cs" />
     <Compile Include="Code\App_Code\CMS\Base\PathInfo.cs" />
@@ -70,5 +88,10 @@
     <Content Include="Code\web.config" />
     <Content Include="Code\Default.aspx" />
     <Content Include="Code\CMS.config" />
+    <Content Include="SQL\MySQL\Install.sql" />
+	<Content Include="SQL\MySQL\Uninstall.sql" />
+	<Content Include="README" />
+	<Content Include="TODO" />
+	<Content Include="LICENSE" />
   </ItemGroup>
 </Project>

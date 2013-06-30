@@ -1,2 +1,6 @@
 >	Update Connector to throw exceptions properly; EmailQueue needs to catch failed query executions to avoid sending the same e-mails (could potentially spam a destination).
 -----> If an exception occurs with the DB, shutdown the entire email queue service to be safe.
+>	test e-mail queue service.
+> plugin.refresh -> either conn or resultrow
+> scan and update core.settings and core.settingsdisk
+> change plugins.cs findhandlers to be view
