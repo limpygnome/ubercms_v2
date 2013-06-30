@@ -21,12 +21,14 @@
  *                      2013-06-27      Created initial class.
  *                      2013-06-28      Added handler information.
  *                      2013-06-29      Finished initial class.
+ *                      2013-06-30      Made changes to message param type of install/uninstall/enable/disable.
  * 
  * *********************************************************************************************************************
  * Base class for all plugins. This contains information about the plugin and methods to be implemented as handlers.
  * *********************************************************************************************************************
  */
 using System;
+using System.Text;
 using CMS.Base;
 using UberLib.Connector;
 
@@ -59,7 +61,8 @@ namespace CMS
                 PostEnable
             }
 			// Fields **************************************************************************************************
-			private int pluginid;                       // The identifier of the plugin.
+            private bool stateChanged;                  // Indicates if the state of the plugin has changed.
+            private int pluginid;                       // The identifier of the plugin.
 			private PluginState state;                  // The state of the plugin.
             private PluginHandlerInfo handlerInfo;      // The handler information of the plugin.
             private DateTime lastCycled;                // The last time the plugin cycled; DateTime.Min as value means the plugin has yet to cycle.
@@ -74,48 +77,63 @@ namespace CMS
                 this.lastCycled = DateTime.MinValue;
             }
 			// Methods - Abstract - State ******************************************************************************
-			/// <summary>
+            /// <summary>
+            /// Invoked when the plugin should persist its data to the database.
+            /// </summary>
+            /// <param name="conn"></param>
+            public virtual void save(Connector conn)
+            {
+                if(stateChanged)
+                    conn.Query_Execute("UPDATE cms_plugins SET state='" + Utils.Escape(((int)state).ToString()) + "' WHERE pluginid='" + Utils.Escape(pluginid.ToString()) + "'; ");
+            }
+            /// <summary>
+            /// Invoked when the plugin is being unloaded; this may not occur only when the CMS ends.
+            /// </summary>
+            public virtual void dispose()
+            {
+            }
+            /// <summary>
 			/// Invoked when the plugin is to be enabled; no checking of the plugin state is required. Return
 			/// true if successful or false if the plugin cannot be enabled.
 			/// </summary>
 			/// <param name="conn">Database connector.</param>
-			/// <param name="message">Message output.</param>
-            public virtual bool enable(Connector conn, ref string errorMessage)
+            /// <param name="messageOutput">Message output.</param>
+            public virtual bool enable(Connector conn, ref StringBuilder messageOutput)
 			{
-				errorMessage = "Not implemented.";
+                messageOutput.Append("Not implemented.");
 				return false;
 			}
 			/// <summary>
 			/// Invoked when the current plugin is to be disabled; no checking of the plugin state is required.
 			/// </summary>
 			/// <param name="conn">Database connector.</param>
-			/// <param name="message">Message output.</param>
+            /// <param name="messageOutput">Message output.</param>
             /// <returns>True if successful or false if the plugin failed to be disabled.</returns>
-            public virtual bool disable(Connector conn, ref string message)
+            public virtual bool disable(Connector conn, ref StringBuilder messageOutput)
 			{
-				message = "Not implemented.";
+                messageOutput.Append("Not implemented.");
 				return false;
 			}
             /// <summary>
             /// Invoked wehn the current plugin is to be uninstalled; no checking of the plugin state is required.
             /// </summary>
             /// <param name="conn">Database connector.</param>
-            /// <param name="message">Message output.</param>
+            /// <param name="messageOutput">Message output.</param>
             /// <returns>True if successful or false if the plugin failed to be uninstalled.</returns>
-            public virtual bool uninstall(Connector conn, ref string message)
+            public virtual bool uninstall(Connector conn, ref StringBuilder messageOutput)
 			{
-				message = "Not implemented.";
+                messageOutput.Append("Not implemented.");
 				return false;
 			}
             /// <summary>
             /// Invoked when the current plugin is to be installed; no checking of the plugin state is required.
             /// </summary>
             /// <param name="conn">Database connector.</param>
-            /// <param name="message">Message output.</param>
+            /// <param name="messageOutput">Message output.</param>
             /// <returns>True if successful or false if the plugin failed to be disabled.</returns>
-            public virtual bool install(Connector conn, ref string message)
+            public virtual bool install(Connector conn, ref StringBuilder messageOutput)
 			{
-				message = "Not implemented.";
+                messageOutput.Append("Not implemented.");
 				return false;
 			}
 			// Methods - Abstract - Handlers - CMS *********************************************************************
@@ -147,7 +165,7 @@ namespace CMS
             /// <param name="conn">Database connector.</param>
             /// <param name="action">The action being, or has been, performed.</param>
             /// <returns>If this is a pre-action, you can return false to abort the process. No affect on post actions.</returns>
-            public virtual bool handler_cmsPluginAction(Connector conn, PluginAction action)
+            public virtual bool handler_cmsPluginAction(Connector conn, PluginAction action, Plugin plugin)
             {
                 return false;
             }
@@ -224,6 +242,11 @@ namespace CMS
 				{
 					return state;
 				}
+                set
+                {
+                    state = value;
+                    stateChanged = true;
+                }
 			}
             /// <summary>
             /// The handler information about the plugin.

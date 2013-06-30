@@ -29,6 +29,8 @@ using System;
 using System.IO;
 using System.Text;
 using UberLib.Connector;
+using Ionic.Zip;
+using System.IO;
 
 namespace CMS
 {
@@ -71,6 +73,26 @@ namespace CMS
                 {
                     return "Failed to execute SQL file '" + path + "' - " + ex.Message + " - " + ex.GetBaseException().Message + "!";
                 }
+            }
+            /// <summary>
+            /// Extracts a zip file to the destination path. This will overwrite pre-existing files!
+            /// </summary>
+            /// <param name="sourcePath">Path to the source-file/zip-file to extract.</param>
+            /// <param name="destinationPath">The destination directory for the contents of the zip.</param>
+            /// <returns></returns>
+            public static bool extractZip(string sourcePath, string destinationPath)
+            {
+                try
+                {
+                    using (ZipFile file = new ZipFile(sourcePath))
+                    {
+                        foreach (ZipEntry entry in file)
+                            entry.Extract(destinationPath, ExtractExistingFileAction.OverwriteSilently);
+                    }
+                    return true;
+                }
+                catch { }
+                return false;
             }
         }
     }

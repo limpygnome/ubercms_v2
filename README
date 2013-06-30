@@ -1,6 +1,14 @@
 About
 ---------------------------------------------------------------------------------->
 
+Directories
+---------------------------------------------------------------------------------->
+The following directories are used by the base of the CMS:
+
+\Temp
+Used for any temporary files; all files should be removed after being used. This
+directory will also be deleted when the core stops and created when the core starts.
+
 Request Variables
 ---------------------------------------------------------------------------------->
 Variables can be set in the Data (CMS.Base.Data) object, which can be rendered on the page or used as indicators for template if-statement control blocks. These variables are also used for outputting content. List of reserved/special request variable names:
@@ -23,3 +31,15 @@ A:	Solution from "https://bugs.archlinux.org/task/6410":
 
 Authors
 ---------------------------------------------------------------------------------->
+
+Credits
+---------------------------------------------------------------------------------->
+Title:		DotNetZip - for compression and decompression of zip files.
+Version:	Version 1.9.1.8
+Homepage:	http://dotnetzip.codeplex.com/
+Location:	/Code/Bin/Ionic.Zip.Reduced.dll
+License:	Microsoft Public License (Ms-PL)
+			URL:	http://dotnetzip.codeplex.com/license
+					http://opensource.org/licenses/MS-PL
+					http://www.tldrlegal.com/license/microsoft-public-license-(ms-pl)  <- Overview!
+			- Allows commercial usage, however credit must remain.

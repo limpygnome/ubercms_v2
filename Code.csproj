@@ -67,8 +67,9 @@
   </ProjectExtensions>
   <ItemGroup />
   <ItemGroup>
+    <Compile Include="Code\App_Code\CMS\Base\SettingsNode.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\PluginHandlerInfo.cs" />
-    <Compile Include="Code\App_Code\CMS\Plugins\Test\Test.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Example\Example.cs" />
     <Compile Include="Code\Default.aspx.cs">
       <DependentUpon>Code\Default.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -89,9 +90,9 @@
     <Content Include="Code\Default.aspx" />
     <Content Include="Code\CMS.config" />
     <Content Include="SQL\MySQL\Install.sql" />
-	<Content Include="SQL\MySQL\Uninstall.sql" />
-	<Content Include="README" />
-	<Content Include="TODO" />
-	<Content Include="LICENSE" />
+    <Content Include="SQL\MySQL\Uninstall.sql" />
+    <Content Include="README" />
+    <Content Include="TODO" />
+    <Content Include="LICENSE" />
   </ItemGroup>
 </Project>

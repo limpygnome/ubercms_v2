@@ -20,6 +20,7 @@
  *      Change-Log:
  *                      2013-06-25      Created initial class.
  *                      2013-06-29      Finished initial class.
+ *                      2013-06-30      Added temporary directory creation.
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -52,6 +53,7 @@ namespace CMS
 			}
 			// Fields - Runtime ****************************************************************************************
 			private static string				basePath;							// The base path to the CMS on disk.
+            private static string               tempPath;                           // The path of the temporary folder, created when the core starts and deleted when the core stops.
 			private static CoreState			currentState = CoreState.Stopped;	// The current state of the core.
 			private static DatabaseType			dbType;								// The type of database connector to create (faster than checking config value each time).
 			private static string 				errorMessage;				        // Used to store the exception message when loading the core (if one occurs).
@@ -79,7 +81,21 @@ namespace CMS
 						basePath = AppDomain.CurrentDomain.BaseDirectory;
 						if (basePath[basePath.Length - 1] == '\\' || basePath[basePath.Length - 1] == '/')
 							basePath = basePath.Remove(basePath.Length - 1, 1);
-						basePath.Replace("\\", "/");
+                        basePath = basePath.Replace("\\", "/");
+                        // Setup the temporary directory
+                        tempPath = basePath + "/Temp";
+                        if (!Directory.Exists(tempPath))
+                        {
+                            try
+                            {
+                                Directory.CreateDirectory(tempPath);
+                            }
+                            catch (Exception ex)
+                            {
+                                fail("Failed to create temporary folder at '" + tempPath + "'; exception occurred: '" + ex.Message + "'!");
+                                return;
+                            }
+                        }
 						// Load the configuration file
 						if(!File.Exists(basePath + "/CMS.config"))
 							currentState = CoreState.NotInstalled;
@@ -154,6 +170,12 @@ namespace CMS
 					templates = null;
 					settingsDisk = null;
 					settings = null;
+                    // Dispose temporary directory
+                    try
+                    {
+                        Directory.Delete(tempPath, true);
+                    }
+                    catch { }
 					// Update state
 					currentState = CoreState.Stopped;
 				}
@@ -211,6 +233,17 @@ namespace CMS
 					return basePath;
 				}
 			}
+            /// <summary>
+            /// The path to the temporary directory, used for temporarily storing files; this directory is created when
+            /// the core starts and deleted when the core stops.
+            /// </summary>
+            public static string TempPath
+            {
+                get
+                {
+                    return tempPath;
+                }
+            }
             /// <summary>
             /// The state of the core.
             /// </summary>

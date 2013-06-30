@@ -19,6 +19,7 @@
  * 
  *      Change-Log:
  *                      2013-06-28      Created initial class.
+ *                      2013-06-30      Added setting and saving.
  * 
  * *********************************************************************************************************************
  * Stores information about a plugin's handler's, indicating if they should invoked and any parameters.
@@ -27,6 +28,7 @@
 using System;
 using System.Collections.Generic;
 using System.Web;
+using UberLib.Connector;
 
 namespace CMS
 {
@@ -38,6 +40,7 @@ namespace CMS
         public class PluginHandlerInfo
         {
             // Fields **************************************************************************************************
+            private int     pluginid;           // The identifier of the plugin; used internally only.
             private bool    requestStart,
                             requestEnd,
                             pageError,
@@ -46,9 +49,9 @@ namespace CMS
                             cmsEnd,
                             cmsPluginAction;
             int             cycleInterval;
-            // Methods - Constructors
+            // Methods - Constructors **********************************************************************************
             public PluginHandlerInfo() { }
-            public PluginHandlerInfo(bool requestStart, bool requestEnd, bool pageError, bool pageNotFound, bool cmsStart, bool cmsEnd, bool cmsPluginAction, int cycleInterval)
+            public PluginHandlerInfo(int pluginid, bool requestStart, bool requestEnd, bool pageError, bool pageNotFound, bool cmsStart, bool cmsEnd, bool cmsPluginAction, int cycleInterval)
             {
                 this.requestStart = requestStart;
                 this.requestEnd = requestEnd;
@@ -59,7 +62,13 @@ namespace CMS
                 this.cmsPluginAction = cmsPluginAction;
                 this.cycleInterval = cycleInterval;
             }
-            // Methods - Properties
+            // Methods *************************************************************************************************
+            public void save(Connector conn)
+            {
+                lock(this) // Lock this handler information instance until we've updated the database
+                    conn.Query_Execute("UPDATE cms_plugin_handlers SET request_start='" + (requestStart ? "!" : "0") + "', request_end='" + (requestEnd ? "1" : "0") + "', page_error='" + (pageError ? "1" : "0") + "', page_not_found='" + (pageNotFound ? "1" : "0") + "', cms_start='" + (cmsStart ? "1" : "0") + "', cms_end='" + (cmsEnd ? "1" : "0") + "', cms_plugin_action='" + (cmsPluginAction ? "1" : "0") + "', cycle_interval='" + Utils.Escape(cycleInterval.ToString()) + "' WHERE pluginid='" + Utils.Escape(pluginid.ToString()) + "'; ");
+            }
+            // Methods - Properties ************************************************************************************
             /// <summary>
             /// Indicates if the plugin's request-start handler should be invoked for every request.
             /// </summary>
