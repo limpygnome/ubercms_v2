@@ -19,7 +19,7 @@
  * 
  *      Change-Log:
  *                      2013-06-25      Created initial class.
- *                      2013-06-29      Finished initial class.
+ *                      2013-06-30      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Used to store and interact with plugins.
@@ -259,48 +259,154 @@ namespace CMS
             {
                 lock (this)
                 {
-                    if (plugin.State != Plugin.PluginState.NotInstalled)
+                    lock (plugin)
                     {
-                        messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID+ "') is already installed!");
-                        return false;
-                    }
-                    // Invoke pre-action handlers
-                    foreach (Plugin p in Fetch)
-                    {
-                        if (p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreInstall, plugin))
+                        if (plugin.State != Plugin.PluginState.NotInstalled)
                         {
-                            messageOutput.Append("Aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is already installed!");
                             return false;
                         }
+                        // Invoke pre-action handlers
+                        foreach (Plugin p in Fetch)
+                        {
+                            if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreInstall, plugin))
+                            {
+                                messageOutput.Append("Aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
+                                return false;
+                            }
+                        }
+                        // Invoke install handler of plugin
+                        if (!plugin.install(Core.Connector, ref messageOutput))
+                            return false;
+                        else
+                        {
+                            plugin.State = Plugin.PluginState.Enabled;
+                            plugin.save(Core.Connector);
+                        }
+                        // Invoke post-action handlers
+                        foreach (Plugin p in Fetch)
+                            if (plugin != p && p.HandlerInfo.CmsPluginAction)
+                                p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PostInstall, plugin);
                     }
-                    // Invoke install handler of plugin
-                    if (!plugin.install(Core.Connector, ref messageOutput))
-                        return false;
-                    else
-                    {
-                        plugin.State = Plugin.PluginState.Disabled;
-                        plugin.save(Core.Connector);
-                    }
-                    // Invoke post-action handlers
-                    foreach (Plugin p in Fetch)
-                        if (p.HandlerInfo.CmsPluginAction)
-                            p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PostInstall, plugin);
                 }
                 return true;
             }
             public bool uninstall(Plugin plugin, ref StringBuilder messageOutput)
             {
-
+                lock (this)
+                {
+                    lock (plugin)
+                    {
+                        if (plugin.State == Plugin.PluginState.NotInstalled)
+                        {
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is already uninstalled!");
+                            return false;
+                        }
+                        // Invoke pre-action handlers
+                        foreach (Plugin p in Fetch)
+                        {
+                            if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreUninstall, plugin))
+                            {
+                                messageOutput.Append("Aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
+                                return false;
+                            }
+                        }
+                        // Invoke install handler of plugin
+                        if (!plugin.uninstall(Core.Connector, ref messageOutput))
+                            return false;
+                        else
+                        {
+                            plugin.State = Plugin.PluginState.NotInstalled;
+                            plugin.save(Core.Connector);
+                        }
+                        // Invoke post-action handlers
+                        foreach (Plugin p in Fetch)
+                            if (plugin != p && p.HandlerInfo.CmsPluginAction)
+                                p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PostUninstall, plugin);
+                    }
+                }
                 return true;
             }
             public bool enable(Plugin plugin, ref StringBuilder messageOutput)
             {
-
+                lock (this)
+                {
+                    lock (plugin)
+                    {
+                        if (plugin.State == Plugin.PluginState.NotInstalled)
+                        {
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is not installed!");
+                            return false;
+                        }
+                        else if (plugin.State == Plugin.PluginState.Enabled)
+                        {
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is already enabled!");
+                            return false;
+                        }
+                        // Invoke pre-action handlers
+                        foreach (Plugin p in Fetch)
+                        {
+                            if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreEnable, plugin))
+                            {
+                                messageOutput.Append("Aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
+                                return false;
+                            }
+                        }
+                        // Invoke install handler of plugin
+                        if (!plugin.enable(Core.Connector, ref messageOutput))
+                            return false;
+                        else
+                        {
+                            plugin.State = Plugin.PluginState.Enabled;
+                            plugin.save(Core.Connector);
+                        }
+                        // Invoke post-action handlers
+                        foreach (Plugin p in Fetch)
+                            if (plugin != p && p.HandlerInfo.CmsPluginAction)
+                                p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PostEnable, plugin);
+                    }
+                }
                 return true;
             }
             public bool disable(Plugin plugin, ref StringBuilder messageOutput)
             {
-
+                lock (this)
+                {
+                    lock (plugin)
+                    {
+                        if (plugin.State == Plugin.PluginState.NotInstalled)
+                        {
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is not installed!");
+                            return false;
+                        }
+                        else if (plugin.State == Plugin.PluginState.Disabled)
+                        {
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is already disabled!");
+                            return false;
+                        }
+                        // Invoke pre-action handlers
+                        foreach (Plugin p in Fetch)
+                        {
+                            if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreDisable, plugin))
+                            {
+                                messageOutput.Append("Aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
+                                return false;
+                            }
+                        }
+                        // Invoke install handler of plugin
+                        if (!plugin.disable(Core.Connector, ref messageOutput))
+                            return false;
+                        else
+                        {
+                            plugin.State = Plugin.PluginState.Disabled;
+                            plugin.save(Core.Connector);
+                        }
+                        // Invoke post-action handlers
+                        foreach (Plugin p in Fetch)
+                            if (plugin != p && p.HandlerInfo.CmsPluginAction)
+                                p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PostDisable, plugin);
+                    }
+                }
                 return true;
             }
             // Methods - Cycles ****************************************************************************************

@@ -60,6 +60,22 @@ namespace CMS
                 data["Content"] = "Error '" + ex.Message + "' caught by example plugin!";
                 return true;
             }
+            public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+            {
+                return true;
+            }
+            public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+            {
+                return true;
+            }
+            public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+            {
+                return true;
+            }
+            public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+            {
+                return true;
+            }
         }
     }
 }
