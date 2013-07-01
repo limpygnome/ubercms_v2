@@ -20,6 +20,9 @@
  *      Change-Log:
  *                      2013-06-25      Created initial class.
  *                      2013-06-30      Finished initial class.
+ *                                      Added install/uninstall/enable/disable exception catching for safety.
+ *                                      Added remove method.
+ *                                      Improved general safety of install/uninstall/enable/disable and cycling.
  * 
  * *********************************************************************************************************************
  * Used to store and interact with plugins.
@@ -139,11 +142,16 @@ namespace CMS
             /// </summary>
             /// <param name="pathToZip">The path to the zip file.</param>
             /// <param name="messageOutput">Message output.</param>
-            /// <returns></returns>
+            /// <returns>True if successful, false if the operation failed.</returns>
             public bool createFromZip(string pathToZip, ref StringBuilder messageOutput)
             {
                 lock(this)
                 {
+                    if (pathToZip == null)
+                    {
+                        messageOutput.AppendLine("Plugins.createFromZip - invalid zip path specified!");
+                        return false;
+                    }
                     // Find a suitable output directory for the zip extraction
                     Random rand = new Random((int)DateTime.Now.ToBinary());
                     string outputDir;
@@ -152,7 +160,7 @@ namespace CMS
                         ;
                     if(attempts == 5)
                     {
-                        messageOutput.Append("Failed to create a temporary directory for the zip upload '" + pathToZip + "'!");
+                        messageOutput.AppendLine("Failed to create a temporary directory for the zip upload '" + pathToZip + "'!");
                         return false;
                     }
                     // Extract the zip to the temporary path
@@ -168,7 +176,7 @@ namespace CMS
                         if (Directory.Exists(directory))
                         {
                             success = false;
-                            messageOutput.Append("Destination directory '" + directory + "' for plugin already exists, aborted!");
+                            messageOutput.AppendLine("Destination directory '" + directory + "' for plugin already exists, aborted!");
                         }
                         else
                         {
@@ -179,7 +187,7 @@ namespace CMS
                             }
                             catch (Exception ex)
                             {
-                                messageOutput.Append("Failed to move plugin to destination directory '" + directory + "' for plugin; exception: '" + ex.Message + "'!");
+                                messageOutput.AppendLine("Failed to move plugin to destination directory '" + directory + "' for plugin; exception: '" + ex.Message + "'!");
                                 success = false;
                             }
                         }
@@ -187,7 +195,7 @@ namespace CMS
                     catch (Exception ex)
                     {
                         success = false;
-                        messageOutput.Append("Failed to handle temporary directory: '" + ex.Message + "'!");
+                        messageOutput.AppendLine("Failed to handle temporary directory: '" + ex.Message + "'!");
                     }
                     // Create a new plugin from the directory
                     if (success)
@@ -214,11 +222,16 @@ namespace CMS
             /// </summary>
             /// <param name="directoryPath">The directory of the new plugin.</param>
             /// <param name="messageOutput">Message output.</param>
-            /// <returns></returns>
+            /// <returns>True if successful, false if the operation failed.</returns>
             public bool createFromDirectory(string directoryPath, ref StringBuilder messageOutput)
             {
                 lock (this)
                 {
+                    if (directoryPath == null)
+                    {
+                        messageOutput.AppendLine("Plugins.createFromDirectory - invalid directory path specified!");
+                        return false;
+                    }
                     int priority;
                     string title, directory, classPath;
                     // Read base configuration
@@ -233,13 +246,13 @@ namespace CMS
                     }
                     catch (Exception ex)
                     {
-                        messageOutput.Append("Failed to read configuration file; exception: '" + ex.Message + "'!");
+                        messageOutput.AppendLine("Failed to read configuration file; exception: '" + ex.Message + "'!");
                         return false;
                     }
                     // Check the path is correct
                     if ((Core.BasePath + "/" + directory) != directoryPath)
                     {
-                        messageOutput.Append("Incorrect directory location! Should be at '" + Core.BasePath + "/" + directory + "', however directory is at '" + directoryPath + "'! If you need to change the install location of a plugin, modify its 'Plugin.config' file, however the new path MUST be relative.");
+                        messageOutput.AppendLine("Incorrect directory location! Should be at '" + Core.BasePath + "/" + directory + "', however directory is at '" + directoryPath + "'! If you need to change the install location of a plugin, modify its 'Plugin.config' file, however the new path MUST be relative.");
                         return false;
                     }
                     // Update the database
@@ -249,21 +262,32 @@ namespace CMS
                     }
                     catch (Exception ex)
                     {
-                        messageOutput.Append("Failed to insert the plugin into the database: '" + ex.Message + "'!");
+                        messageOutput.AppendLine("Failed to insert the plugin into the database: '" + ex.Message + "'!");
                         return false;
                     }
                     return true;
                 }
             }
+            /// <summary>
+            /// Installs a plugin.
+            /// </summary>
+            /// <param name="plugin">The plugin to be installed.</param>
+            /// <param name="messageOutput">Message output.</param>
+            /// <returns>True if successful, false if the operation failed.</returns>
             public bool install(Plugin plugin, ref StringBuilder messageOutput)
             {
                 lock (this)
                 {
+                    if (plugin == null)
+                    {
+                        messageOutput.AppendLine("Plugins.install - invalid plugin specified!");
+                        return false;
+                    }
                     lock (plugin)
                     {
                         if (plugin.State != Plugin.PluginState.NotInstalled)
                         {
-                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is already installed!");
+                            messageOutput.AppendLine("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - already installed!");
                             return false;
                         }
                         // Invoke pre-action handlers
@@ -271,18 +295,24 @@ namespace CMS
                         {
                             if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreInstall, plugin))
                             {
-                                messageOutput.Append("Aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
+                                messageOutput.AppendLine("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
                                 return false;
                             }
                         }
                         // Invoke install handler of plugin
-                        if (!plugin.install(Core.Connector, ref messageOutput))
-                            return false;
-                        else
+                        try
                         {
-                            plugin.State = Plugin.PluginState.Enabled;
-                            plugin.save(Core.Connector);
+                            if (!plugin.install(Core.Connector, ref messageOutput))
+                                return false;
                         }
+                        catch (Exception ex)
+                        {
+                            messageOutput.AppendLine("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - exception occured invoking install method: '" + ex.Message + "'!");
+                            return false;
+                        }
+                        // Update the database
+                        plugin.State = Plugin.PluginState.Enabled;
+                        plugin.save(Core.Connector);
                         // Invoke post-action handlers
                         foreach (Plugin p in Fetch)
                             if (plugin != p && p.HandlerInfo.CmsPluginAction)
@@ -291,15 +321,26 @@ namespace CMS
                 }
                 return true;
             }
+            /// <summary>
+            /// Uninstalls a plugin.
+            /// </summary>
+            /// <param name="plugin">The plugin to be uninstalled.</param>
+            /// <param name="messageOutput">Message output.</param>
+            /// <returns>True if successful, false if the operation failed.</returns>
             public bool uninstall(Plugin plugin, ref StringBuilder messageOutput)
             {
                 lock (this)
                 {
+                    if (plugin == null)
+                    {
+                        messageOutput.AppendLine("Plugins.uninstall - invalid plugin specified!");
+                        return false;
+                    }
                     lock (plugin)
                     {
                         if (plugin.State == Plugin.PluginState.NotInstalled)
                         {
-                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is already uninstalled!");
+                            messageOutput.AppendLine("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - already uninstalled!");
                             return false;
                         }
                         // Invoke pre-action handlers
@@ -307,18 +348,24 @@ namespace CMS
                         {
                             if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreUninstall, plugin))
                             {
-                                messageOutput.Append("Aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
+                                messageOutput.AppendLine("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
                                 return false;
                             }
                         }
                         // Invoke install handler of plugin
-                        if (!plugin.uninstall(Core.Connector, ref messageOutput))
-                            return false;
-                        else
+                        try
                         {
-                            plugin.State = Plugin.PluginState.NotInstalled;
-                            plugin.save(Core.Connector);
+                            if (!plugin.uninstall(Core.Connector, ref messageOutput))
+                                return false;
                         }
+                        catch (Exception ex)
+                        {
+                            messageOutput.AppendLine("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - exception occurred invoking uninstall method: '" + ex.Message + "'!");
+                            return false;
+                        }
+                        // Update the database
+                        plugin.State = Plugin.PluginState.NotInstalled;
+                        plugin.save(Core.Connector);
                         // Invoke post-action handlers
                         foreach (Plugin p in Fetch)
                             if (plugin != p && p.HandlerInfo.CmsPluginAction)
@@ -327,20 +374,31 @@ namespace CMS
                 }
                 return true;
             }
+            /// <summary>
+            /// Enables a plugin.
+            /// </summary>
+            /// <param name="plugin">The plugin to be enabled.</param>
+            /// <param name="messageOutput">Message output.</param>
+            /// <returns>True if successful, false if the operation failed.</returns>
             public bool enable(Plugin plugin, ref StringBuilder messageOutput)
             {
                 lock (this)
                 {
+                    if (plugin == null)
+                    {
+                        messageOutput.AppendLine("Plugins.enable - invalid plugin specified!");
+                        return false;
+                    }
                     lock (plugin)
                     {
                         if (plugin.State == Plugin.PluginState.NotInstalled)
                         {
-                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is not installed!");
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - not installed!");
                             return false;
                         }
                         else if (plugin.State == Plugin.PluginState.Enabled)
                         {
-                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is already enabled!");
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - already enabled!");
                             return false;
                         }
                         // Invoke pre-action handlers
@@ -348,18 +406,24 @@ namespace CMS
                         {
                             if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreEnable, plugin))
                             {
-                                messageOutput.Append("Aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
+                                messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
                                 return false;
                             }
                         }
                         // Invoke install handler of plugin
-                        if (!plugin.enable(Core.Connector, ref messageOutput))
-                            return false;
-                        else
+                        try
                         {
-                            plugin.State = Plugin.PluginState.Enabled;
-                            plugin.save(Core.Connector);
+                            if (!plugin.enable(Core.Connector, ref messageOutput))
+                            return false;
                         }
+                        catch (Exception ex)
+                        {
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - exception occurred invoking enable method: '" + ex.Message + "'!");
+                            return false;
+                        }
+                        // Update the database
+                        plugin.State = Plugin.PluginState.Enabled;
+                        plugin.save(Core.Connector);
                         // Invoke post-action handlers
                         foreach (Plugin p in Fetch)
                             if (plugin != p && p.HandlerInfo.CmsPluginAction)
@@ -368,20 +432,31 @@ namespace CMS
                 }
                 return true;
             }
+            /// <summary>
+            /// Disable a plugin.
+            /// </summary>
+            /// <param name="plugin">The plugin to be disabled.</param>
+            /// <param name="messageOutput">Message output.</param>
+            /// <returns>True if successful, false if the operation failed.</returns>
             public bool disable(Plugin plugin, ref StringBuilder messageOutput)
             {
                 lock (this)
                 {
+                    if (plugin == null)
+                    {
+                        messageOutput.Append("Plugins.disable - invalid plugin specified!");
+                        return false;
+                    }
                     lock (plugin)
                     {
                         if (plugin.State == Plugin.PluginState.NotInstalled)
                         {
-                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is not installed!");
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - not installed!");
                             return false;
                         }
                         else if (plugin.State == Plugin.PluginState.Disabled)
                         {
-                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') is already disabled!");
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - already disabled!");
                             return false;
                         }
                         // Invoke pre-action handlers
@@ -389,22 +464,74 @@ namespace CMS
                         {
                             if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreDisable, plugin))
                             {
-                                messageOutput.Append("Aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
+                                messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - aborted by plugin '" + p.Title + "' (ID: '" + p.PluginID + "')!");
                                 return false;
                             }
                         }
                         // Invoke install handler of plugin
-                        if (!plugin.disable(Core.Connector, ref messageOutput))
-                            return false;
-                        else
+                        try
                         {
-                            plugin.State = Plugin.PluginState.Disabled;
-                            plugin.save(Core.Connector);
+                            if (!plugin.disable(Core.Connector, ref messageOutput))
+                                return false;
                         }
+                        catch (Exception ex)
+                        {
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - exception occurred invoking disable method: '" + ex.Message + "'!");
+                            return false;
+                        }
+                        // Update the database
+                        plugin.State = Plugin.PluginState.Disabled;
+                        plugin.save(Core.Connector);
                         // Invoke post-action handlers
                         foreach (Plugin p in Fetch)
                             if (plugin != p && p.HandlerInfo.CmsPluginAction)
                                 p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PostDisable, plugin);
+                    }
+                }
+                return true;
+            }
+            /// <summary>
+            /// Permanently removes a plugin from the CMS; warning: this may delete all database data!
+            /// </summary>
+            /// <param name="plugin">The plugin to be removed/deleted.</param>
+            /// <param name="removeDirectory">Indicates if to delete the physical directory of the plugin.</param>
+            /// <param name="messageOutput">Message output.</param>
+            /// <returns>True if successful, false if the operation failed.</returns>
+            public bool remove(Plugin plugin, bool removeDirectory, ref StringBuilder messageOutput)
+            {
+                lock (this)
+                {
+                    if (plugin == null)
+                    {
+                        messageOutput.Append("Plugins.remove - invalid plugin specified!");
+                        return false;
+                    }
+                    lock (plugin)
+                    {
+                        // Remove from runtime
+                        unload(plugin);
+                        // Remove from the database
+                        try
+                        {
+                            Core.Connector.Query_Execute("DELETE FROM cms_plugins WHERE pluginid='" + Utils.Escape(plugin.PluginID.ToString()) + "';");
+                        }
+                        catch (Exception ex)
+                        {
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - failed to execute SQL to remove the plugin from the database: '" + Utils.Escape(ex.Message) + "'!");
+                            return false;
+                        }
+                        // Attempt to delete the files; if it fails, we can continue since the plugin has been removed (just inform the user)
+                        if (removeDirectory)
+                        {
+                            try
+                            {
+                                Directory.Delete(plugin.FullPath, true);
+                            }
+                            catch (Exception ex)
+                            {
+                                messageOutput.Append("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - warning - exception occurred removing the directory ('" + plugin.FullPath + "'): '" + ex.Message + "'; you will need to remove the directory manually!");
+                            }
+                        }
                     }
                 }
                 return true;
@@ -451,9 +578,12 @@ namespace CMS
                 // Loop...
                 while (true)
                 {
-                    foreach (Plugin p in pluginsCycling)
-                        if ((DateTime.Now - p.LastCycled).Milliseconds > p.HandlerInfo.CycleInterval)
-                            p.handler_cmsCycle();
+                    lock (this)
+                    {
+                        foreach (Plugin p in pluginsCycling)
+                            if ((DateTime.Now - p.LastCycled).Milliseconds > p.HandlerInfo.CycleInterval)
+                                p.handler_cmsCycle();
+                    }
                     Thread.Sleep(cyclingInterval);
                 }
             }
@@ -504,7 +634,7 @@ namespace CMS
                             // Create an instance of the class and add it
                             try
                             {
-                                plugin = (Plugin)ass.CreateInstance(t["classpath"], false, BindingFlags.CreateInstance, null, new object[] { pluginid, t["title"], state, phi }, null, null);
+                                plugin = (Plugin)ass.CreateInstance(t["classpath"], false, BindingFlags.CreateInstance, null, new object[] { pluginid, t["title"], t["directory"], state, phi }, null, null);
                                 if (plugin != null)
                                     plugins.Add(pluginid, plugin);
                                 else

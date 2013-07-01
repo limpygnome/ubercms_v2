@@ -22,6 +22,7 @@
  *                      2013-06-28      Added handler information.
  *                      2013-06-29      Finished initial class.
  *                      2013-06-30      Made changes to message param type of install/uninstall/enable/disable.
+ *                                      Added directory data from database.
  * 
  * *********************************************************************************************************************
  * Base class for all plugins. This contains information about the plugin and methods to be implemented as handlers.
@@ -67,11 +68,13 @@ namespace CMS
             private PluginHandlerInfo handlerInfo;      // The handler information of the plugin.
             private DateTime lastCycled;                // The last time the plugin cycled; DateTime.Min as value means the plugin has yet to cycle.
             private string title;                       // The title of the plugin.
+            private string directory;                   // The relative path of the plugin's base directory.
             // Methods - Constructors **********************************************************************************
-            public Plugin(int pluginid, string title, PluginState state, PluginHandlerInfo handlerInfo)
+            public Plugin(int pluginid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
             {
                 this.pluginid = pluginid;
                 this.title = title;
+                this.directory = directory;
                 this.state = state;
                 this.handlerInfo = handlerInfo;
                 this.lastCycled = DateTime.MinValue;
@@ -100,7 +103,7 @@ namespace CMS
             /// <param name="messageOutput">Message output.</param>
             public virtual bool enable(Connector conn, ref StringBuilder messageOutput)
 			{
-                messageOutput.Append("Not implemented.");
+                messageOutput.AppendLine("Not implemented.");
 				return false;
 			}
 			/// <summary>
@@ -111,7 +114,7 @@ namespace CMS
             /// <returns>True if successful or false if the plugin failed to be disabled.</returns>
             public virtual bool disable(Connector conn, ref StringBuilder messageOutput)
 			{
-                messageOutput.Append("Not implemented.");
+                messageOutput.AppendLine("Not implemented.");
 				return false;
 			}
             /// <summary>
@@ -122,7 +125,7 @@ namespace CMS
             /// <returns>True if successful or false if the plugin failed to be uninstalled.</returns>
             public virtual bool uninstall(Connector conn, ref StringBuilder messageOutput)
 			{
-                messageOutput.Append("Not implemented.");
+                messageOutput.AppendLine("Not implemented.");
 				return false;
 			}
             /// <summary>
@@ -133,7 +136,7 @@ namespace CMS
             /// <returns>True if successful or false if the plugin failed to be disabled.</returns>
             public virtual bool install(Connector conn, ref StringBuilder messageOutput)
 			{
-                messageOutput.Append("Not implemented.");
+                messageOutput.AppendLine("Not implemented.");
 				return false;
 			}
 			// Methods - Abstract - Handlers - CMS *********************************************************************
@@ -234,9 +237,29 @@ namespace CMS
                 }
             }
             /// <summary>
+            /// The relative path of the plugin's base-directory.
+            /// </summary>
+            public string Directory
+            {
+                get
+                {
+                    return directory;
+                }
+            }
+            /// <summary>
+            /// Returns the full path to the plugin's base-directory.
+            /// </summary>
+            public string FullPath
+            {
+                get
+                {
+                    return Core.BasePath + "/" + directory;
+                }
+            }
+            /// <summary>
             /// The state of the plugin.
             /// </summary>
-			public PluginState State 
+			public PluginState State
 			{
 				get
 				{

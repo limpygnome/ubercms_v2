@@ -35,7 +35,7 @@ namespace CMS
     {
         public class Example : Plugin
         {
-            public Example(int pluginid, string title, PluginState state, PluginHandlerInfo handlerInfo) : base(pluginid, title, state, handlerInfo)
+            public Example(int pluginid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo) : base(pluginid, title, directory, state, handlerInfo)
             {
             }
             public override bool handler_handleRequest(Base.Data data)

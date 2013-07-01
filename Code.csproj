@@ -31,6 +31,9 @@
     <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Ionic.Zip.Reduced">
+      <HintPath>Code\Bin\Ionic.Zip.Reduced.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
@@ -65,7 +68,9 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Code\App_Code\CMS\Plugins\Example\Plugin.config" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="Code\App_Code\CMS\Base\SettingsNode.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\PluginHandlerInfo.cs" />

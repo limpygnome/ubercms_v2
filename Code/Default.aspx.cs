@@ -70,6 +70,7 @@ public partial class _Default : System.Web.UI.Page
 #endif
 			// Start recording the time taken to process the request
 			data.timingStart();
+
             try
             {
                 // Invoke request-start handlers
