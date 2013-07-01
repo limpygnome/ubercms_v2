@@ -58,6 +58,9 @@ CREATE TABLE IF NOT EXISTS cms_templates
 );
 CREATE TABLE IF NOT EXISTS cms_template_handlers
 (
+	-- path: the path/function-name when called from a template
+	-- classpath: the location of the class in the assembly e.g. CMS.Base.Templates
+	-- function_name: the name of the function within the class to be invoked.
 	path VARCHAR(128) PRIMARY KEY,
 	pluginid INT,
 	FOREIGN KEY(`pluginid`) REFERENCES `cms_plugins`(`pluginid`) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -82,3 +85,5 @@ CREATE OR REPLACE VIEW cms_view_settings_load AS
 -- Insert core settings
 INSERT INTO cms_settings (path, pluginid, value, description) VALUES('core/default_handler', NULL, 'home', 'The default module-handler for the home-page/an empty request path.');
 
+-- Insert default template handlers
+INSERT INTO cms_template_handlers (path, pluginid, classpath, function_name) VALUES('include', NULL, 'CMS.Base.Templates', 'handler_include');

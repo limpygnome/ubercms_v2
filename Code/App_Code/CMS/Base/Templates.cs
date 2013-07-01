@@ -20,6 +20,8 @@
  *      Change-Log:
  *                      2013-06-25      Created initial class.
  *                      2013-06-29      Finished initial class.
+ *                      2013-07-01      Added template install/uninstall/dump methods.
+ *                                      Added include template handler.
  * 
  * *********************************************************************************************************************
  * Used to load, and possibly cache, HTML templates from the database; this class also transforms the custom markup
@@ -32,7 +34,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using System.IO;
+using System.Xml;
 using UberLib.Connector;
+using CMS.Plugins;
 
 namespace CMS
 {
@@ -56,7 +61,7 @@ namespace CMS
 				primaryCache = new Dictionary<string, string>();
                 functions = new Dictionary<string, TemplateFunction>();
 			}
-			// Methods
+			// Methods *************************************************************************************************
             /// <summary>
             /// Renders the specified text according to the rules of the custom markup syntax.
             /// </summary>
@@ -174,6 +179,134 @@ namespace CMS
                     }
                 }
             }
+            /// <summary>
+            /// Dumps templates from the database to disk; useful for development.
+            /// 
+            /// Note: if the destination already exists, it will be deleted! If you want to avoid this, check the
+            /// destination before invoking this method.
+            /// </summary>
+            /// <param name="pathDestination">The physical path to dump the templates.</param>
+            /// <param name="path">The template parent path; anything matching the path from the left-side will be dumped e.g. specifying \example will dump everything starting with \example e.g. \example, \example\a, etc.</param>
+            /// <param name="messageOutput">Message output.</param>
+            public void dump(string pathDestination, string path, ref StringBuilder messageOutput)
+            {
+                // Delete destination contents if it already exists
+                if (Directory.Exists(pathDestination))
+                {
+                    // Delete all the files
+                    foreach (string file in Directory.GetFiles(pathDestination, "*.xml", SearchOption.AllDirectories))
+                        File.Delete(file);
+                    // Delete all the empty subdirs (any non-empty dirs will not contain xml files, thus skip them by allowing an exception)
+                    foreach (string subdir in Directory.GetDirectories(pathDestination, "*", SearchOption.AllDirectories))
+                        try
+                        { Directory.Delete(subdir, false); }
+                        catch { }
+                }
+                else
+                    Directory.CreateDirectory(pathDestination);
+                // Write the templates to the destination
+                XmlWriter w;
+                foreach (ResultRow template in Core.Connector.Query_Read("SELECT path, description, html FROM cms_templates WHERE path LIKE '" + Utils.Escape(path) + "%'"))
+                {
+                    // Create dir and file info
+                    string dir = pathDestination + "/" + Path.GetDirectoryName(template["path"]);
+                    string file = Path.GetFileName(template["path"]) + ".xml";
+                    string dest = dir + "/" + file;
+                    // Create sub-directory if it does not exist
+                    if (!Directory.Exists(dir))
+                        Directory.CreateDirectory(dir);
+                    // Create the xml file
+                    w = XmlWriter.Create(dest);
+                    w.WriteStartDocument();
+                    w.WriteStartElement("template");
+
+                    w.WriteStartElement("path");
+                    w.WriteCData(template["path"]);
+                    w.WriteEndElement();
+
+                    w.WriteStartElement("description");
+                    w.WriteCData(template["description"]);
+                    w.WriteEndElement();
+
+                    w.WriteStartElement("html");
+                    w.WriteCData(template["html"]);
+                    w.WriteEndElement();
+
+                    w.WriteEndElement();
+                    w.WriteEndDocument();
+                    // Flush and close
+                    w.Flush();
+                    w.Close();
+                    messageOutput.AppendLine("Created template file '" + dest + "'.");
+                }
+            }
+            // Methods - Installation Related **************************************************************************
+            /// <summary>
+            /// Installs templates from disk to the database and reloads the cache (if caching is enabled).
+            /// </summary>
+            /// <param name="conn">The database connector; must be unique, cannot be a shared connector!</param>
+            /// <param name="plugin">The plugin which owns the template; can be null (not recommended).</param>
+            /// <param name="pathSource">The physical source of the templates to be installed.</param>
+            /// <param name="messageOutput">Message output.</param>
+            /// <returns>True if successful, false if the operation fails.</returns>
+            public bool install(Connector conn, Plugin plugin, string pathSource, ref StringBuilder messageOutput)
+            {
+                try
+                {
+                    XmlDocument doc;
+                    conn.Query_Execute("BEGIN;");
+                    foreach (string file in Directory.GetFiles(pathSource, "*.xml", SearchOption.AllDirectories))
+                    {
+                        try
+                        {
+                            doc = new XmlDocument();
+                            doc.LoadXml(File.ReadAllText(file));
+                            conn.Query_Execute("INSERT IGNORE INTO cms_templates (path, pluginid, description, html) VALUES('" + Utils.Escape(doc["template"]["path"].InnerText) + "', " + (plugin == null ? "NULL" : "'" + Utils.Escape(plugin.PluginID.ToString()) + "'") + ", '" + Utils.Escape(doc["template"]["description"].InnerText) + "', '" + Utils.Escape(doc["template"]["html"].InnerText) + "');");
+                        }
+                        catch (Exception ex)
+                        {
+                            messageOutput.AppendLine("Failed to install templates from '" + pathSource + "', exception occurred processing file '" + file + "': '" + ex.Message + "'!");
+                            conn.Query_Execute("ROLLBACK;");
+                            return false;
+                        }
+                    }
+                    conn.Query_Execute("COMMIT;");
+                    reload(Core.Connector);
+                }
+                catch (Exception ex)
+                {
+                    messageOutput.AppendLine("Failed to install templates from '" + pathSource + "', exception occurred: '" + ex.Message + "'!");
+                    return false;
+                }
+                return true;
+            }
+            /// <summary>
+            /// Uninstalls templates from the database and reloads the cache (if caching is enabled).
+            /// </summary>
+            /// <param name="path">The template parent path; anything matching the path from the left-side will be dumped e.g. specifying \example will dump everything starting with \example e.g. \example, \example\a, etc.</param>
+            /// <returns>True if successful, false if the operation fails.</returns>
+            public bool uninstall(string path, ref StringBuilder messageOutput)
+            {
+                try
+                {
+                    Core.Connector.Query_Execute("DELETE FROM cms_templates WHERE path LIKE '" + Utils.Escape(path) + "%'");
+                }
+                catch (Exception ex)
+                {
+                    messageOutput.AppendLine("Failed to delete templates at path '" + path + "'; exception: '" + ex.Message + "'!");
+                    return false;
+                }
+                try
+                {
+                    reload(Core.Connector);
+                }
+                catch (Exception ex)
+                {
+                    messageOutput.AppendLine("Failed to reload template cache from deleting templates at path '" + path + "'; exception: '" + ex.Message + "'!");
+                    return false;
+                }
+                return true;
+            }
 			// Methods - Accessors *************************************************************************************
 			/// <summary>
 			/// Fetches a template; returns an empty-string if the template is not found.
@@ -228,6 +361,14 @@ namespace CMS
                 }
 				return templates;
 			}
+            // Methods - Static - Default Handers **********************************************************************
+            public static string handler_include(Data data, string[] args)
+            {
+                if (args.Length != 1)
+                    return "Template include error: invalid number of arguments!";
+                else
+                    return Core.Templates.get(data.Connector, args[0], "Template include error: '" + args[0] + "' not found!");
+            }
 		}
 	}
 }

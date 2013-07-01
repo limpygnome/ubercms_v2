@@ -21,7 +21,7 @@
  *                      2013-06-25      Created initial class.
  *                      2013-06-29      Finished initial class.
  *                      2013-06-30      Added temporary directory creation.
- *                      2013-06-01      Added web.config path property.
+ *                      2013-07-01      Added web.config path property.
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.

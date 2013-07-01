@@ -20,7 +20,7 @@
  *      Change-Log:
  *                      2013-06-25      Created initial class.
  *                      2013-06-29      Updated header and namespace.
- *                      2013-06-01      Added many functions from the old CMS plugins library.
+ *                      2013-07-01      Added many functions from the old CMS plugins library.
  * 
  * *********************************************************************************************************************
  * A utility class of commonly used code.
