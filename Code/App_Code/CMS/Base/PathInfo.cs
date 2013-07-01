@@ -20,6 +20,7 @@
  *      Change-Log:
  *                      2013-06-25      Created initial class.
  *                      2013-06-29      Finished initial class.
+ *                      2013-07-01      Modified this property to something more sensible (module handler at index zero).
  * 
  * *********************************************************************************************************************
  * Used to parse url-rewriting/request data. Plugins are invoked based on either the first directory in the URL, the
@@ -110,18 +111,22 @@ namespace CMS
 			}
 			// Methods - Properties ************************************************************************************
             /// <summary>
-            /// Gets the subdirectory at the specified index; returns null if the sub-dir cannot be found.
+            /// Gets the directory at the specified index; returns null if the directory cannot be found.
+            /// 0 = module handler.
+            /// 1...n = sub-dir.
             /// </summary>
-            /// <param name="index"></param>
-            /// <returns></returns>
+            /// <param name="index">The directory index of the request.</param>
+            /// <returns>The directory's name/alias.</returns>
             public string this[int index]
             {
                 get
                 {
                     if (index >= this.subDirs.Length)
                         return null;
+                    else if (index == 0)
+                        return moduleHandler;
                     else
-                        return this.subDirs[index];
+                        return this.subDirs[index-1];
                 }
             }
             /// <summary>

@@ -23,6 +23,8 @@
  *                                      Added install/uninstall/enable/disable exception catching for safety.
  *                                      Added remove method.
  *                                      Improved general safety of install/uninstall/enable/disable and cycling.
+ *                      2013-07-01      Invoking uninstall will now invoke disable if the plugin is enabled.
+ *                                      Added getPlugin methods.
  * 
  * *********************************************************************************************************************
  * Used to store and interact with plugins.
@@ -341,6 +343,11 @@ namespace CMS
                         if (plugin.State == Plugin.PluginState.NotInstalled)
                         {
                             messageOutput.AppendLine("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - already uninstalled!");
+                            return false;
+                        }
+                        else if (plugin.State == Plugin.PluginState.Enabled && !disable(plugin, ref messageOutput))
+                        {
+                            messageOutput.AppendLine("Plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "') - aborting uninstall, failed to disable plugin!");
                             return false;
                         }
                         // Invoke pre-action handlers
@@ -704,6 +711,28 @@ namespace CMS
                 plugins.reload(true);
                 return plugins;
 			}
+            // Methods - Accessors *************************************************************************************
+            /// <summary>
+            /// Gets a plugin by its identifier.
+            /// </summary>
+            /// <param name="pluginid">String representation of the plugin's identifier; null protected.</param>
+            /// <returns>A plugin with the specified identifier or null.</returns>
+            public Plugin getPlugin(string pluginid)
+            {
+                int t;
+                lock(this)
+                    return int.TryParse(pluginid, out t) && plugins.ContainsKey(t) ? plugins[t] : null;
+            }
+            /// <summary>
+            /// Gets a plugin by its identifier.
+            /// </summary>
+            /// <param name="pluginid">The plugin's identifier.</param>
+            /// <returns>A plugin with the specified identifier or null.</returns>
+            public Plugin getPlugin(int pluginid)
+            {
+                lock(this)
+                    return plugins.ContainsKey(t) ? plugins[t] : null;
+            }
             // Methods - Properties ************************************************************************************
             /// <summary>
             /// Returns a plugin by its pluginid, else null if a plugin with the specified ID cannot be found.

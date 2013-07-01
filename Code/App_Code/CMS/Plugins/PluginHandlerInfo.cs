@@ -20,6 +20,7 @@
  *      Change-Log:
  *                      2013-06-28      Created initial class.
  *                      2013-06-30      Added setting and saving.
+ *                      2013-07-01      Properties can now be set.
  * 
  * *********************************************************************************************************************
  * Stores information about a plugin's handler's, indicating if they should invoked and any parameters.
@@ -78,6 +79,10 @@ namespace CMS
                 {
                     return requestStart;
                 }
+                set
+                {
+                    requestStart = value;
+                }
             }
             /// <summary>
             /// Indicates if the plugins' request-end handler should be invoked for every request.
@@ -87,6 +92,10 @@ namespace CMS
                 get
                 {
                     return requestEnd;
+                }
+                set
+                {
+                    requestEnd = value;
                 }
             }
             /// <summary>
@@ -99,6 +108,10 @@ namespace CMS
                 {
                     return pageError;
                 }
+                set
+                {
+                    pageError = value;
+                }
             }
             /// <summary>
             /// Indicates if the plugin's page-not-found handler should be considered for invocation when a page not found
@@ -110,6 +123,10 @@ namespace CMS
                 {
                     return pageNotFound;
                 }
+                set
+                {
+                    pageNotFound = value;
+                }
             }
             /// <summary>
             /// Indicates if the plugin's cms-start handler should be invoked after the cms's core has started.
@@ -120,6 +137,10 @@ namespace CMS
                 {
                     return cmsStart;
                 }
+                set
+                {
+                    cmsStart = value;
+                }
             }
             /// <summary>
             /// Indicates if the plugin's cms-end handler should be invoked before the cms's core is stopped.
@@ -129,6 +150,10 @@ namespace CMS
                 get
                 {
                     return cmsEnd;
+                }
+                set
+                {
+                    cmsEnd = value;
                 }
             }
             /// <summary>
@@ -141,6 +166,10 @@ namespace CMS
                 {
                     return cmsPluginAction;
                 }
+                set
+                {
+                    cmsPluginAction = value;
+                }
             }
             /// <summary>
             /// Indicates how often the plugin's cycler handler should be invoked; if this is greater than zero, it will
@@ -151,6 +180,10 @@ namespace CMS
                 get
                 {
                     return cycleInterval;
+                }
+                set
+                {
+                    cycleInterval = value;
                 }
             }
         }

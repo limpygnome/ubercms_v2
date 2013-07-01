@@ -22,6 +22,8 @@
  *                      2013-06-29      Finished initial class.
  *                      2013-06-30      Added temporary directory creation.
  *                      2013-07-01      Added web.config path property.
+ *                                      Added PathContent property.
+ *                                      Modified core-start to use CmsConfigPath property.
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -98,9 +100,9 @@ namespace CMS
                             }
                         }
 						// Load the configuration file
-						if(!File.Exists(basePath + "/CMS.config"))
+						if(!File.Exists(CmsConfigPath))
 							currentState = CoreState.NotInstalled;
-                        if ((settingsDisk = Settings.loadFromDisk(basePath + "/CMS.config")) == null)
+                        if ((settingsDisk = Settings.loadFromDisk(CmsConfigPath)) == null)
                             fail(errorMessage ?? "Failed to load disk settings!");
                         else
                         {
@@ -255,11 +257,25 @@ namespace CMS
                     return basePath + "/web.config";
                 }
             }
+            /// <summary>
+            /// The physical path to the CMS's configuration file.
+            /// </summary>
             public static string CmsConfigPath
             {
                 get
                 {
                     return basePath + "/CMS.config";
+                }
+            }
+            /// <summary>
+            /// The physical path to the content directory, used for serving media content (such as CSS files and
+            /// imagery) to end-users of the CMS.
+            /// </summary>
+            public static string PathContent
+            {
+                get
+                {
+                    return basePath + "/Content";
                 }
             }
             /// <summary>

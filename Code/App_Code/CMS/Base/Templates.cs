@@ -22,6 +22,8 @@
  *                      2013-06-29      Finished initial class.
  *                      2013-07-01      Added template install/uninstall/dump methods.
  *                                      Added include template handler.
+ *                                      Added uninstall by plugin method.
+ *                                      Added dump for plugin method.
  * 
  * *********************************************************************************************************************
  * Used to load, and possibly cache, HTML templates from the database; this class also transforms the custom markup
@@ -190,6 +192,23 @@ namespace CMS
             /// <param name="messageOutput">Message output.</param>
             public void dump(string pathDestination, string path, ref StringBuilder messageOutput)
             {
+                dump(pathDestination, path, null, ref messageOutput);
+            }
+            /// <summary>
+            /// Dumps templates from the database to disk; useful for development.
+            /// 
+            /// Note: if the destination already exists, it will be deleted! If you want to avoid this, check the
+            /// destination before invoking this method.
+            /// </summary>
+            /// <param name="pathDestination">The physical path to dump the templates.</param>
+            /// <param name="plugin">The owner of the templates to dump; can be null to dump core CMS templates</param>
+            /// <param name="messageOutput">Message output.</param>
+            public void dumpForPlugin(string pathDestination, Plugin plugin, ref StringBuilder messageOutput)
+            {
+                dump(pathDestination, null, plugin, ref messageOutput);
+            }
+            private void dump(string pathDestination, string path, Plugin plugin, ref StringBuilder messageOutput)
+            {
                 // Delete destination contents if it already exists
                 if (Directory.Exists(pathDestination))
                 {
@@ -206,7 +225,7 @@ namespace CMS
                     Directory.CreateDirectory(pathDestination);
                 // Write the templates to the destination
                 XmlWriter w;
-                foreach (ResultRow template in Core.Connector.Query_Read("SELECT path, description, html FROM cms_templates WHERE path LIKE '" + Utils.Escape(path) + "%'"))
+                foreach (ResultRow template in Core.Connector.Query_Read("SELECT path, description, html FROM cms_templates WHERE " + (path != null ? "path LIKE '" + Utils.Escape(path) + "%'" : plugin != null ? "pluginid='" + Utils.Escape(plugin.PluginID.ToString()) + "'" : "pluginid=NULL")))
                 {
                     // Create dir and file info
                     string dir = pathDestination + "/" + Path.GetDirectoryName(template["path"]);
@@ -294,6 +313,39 @@ namespace CMS
                 catch (Exception ex)
                 {
                     messageOutput.AppendLine("Failed to delete templates at path '" + path + "'; exception: '" + ex.Message + "'!");
+                    return false;
+                }
+                try
+                {
+                    reload(Core.Connector);
+                }
+                catch (Exception ex)
+                {
+                    messageOutput.AppendLine("Failed to reload template cache from deleting templates at path '" + path + "'; exception: '" + ex.Message + "'!");
+                    return false;
+                }
+                return true;
+            }
+            /// <summary>
+            /// Uninstalls templates from the database based on the ownership by a plugin.
+            /// </summary>
+            /// <param name="plugin">The owner of the templates to be removed.</param>
+            /// <param name="messageOutput">Message output.</param>
+            /// <returns>True if successful, false if the operation fails.</returns>
+            public bool uninstall(Plugin plugin, ref StringBuilder messageOutput)
+            {
+                if (plugin == null)
+                {
+                    messageOutput.AppendLine("Templates uninstall - plugin cannot be null!");
+                    return false;
+                }
+                try
+                {
+                    Core.Connector.Query_Execute("DELETE FROM cms_templates WHERE pluginid='" + Utils.Escape(plugin.PluginID.ToString()) + "';");
+                }
+                catch (Exception ex)
+                {
+                    messageOutput.AppendLine("Failed to delete templates for plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "'); exception: '" + ex.Message + "'!");
                     return false;
                 }
                 try

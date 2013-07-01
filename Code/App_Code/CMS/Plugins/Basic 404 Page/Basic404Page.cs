@@ -14,54 +14,35 @@
  *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
  *                      http://creativecommons.org/licenses/by-sa/3.0/
  * 
- *      File:           Plugins.cs
- *      Path:           /App_Code/CMS/Plugins/Example/Example.cs
+ *      File:           Basic404Page.cs
+ *      Path:           /App_Code/CMS/Plugins/Basic 404 Page/Basic404Page.cs
  * 
  *      Change-Log:
- *                      2013-06-28      Created initial class.
- *                      2013-06-29      Updated name to Example.
+ *                      2013-07-01      Created initial class.
  * 
  * *********************************************************************************************************************
- * Example/debugging plugin.
+ * A very basic page-not-found plugin.
  * *********************************************************************************************************************
  */
 using System;
 using System.Collections.Generic;
 using System.Web;
+using CMS.Base;
 
 namespace CMS
 {
     namespace Plugins
     {
-        public class Example : Plugin
+        /// <summary>
+        /// A very basic page-not-found plugin.
+        /// </summary>
+        public class Basic404Page : Plugin
         {
-            public Example(int pluginid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo) : base(pluginid, title, directory, state, handlerInfo)
-            {
-            }
-            public override bool handler_handleRequest(Base.Data data)
-            {
-                switch (data.PathInfo.ModuleHandler)
-                {
-                    case "error_example":
-                        throw new Exception("An example of error catching!");
-                    default:
-                        data["Content"] = "Example handler works! Click <a href=\"/error_example\">here</a> for error-catching example.";
-                        break;
-                }
-                return true;
-            }
-            public override bool handler_handlePageNotFound(Base.Data data)
-            {
-                data["Content"] = "Path '" + data.PathInfo.FullPath + "' not found - caught by test handler!";
-                return true;
-            }
-            public override bool handler_handlePageError(Base.Data data, Exception ex)
-            {
-                data["Content"] = "Error '" + ex.Message + "' caught by example plugin!";
-                return true;
-            }
             public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
             {
+                // Register handlers
+                HandlerInfo.PageNotFound = true;
+                HandlerInfo.save(conn);
                 return true;
             }
             public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
@@ -70,10 +51,24 @@ namespace CMS
             }
             public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
             {
+                // Install content
+                BaseUtils.contentInstall(PathContent, Core.PathContent, false, ref messageOutput);
+                // Install templates
+                Core.Templates.install(conn, this, PathTemplates, ref messageOutput);
                 return true;
             }
             public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
             {
+                // Remove content
+                BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput);
+                // Remove templates
+                Core.Templates.uninstall(this, ref messageOutput);
+                return true;
+            }
+            public override bool handler_handlePageNotFound(Data data)
+            {
+                data["Content"] = Core.Templates.get(data.Connector, "basic404page/page_not_found");
+                data["404_PATH"] = data.PathInfo.FullPath;
                 return true;
             }
         }

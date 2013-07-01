@@ -73,6 +73,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Code\App_Code\CMS\Base\SettingsNode.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic 404 Page\Basic404Page.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Package Developer\PackageDeveloper.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\PluginHandlerInfo.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Example\Example.cs" />
     <Compile Include="Code\Default.aspx.cs">
@@ -99,5 +101,20 @@
     <Content Include="README" />
     <Content Include="TODO" />
     <Content Include="LICENSE" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Code\App_Code\CMS\Plugins\Admin Panel\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Articles\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Downloads\" />
+    <Folder Include="Code\Installer\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\Plugin.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Code\App_Code\CMS\Plugins\Package Developer\Plugin.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Code\App_Code\CMS\Plugins\Basic 404 Page\Plugin.config" />
   </ItemGroup>
 </Project>

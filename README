@@ -17,6 +17,7 @@ Variables can be set in the Data (CMS.Base.Data) object, which can be rendered o
 > 'Content' - the area within the 'Page' where content can be appended.
 > 'BenchMark_ms' - the total number of milliseconds taken to serve the request (integer).
 > 'BenchMark_s' - the totla number of seconds taken to serve the request (decimal).
+> 'Title' - the page title.
 
 The above names are only guidelines, except for 'Page' (which is sent to the client at the end of the request) and 'Content', which is set if a page cannot be found and no page-not-found handler handles the request. 'Page' will also be set with the template at 'core/page' before rendering and outputtign the content to the client (after request-end handlers), unless the variable has already been set.
 

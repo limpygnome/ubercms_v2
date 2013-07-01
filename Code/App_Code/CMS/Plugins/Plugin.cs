@@ -23,6 +23,8 @@
  *                      2013-06-29      Finished initial class.
  *                      2013-06-30      Made changes to message param type of install/uninstall/enable/disable.
  *                                      Added directory data from database.
+ *                                      Added properties for some default paths.
+ *                                      Renamed Plugin property to avoid conflict with System.IO.
  * 
  * *********************************************************************************************************************
  * Base class for all plugins. This contains information about the plugin and methods to be implemented as handlers.
@@ -239,7 +241,7 @@ namespace CMS
             /// <summary>
             /// The relative path of the plugin's base-directory.
             /// </summary>
-            public string Directory
+            public string RelativeDirectory
             {
                 get
                 {
@@ -254,6 +256,36 @@ namespace CMS
                 get
                 {
                     return Core.BasePath + "/" + directory;
+                }
+            }
+            /// <summary>
+            /// The full physical path to this plugin's content directory.
+            /// </summary>
+            public virtual string PathContent
+            {
+                get
+                {
+                    return FullPath + "/Content";
+                }
+            }
+            /// <summary>
+            /// The full physical path to this plugin's templates directory.
+            /// </summary>
+            public virtual string PathTemplates
+            {
+                get
+                {
+                    return FullPath + "/Templates";
+                }
+            }
+            /// <summary>
+            /// The full physical path to this plugin's SQL directory.
+            /// </summary>
+            public virtual string PathSQL
+            {
+                get
+                {
+                    return FullPath + "/SQL";
                 }
             }
             /// <summary>

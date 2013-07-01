@@ -21,6 +21,7 @@
  *                      2013-06-25      Created initial class.
  *                      2013-06-29      Updated header and namespace.
  *                      2013-07-01      Added many functions from the old CMS plugins library.
+ *                                      Added URL reservation methods.
  * 
  * *********************************************************************************************************************
  * A utility class of commonly used code.
@@ -33,6 +34,7 @@ using UberLib.Connector;
 using Ionic.Zip;
 using System.IO;
 using System.Xml;
+using CMS.Plugins;
 
 namespace CMS
 {
@@ -375,7 +377,73 @@ namespace CMS
                 int output;
                 return int.TryParse(text, out output) && output >= min && output <= max;
             }
+            /// <summary>
+            /// Reserves multiple URL rewriting paths.
+            /// </summary>
+            /// <param name="plugin">The owner of the paths; cannot be null.</param>
+            /// <param name="paths">String array consisting of the paths to reserve.</param>
+            /// <param name="messageOutput">Message output.</param>
+            /// <returns>True if successful, false if the operation fails.</returns>
+            public static bool urlRewritingInstall(Plugin plugin, string[] paths, ref StringBuilder messageOutput)
+            {
+                if (paths.Length == 0) // Check we have work to do, else we'll just skip straight out.
+                    return true;
+                else if (plugin == null)
+                {
+                    messageOutput.AppendLine("URL rewriting install - plugin cannot be null!");
+                    return false;
+                }
+                try
+                {
+                    StringBuilder query = new StringBuilder("INSERT INTO cms_urlrewriting (pluginid, full_path) VALUES");
+                    string pluginid = Utils.Escape(plugin.PluginID.ToString());
+                    foreach (string s in paths)
+                        query.Append("('" + pluginid +"', '" + Utils.Escape(s) + "'),");
+                    query.Remove(query.Length - 1, 1).Append(";");
+                    Core.Connector.Query_Execute(query.ToString());
+                }
+                catch (Exception ex)
+                {
+                    messageOutput.AppendLine("URL rewriting - failed to install items; exception: '" + ex.Message + "'!");
+                    return false;
+                }
+                return true;
+            }
+            /// <summary>
+            /// Uninstalls all of the URL rewriting reservations associated with the specified plugin.
+            /// </summary>
+            /// <param name="plugin">The owner of the paths; cannot be null.</param>
+            /// <param name="messageOutput">Message output.</param>
+            /// <returns>True if successful, false if the operation fails.</returns>
+            public static bool urlRewritingUninstall(Plugin plugin, ref StringBuilder messageOutput)
+            {
+                return urlRewritingUninstall(plugin, "", ref messageOutput);
+            }
+            /// <summary>
+            /// Uninstalls all of the URL rewriting reservations associated with the specified plugin.
+            /// </summary>
+            /// <param name="plugin">The owner of the paths; cannot be null.</param>
+            /// <param name="path">The starting path of elements to be deleted. If you specify e.g. \example, the paths \example, \example\a, \example\b would be deleted.</param>
+            /// <param name="messageOutput">Message output.</param>
+            /// <returns>True if successful, false if the operation fails.</returns>
+            public static bool urlRewritingUninstall(Plugin plugin, string path, ref StringBuilder messageOutput)
+            {
+                if (plugin == null)
+                {
+                    messageOutput.AppendLine("URL rewriting install - plugin cannot be null!");
+                    return false;
+                }
+                try
+                {
+                    Core.Connector.Query_Execute("DELETE FROM cms_urlrewriting WHERE full_path LIKE '" + Utils.Escape(path) + "%'");
+                }
+                catch (Exception ex)
+                {
+                    messageOutput.AppendLine("URL rewriting - failed to uninstall items at path '" + path + "'; exception: '" + ex.Message + "'!");
+                    return false;
+                }
+                return true;
+            }
         }
     }
 }
-
