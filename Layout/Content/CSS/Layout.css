@@ -1,0 +1,288 @@
+/* General */
+.clear
+{
+    clear: both;
+}
+/* Layout */
+body
+{
+	margin: 0em;
+	background: #333;
+}
+.AREA_SHADOW
+{
+	position: absolute;
+	width: 100%;
+	height: 0.5em;
+	top: -0.5em;
+	box-shadow: 0em 0em 25em 5em #666;
+}
+.AREA_WRAPPER
+{
+	position: relative;
+	top: 0.5em;
+    font: normal 12px Arial,Verdana;
+    width: 70em;
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+	margin: auto;
+	box-shadow: 0em 0em 1.0em #000;
+	border-radius: 0.5em;
+	overflow: hidden;
+}
+.AREA_BANNER, .AREA_NAV, .AREA_CONTENT
+{
+	position: relative;
+	display: inline-block;
+	float: left;
+	width: 100%;
+}
+.AREA_BANNER
+{
+	height: 5em;
+	line-height: 4em;
+	background: url('../Images/Layout/background.png') no-repeat;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+}
+.AREA_BANNER h1
+{
+	visibility: hidden;
+}
+.AREA_BANNER img
+{
+	width: 100%;
+	height: 100%;
+}
+.AREA_BANNER .AUTH
+{
+	display: inline-block;
+	height: 2em;
+	line-height: 2em;
+	float: right;
+	padding: 0.25em 0.5em;
+	margin: 0.5em;
+	background: rgba(0, 0, 0, 0.4);
+	border-radius: 0.5em;
+	box-shadow: 0em 0em 0.5em rgba(0, 0, 0, 0.5);
+	border: solid 0.1em rgba(0, 0, 0, 0.1);
+}
+.AREA_BANNER .AUTH a
+{
+	float: left;
+	color: #FFF;
+	text-decoration: none;
+}
+.AREA_BANNER .AUTH a:hover, .AREA_BANNER .AUTH a:focus
+{
+	color: #999;
+}
+.AREA_BANNER .AUTH img
+{
+	width: 1.33em;
+	height: 1.33em;
+	vertical-align: middle;
+	border: none;
+}
+.AREA_NAV
+{
+	height: 2em;
+	z-index: 2;
+	background: #CCC;
+	font-size: small;
+}
+.AREA_NAV .ITEM
+{
+	float: left;
+	height: 2em;
+	overflow: hidden;
+}
+.AREA_NAV .ITEM:hover, .AREA_NAV .ITEM:focus
+{
+	overflow: visible;
+}
+.AREA_NAV .SEP, .AREA_BANNER .SEP
+{
+	float: left;
+	margin: 0.5em;
+	width: 0.2em;
+	background: #CCC;
+	height: 1em;
+}
+.AREA_NAV .ITEM:hover, .AREA_NAV .ITEM:focus
+{
+	background: #999;
+}
+.AREA_NAV .ITEM .SUBITEMS
+{
+	float: left;
+	width: 100%;
+	background: #CCC;
+	box-shadow: 0em 0.2em 0.5em -0.2em #000;
+}
+.AREA_NAV .ITEM a
+{
+	display: block;
+	height: 1em;
+	padding: 0.5em;
+	line-height: 1em;
+	text-decoration: none;
+	color: #333;
+}
+.AREA_NAV .ITEM a:hover, .AREA_NAV .ITEM a:focus
+{
+	background: #999;
+}
+.AREA_CONTENT
+{
+	background: #FFF;
+	min-height: 40em;
+	z-index: 1;
+}
+.AREA_CONTENT p
+{
+	margin: 0.5em 1em 1em 1em;
+	color: #333;
+	font-size: small;
+}
+.AREA_CONTENT p a
+{
+	color: #06C;
+}
+.AREA_CONTENT p a:hover, .AREA_CONTENT p a:focus
+{
+	color: #999;
+}
+.AREA_CONTENT h2
+{
+	padding: 0em;
+	margin: 0.5em 0.25em;
+	color: #333;
+	font-weight: normal;
+	font-size: x-large;
+}
+.AREA_CONTENT h3
+{
+	font-size: small;
+	border-bottom: dotted 0.1em #999;
+	margin: 0.5em;
+	padding: 0em;
+	color: #333;
+	font-size: medium;
+	color: #06C;
+}
+.AREA_CONTENT h4
+{
+	margin: 0em 1em;
+}
+.FOOTER
+{
+	font: normal small Arial;
+	text-align: center;
+}
+.FOOTER, .FOOTER a
+{
+	color: #666;
+}
+.FOOTER a:focus, .FOOTER a:hover
+{
+	color: #06C;
+}
+/* Data Table */
+.AREA_CONTENT table
+{
+	border: solid 0.1em #333;
+	border-radius: 0.5em;
+	border-collapse: collapse;
+	margin: 0.5em auto;
+	box-shadow: 0em 0em 0.5em #000;
+}
+.AREA_CONTENT table tr:nth-child(even)
+{
+	background: #CCC;
+}
+.AREA_CONTENT table th, .AREA_CONTENT table td
+{
+	padding: 0.5em;
+	border: solid 0.1em #333;
+}
+.AREA_CONTENT table th
+{
+	background: #06C;
+	color: #FFF;
+}
+/* Layout Table */
+.TABLE
+{
+    display: block;
+	margin: auto;
+	margin-bottom: 0.5em;
+	overflow: hidden;
+	font-size: small;
+	padding: 0.5em;
+}
+.TABLE .ROW
+{
+    display: block;
+}
+.TABLE .HEADER, .TABLE .ROW .CELL1, .TABLE .ROW .CELL2, .TABLE .ROW .CELL3, .TABLE .ROW .CELL4
+{
+    vertical-align: middle;
+    display: inline-block;
+    float: left;
+	padding: 1%;
+}
+.TABLE .ROW .CELL1
+{
+    width: 100%;
+}
+.TABLE .ROW .CELL2
+{
+    width: 48%;
+}
+.TABLE .ROW .CELL3
+{
+    width: 30.33%;
+}
+.TABLE .ROW .CELL4
+{
+    width: 21%;
+}
+.TABLE input, .BUTTON
+{
+	font-size: small;
+}
+.TABLE input[type=text], .TABLE input[type=submit], .BUTTON
+{
+	padding: 0.25em 0.5em;
+	border-radius: 0.25em;
+}
+.TABLE input[type=text]
+{
+	border: solid 0.1em #333;
+	background: #CCC;
+	box-shadow: inset 0em 0em 0.5em #666, 0em 0em 0.5em #CCC;
+	padding: 0.25em 0.5em;
+}
+.TABLE input[type=text]:hover, .TABLE input[type=text]:focus
+{
+	background: #999;
+}
+.TABLE input[type=submit], .BUTTON
+{
+	background: #333;
+	border: none;
+	color: #FFF;
+	box-shadow: 0em 0em 0.3em #333;
+	text-decoration: none;
+	margin: 0em 0.25em 0em 0em;
+	padding: 0.25em 0.5em;
+}
+.TABLE input[type=submit]:hover, .TABLE input[type=submit]:focus, .BUTTON:hover, .BUTTON:focus
+{
+	background: #CCC;
+	color: #333;
+	cursor: pointer;
+}
