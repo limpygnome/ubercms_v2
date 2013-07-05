@@ -38,6 +38,9 @@ namespace CMS
         /// </summary>
         public class Basic404Page : Plugin
         {
+            public Basic404Page(int pluginid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
+                : base(pluginid, title, directory, state, handlerInfo)
+            { }
             public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
             {
                 // Register handlers

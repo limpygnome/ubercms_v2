@@ -354,7 +354,7 @@ namespace CMS
                 }
                 catch (Exception ex)
                 {
-                    messageOutput.AppendLine("Failed to reload template cache from deleting templates at path '" + path + "'; exception: '" + ex.Message + "'!");
+                    messageOutput.AppendLine("Failed to reload template cache from deleting templates for plugin '" + plugin.Title + "' (ID: '" + plugin.PluginID + "'); exception: '" + ex.Message + "'!");
                     return false;
                 }
                 return true;

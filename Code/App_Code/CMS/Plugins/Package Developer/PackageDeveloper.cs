@@ -41,6 +41,9 @@ namespace CMS
         /// </summary>
         public class PackageDeveloper : Plugin
         {
+            public PackageDeveloper(int pluginid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
+                : base(pluginid, title, directory, state, handlerInfo)
+            { }
             public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
             {
                 return true;

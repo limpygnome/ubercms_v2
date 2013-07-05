@@ -20,6 +20,7 @@
  *      Change-Log:
  *                      2013-06-28      Created initial class.
  *                      2013-06-29      Updated name to Example.
+ *                      2013-07-05      Updated HTML output to use paragraphs and set titles.
  * 
  * *********************************************************************************************************************
  * Example/debugging plugin.
@@ -45,19 +46,22 @@ namespace CMS
                     case "error_example":
                         throw new Exception("An example of error catching!");
                     default:
-                        data["Content"] = "Example handler works! Click <a href=\"/error_example\">here</a> for error-catching example.";
+                        data["Title"] = "Welcome!";
+                        data["Content"] = "<p>Example handler works! Click <a href=\"/error_example\">here</a> for error-catching example.</p>";
                         break;
                 }
                 return true;
             }
             public override bool handler_handlePageNotFound(Base.Data data)
             {
-                data["Content"] = "Path '" + data.PathInfo.FullPath + "' not found - caught by test handler!";
+                data["Title"] = "Page Not Found";
+                data["Content"] = "<p>Path '" + data.PathInfo.FullPath + "' not found - caught by test handler!</p>";
                 return true;
             }
             public override bool handler_handlePageError(Base.Data data, Exception ex)
             {
-                data["Content"] = "Error '" + ex.Message + "' caught by example plugin!";
+                data["Title"] = "Error Serving Request";
+                data["Content"] = "<p>Error '" + ex.Message + "' caught by example plugin!</p>";
                 return true;
             }
             public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)

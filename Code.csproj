@@ -106,6 +106,7 @@
     <Folder Include="Code\App_Code\CMS\Plugins\Admin Panel\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Articles\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Downloads\" />
+    <Folder Include="Code\Content\CSS\" />
     <Folder Include="Code\Installer\" />
   </ItemGroup>
   <ItemGroup>

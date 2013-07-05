@@ -731,7 +731,7 @@ namespace CMS
             public Plugin getPlugin(int pluginid)
             {
                 lock(this)
-                    return plugins.ContainsKey(t) ? plugins[t] : null;
+                    return plugins.ContainsKey(pluginid) ? plugins[pluginid] : null;
             }
             // Methods - Properties ************************************************************************************
             /// <summary>
