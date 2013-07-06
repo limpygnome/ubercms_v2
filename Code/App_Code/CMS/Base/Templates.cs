@@ -24,6 +24,7 @@
  *                                      Added include template handler.
  *                                      Added uninstall by plugin method.
  *                                      Added dump for plugin method.
+ *                      2013-07-06      Fixed dump bug.
  * 
  * *********************************************************************************************************************
  * Used to load, and possibly cache, HTML templates from the database; this class also transforms the custom markup
@@ -225,6 +226,7 @@ namespace CMS
                     Directory.CreateDirectory(pathDestination);
                 // Write the templates to the destination
                 XmlWriter w;
+                int count = 0;
                 foreach (ResultRow template in Core.Connector.Query_Read("SELECT path, description, html FROM cms_templates WHERE " + (path != null ? "path LIKE '" + Utils.Escape(path) + "%'" : plugin != null ? "pluginid='" + Utils.Escape(plugin.PluginID.ToString()) + "'" : "pluginid=NULL")))
                 {
                     // Create dir and file info
@@ -257,7 +259,9 @@ namespace CMS
                     w.Flush();
                     w.Close();
                     messageOutput.AppendLine("Created template file '" + dest + "'.");
+                    count++;
                 }
+                messageOutput.Append("Dumped a total of ").Append(count).AppendLine(" templates.");
             }
             // Methods - Installation Related **************************************************************************
             /// <summary>

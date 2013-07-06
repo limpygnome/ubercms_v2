@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[package_developer/home]]></path><description><![CDATA[Home-page listing all of the available plugins and their options.]]></description><html><![CDATA[<h3>Plugins</h3>
+<table>
+	<tr>
+		<th>PluginID</th>
+		<th>Title</th>
+		<th>State</th>
+		<th>Options</th>
+	</tr>
+	%PLUGINS%
+</table>
+
+<h3>Core Operations</h3>
+<p>
+	<a class="BUTTON" href="/package_developer/dump/core">Dump Core Templates</a>
+</p>
+
+<h3>Syncing - <i>files.list</i></h3>
+<p>
+	The sync operation allows you to sync files from different folders, useful for creating files for a plugin in e.g. /content and having them moved
+	to the plugin's content directory, ready for packaging.
+</p>
+<p>
+	Sync operations are specified by a file created in the root of a plugin's directory called <i>files.list</i>. You can specify to copy an entire directory
+	or a single file to a destination path. You can use the following variables in paths:
+</p>
+<table>
+	<tr>
+		<th>Variable</th>
+		<th>Usage</th>
+	</tr>
+	<tr>
+		<td>%LOCAL%</td>
+		<td>Replaced with the root path of the current plugin.</td>
+	</tr>
+	<tr>
+		<td>%GLOBAL%</td>
+		<td>Replaced with the root path of the CMS.</td>
+	</tr>
+	<tr>
+		<td>%TEMPLATES%</td>
+		<td>Replaced with the path of the current plugin's template directory.</td>
+	</tr>
+	<tr>
+		<td>%CONTENT%</td>
+		<td>Replaced with the path of the current plugin's content directory.</td>
+	</tr>
+</table>
+<h4>Example</h4>
+<p>
+	// Line comments can be specified.<br />
+	// The following below copies the file 'example.jpg' from the global content directory to a plugin's content directory:<br />
+	%GLOBAL%/content/images/example.jpg, %CONTENT%/images/example.jpg<br />
+	<br />
+	// The following below copies an entire directory:<br />
+	%GLOBAL%/content/images/example/*, %CONTENT%/images/exmaple
+</p>]]></html></template>

@@ -274,15 +274,16 @@ body
 {
 	background: #333;
 	border: none;
-	color: #FFF;
+	color: #FFF !important;
 	box-shadow: 0em 0em 0.3em #333;
 	text-decoration: none;
 	margin: 0em 0.25em 0em 0em;
 	padding: 0.25em 0.5em;
+	height: 2em; line-height: 2em;
 }
 .TABLE input[type=submit]:hover, .TABLE input[type=submit]:focus, .BUTTON:hover, .BUTTON:focus
 {
 	background: #CCC;
-	color: #333;
+	color: #333 !important;
 	cursor: pointer;
 }

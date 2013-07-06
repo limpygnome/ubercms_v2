@@ -21,6 +21,7 @@
  *                      2013-06-28      Created initial class.
  *                      2013-06-29      Updated name to Example.
  *                      2013-07-05      Updated HTML output to use paragraphs and set titles.
+ *                      2013-07-06      Added output for install/uninstall/enable/disable.
  * 
  * *********************************************************************************************************************
  * Example/debugging plugin.
@@ -66,18 +67,22 @@ namespace CMS
             }
             public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
             {
+                messageOutput.AppendLine("Invoked example-plugin's install method!");
                 return true;
             }
             public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
             {
+                messageOutput.AppendLine("Invoked example-plugin's uninstall method!");
                 return true;
             }
             public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
             {
+                messageOutput.AppendLine("Invoked example-plugin's enable method!");
                 return true;
             }
             public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
             {
+                messageOutput.AppendLine("Invoked example-plugin's disable method!");
                 return true;
             }
         }

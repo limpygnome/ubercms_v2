@@ -25,6 +25,7 @@
  *                                      Added directory data from database.
  *                                      Added properties for some default paths.
  *                                      Renamed Plugin property to avoid conflict with System.IO.
+ *                      2013-07-05      Modified default directory paths to be lower-case.
  * 
  * *********************************************************************************************************************
  * Base class for all plugins. This contains information about the plugin and methods to be implemented as handlers.
@@ -265,7 +266,7 @@ namespace CMS
             {
                 get
                 {
-                    return FullPath + "/Content";
+                    return FullPath + "/content";
                 }
             }
             /// <summary>
@@ -275,7 +276,7 @@ namespace CMS
             {
                 get
                 {
-                    return FullPath + "/Templates";
+                    return FullPath + "/templates";
                 }
             }
             /// <summary>
@@ -285,7 +286,7 @@ namespace CMS
             {
                 get
                 {
-                    return FullPath + "/SQL";
+                    return FullPath + "/sql";
                 }
             }
             /// <summary>

@@ -1,0 +1,3 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[package_developer/output]]></path><description><![CDATA[A general template for outputting messages and returning to the home-page.]]></description><html><![CDATA[<h3>Output</h3>
+<p>%OUTPUT%</p>
+<p><a href="/package_developer" class="BUTTON">Back</a></p>]]></html></template>

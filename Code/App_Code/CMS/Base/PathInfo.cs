@@ -21,6 +21,7 @@
  *                      2013-06-25      Created initial class.
  *                      2013-06-29      Finished initial class.
  *                      2013-07-01      Modified this property to something more sensible (module handler at index zero).
+ *                      2013-07-05      Fixed this property bug.
  * 
  * *********************************************************************************************************************
  * Used to parse url-rewriting/request data. Plugins are invoked based on either the first directory in the URL, the
@@ -121,7 +122,7 @@ namespace CMS
             {
                 get
                 {
-                    if (index >= this.subDirs.Length)
+                    if (index > this.subDirs.Length)
                         return null;
                     else if (index == 0)
                         return moduleHandler;

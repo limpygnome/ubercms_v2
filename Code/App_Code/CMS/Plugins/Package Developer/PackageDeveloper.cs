@@ -19,6 +19,9 @@
  * 
  *      Change-Log:
  *                      2013-07-01      Created initial class.
+ *                      2013-07-05      Added templates and content variables.
+ *                      2013-07-06      Added plugin actions (install/uninstall/remove/enable/disable).
+ *                                      Minor tweaks due to testing.
  * 
  * *********************************************************************************************************************
  * A plugin to help developers produce plugins and deployable packages.
@@ -87,6 +90,12 @@ namespace CMS
                         return pageTemplatesDump(data);
                     case "upload":
                         return pageTemplatesUpload(data);
+                    case "install":
+                    case "uninstall":
+                    case "enable":
+                    case "disable":
+                    case "remove":
+                        return pagePluginAction(data);
                     default:
                         return false;
                 }
@@ -101,6 +110,7 @@ namespace CMS
                 {
                     plugins.Append(item
                         .Replace("%PLUGINID%", plugin.PluginID.ToString())
+                        .Replace("%STATE%", HttpUtility.HtmlEncode(plugin.State.ToString()))
                         .Replace("%TITLE%", HttpUtility.HtmlEncode(plugin.Title))
                         );
                 }
@@ -118,8 +128,8 @@ namespace CMS
                     data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync plugin '<i>" + HttpUtility.HtmlEncode(plugin.Title) + "</i>' (ID: " + plugin.PluginID + ") at '<i>" + HttpUtility.HtmlEncode(plugin.FullPath) + "</i>' - files.list does not exist!");
                 else
                 {
-                    StringBuilder filesIncluded = new StringBuilder("Files synchronised:");
-                    StringBuilder filesExcluded = new StringBuilder("<br /><br />Files excluded:");
+                    StringBuilder filesIncluded = new StringBuilder("Files synchronised:<br />");
+                    StringBuilder filesExcluded = new StringBuilder("<br /><br />Files excluded:<br />");
                     // Begin syncing files
                     string line;
                     string[] file;
@@ -130,8 +140,8 @@ namespace CMS
                         if (line.Length != 0 && !line.StartsWith("//") && (file = line.Split(',')).Length == 2) // Check against empty-line or comment-line
                         {
                             // Format the file path's
-                            file1 = file[0].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin.FullPath);
-                            file2 = file[1].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin.FullPath);
+                            file1 = file[0].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin.FullPath).Replace("%TEMPLATES%", plugin.PathTemplates).Replace("%CONTENT%", plugin.PathContent);
+                            file2 = file[1].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin.FullPath).Replace("%TEMPLATES%", plugin.PathTemplates).Replace("%CONTENT%", plugin.PathContent);
                             // Check if file1 is multiple files i.e. a directory
                             bool multipleFiles = file1.EndsWith("/*");
                             // Sync the files
@@ -142,7 +152,7 @@ namespace CMS
                                 foreach (string f in Directory.GetFiles(file1, "*", SearchOption.AllDirectories))
                                 {
                                     ft = f.Replace('\\', '/');
-                                    pageSync_file(ft, file1 + ft.Substring(file1.Length), ref filesIncluded, ref filesExcluded);
+                                    pageSync_file(ft, file2 + ft.Substring(file1.Length), ref filesIncluded, ref filesExcluded);
                                 }
                             }
                             else
@@ -150,28 +160,35 @@ namespace CMS
 
                         }
                     }
-                    data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", filesExcluded.ToString() + filesExcluded.ToString());
+                    data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", filesIncluded.ToString() + filesExcluded.ToString());
                 }
                 return true;
             }
             private void pageSync_file(string source, string destination, ref StringBuilder filesIncluded, ref StringBuilder filesExcluded)
             {
-                // Check the file is not a disallowed/system file and exists
-                if (source.EndsWith("/Thumbs.db") || !File.Exists(source))
+                try
                 {
-                    filesExcluded.Append("<i>").Append(HttpUtility.HtmlEncode(source)).Append("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i><br />");
-                    return;
+                    // Check the file is not a disallowed/system file and exists
+                    if (source.EndsWith("/Thumbs.db") || !File.Exists(source))
+                    {
+                        filesExcluded.Append("<i>").Append(HttpUtility.HtmlEncode(source)).Append("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i><br />");
+                        return;
+                    }
+                    // Add any protection against files loading into the assembly
+                    if (destination.EndsWith(".js"))
+                        destination += ".file";
+                    // Check the destination directoy exists
+                    string dir = Path.GetDirectoryName(destination);
+                    if (!Directory.Exists(dir))
+                        Directory.CreateDirectory(dir);
+                    // Copy the file
+                    File.Copy(source, destination);
+                    filesIncluded.Append("<i>").Append(HttpUtility.HtmlEncode(source)).Append("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i><br />");
                 }
-                // Add any protection against files loading into the assembly
-                if (destination.EndsWith(".js"))
-                    destination += ".file";
-                // Check the destination directoy exists
-                string dir = Path.GetDirectoryName(destination);
-                if (!Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
-                // Copy the file
-                File.Copy(source, destination);
-                filesIncluded.Append("<i>").Append(HttpUtility.HtmlEncode(source)).Append("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i><br />");
+                catch (Exception ex)
+                {
+                    filesExcluded.Append("Failed to include <i>").AppendLine(HttpUtility.HtmlEncode(source)).AppendLine("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i> - exception: '").Append(ex.Message).Append("'<br />");
+                }
             }
             public bool pagePackage(Data data)
             {
@@ -181,7 +198,8 @@ namespace CMS
                 data["Title"] = "Package Developer - Package Plugin";
                 // Create a new archive in the base directory, add every file in the base of the target plugin to the archive
                 StringBuilder output = new StringBuilder();
-                string archivePath = Core.BasePath + "/" + Path.GetDirectoryName(plugin.RelativeDirectory) + ".zip";
+                string archivePath = Core.BasePath + "/" + Path.GetFileName(plugin.RelativeDirectory) + ".zip";
+                output.Append("Creating archive at '").Append(HttpUtility.HtmlEncode(archivePath)).Append("'...");
                 using(ZipFile archive = new ZipFile(archivePath))
                 {
                     int pluginPathLength = plugin.FullPath.Length;
@@ -189,7 +207,7 @@ namespace CMS
                     {
                         try
                         {
-                            archive.AddFile(file, file.Substring(pluginPathLength));
+                            archive.AddFile(file, Path.GetDirectoryName(file.Substring(pluginPathLength)));
                             output.Append("Added file '" + HttpUtility.HtmlEncode(file) + "'.<br />");
                         }
                         catch (Exception ex)
@@ -204,7 +222,6 @@ namespace CMS
             }
             public bool pageTemplatesDump(Data data)
             {
-                data["Title"] = "Package Developer - Dump Templates";
                 string dumpDest;
                 Plugin plugin;
                 // Decide on what and where to dump templates
@@ -212,7 +229,7 @@ namespace CMS
                 {
                     case "core":
                         plugin = null;
-                        dumpDest = Core.BasePath + "/Installer/Templates";
+                        dumpDest = Core.BasePath + "/installer/templates";
                         break;
                     default:
                         plugin = Core.Plugins.getPlugin(data.PathInfo[2]);
@@ -221,6 +238,7 @@ namespace CMS
                         dumpDest = plugin.PathTemplates;
                         break;
                 }
+                data["Title"] = "Package Developer - Dump Templates";
                 // Dump the templates
                 StringBuilder messageOutput = new StringBuilder();
                 messageOutput.Append("Dumping templates to '" + HttpUtility.HtmlEncode(dumpDest) + "'...<br />");
@@ -232,14 +250,44 @@ namespace CMS
             }
             public bool pageTemplatesUpload(Data data)
             {
-                data["Title"] = "Package Developer - Upload Templates";
                 Plugin plugin = Core.Plugins.getPlugin(data.PathInfo[2]);
                 if (plugin == null)
                     return false;
+                data["Title"] = "Package Developer - Upload Templates";
                 StringBuilder messageOutput = new StringBuilder();
                 Core.Templates.install(data.Connector, plugin, plugin.PathTemplates, ref messageOutput);
-                messageOutput.Replace("\r", "").Replace("\n", "<br />").Append("Finished uploading templates from '" + plugin.PathTemplates + "'.");
-                data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(messageOutput.ToString()));
+                messageOutput.AppendLine("Finished uploading templates from '" + plugin.PathTemplates + "'.");
+                data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />"));
+                return true;
+            }
+            public bool pagePluginAction(Data data)
+            {
+                Plugin plugin = Core.Plugins.getPlugin(data.PathInfo[2]);
+                if (plugin == null)
+                    return false;
+                StringBuilder output = new StringBuilder();
+                switch (data.PathInfo[1])
+                {
+                    case "install":
+                        Core.Plugins.install(plugin, ref output);
+                        break;
+                    case "uninstall":
+                        Core.Plugins.uninstall(plugin, ref output);
+                        break;
+                    case "enable":
+                        Core.Plugins.enable(plugin, ref output);
+                        break;
+                    case "disable":
+                        Core.Plugins.disable(plugin, ref output);
+                        break;
+                    case "remove":
+                        Core.Plugins.remove(plugin, false, ref output);
+                        break;
+                    default:
+                        return false;
+                }
+                data["Title"] = "Package Developer - Plugin Action - <i>" + data.PathInfo[1] + "</i>";
+                data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(output.ToString()).Replace("\r", "").Replace("\n", "<br />"));
                 return true;
             }
         }

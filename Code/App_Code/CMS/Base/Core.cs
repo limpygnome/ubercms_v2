@@ -24,6 +24,8 @@
  *                      2013-07-01      Added web.config path property.
  *                                      Added PathContent property.
  *                                      Modified core-start to use CmsConfigPath property.
+ *                      2013-07-05      Modified content path property to be lower-case.
+ *                      2013-07-06      Updated temp-path to also be lower-case.
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -86,7 +88,7 @@ namespace CMS
 							basePath = basePath.Remove(basePath.Length - 1, 1);
                         basePath = basePath.Replace("\\", "/");
                         // Setup the temporary directory
-                        tempPath = basePath + "/Temp";
+                        tempPath = basePath + "/temp";
                         if (!Directory.Exists(tempPath))
                         {
                             try
@@ -275,7 +277,7 @@ namespace CMS
             {
                 get
                 {
-                    return basePath + "/Content";
+                    return basePath + "/content";
                 }
             }
             /// <summary>
