@@ -41,7 +41,7 @@ body
 {
 	height: 5em;
 	line-height: 4em;
-	background: url('../Images/Layout/background.png') no-repeat;
+	background: url('../images/layout/background.png') no-repeat;
 	-webkit-background-size: cover;
 	-moz-background-size: cover;
 	-o-background-size: cover;

@@ -4,6 +4,7 @@
 		<th>PluginID</th>
 		<th>Title</th>
 		<th>State</th>
+		<th>Version</th>
 		<th>Options</th>
 	</tr>
 	%PLUGINS%
@@ -11,7 +12,10 @@
 
 <h3>Core Operations</h3>
 <p>
+	<a class="BUTTON" href="/package_developer/sync/">Sync Core Files</a>
 	<a class="BUTTON" href="/package_developer/dump/core">Dump Core Templates</a>
+	<a class="BUTTON" href="/package_developer/core/rebuild_handler_cache">Rebuild Handler Cache</a>
+	<a class="BUTTON" href="/package_developer/core/reload_plugins">Reload Plugins</a>
 </p>
 
 <h3>Syncing - <i>files.list</i></h3>

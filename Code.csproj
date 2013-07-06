@@ -107,7 +107,6 @@
     <Folder Include="Code\App_Code\CMS\Plugins\Articles\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Downloads\" />
     <Folder Include="Code\Content\CSS\" />
-    <Folder Include="Code\Installer\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\Plugin.config" />
@@ -117,5 +116,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Code\App_Code\CMS\Plugins\Basic 404 Page\Plugin.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Code\App_Code\CMS\Plugins\Basic 404 Page\files.list" />
+    <None Include="Code\installer\files.list" />
   </ItemGroup>
 </Project>

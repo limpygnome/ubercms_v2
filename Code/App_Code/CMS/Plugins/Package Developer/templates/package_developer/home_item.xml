@@ -2,6 +2,7 @@
 		<td>%PLUGINID%</td>
 		<td>%TITLE%</td>
 		<td>%STATE%</td>
+		<td>%VERSION%</td>
 		<td>
 			<a class="BUTTON" href="/package_developer/sync/%PLUGINID%">Sync Files</a>
 			<a class="BUTTON" href="/package_developer/package/%PLUGINID%">Package ZIP</a>
@@ -12,6 +13,7 @@
 			<a class="BUTTON" href="/package_developer/remove/%PLUGINID%">Remove</a>
 			<a class="BUTTON" href="/package_developer/enable/%PLUGINID%">Enable</a>
 			<a class="BUTTON" href="/package_developer/disable/%PLUGINID%">Disable</a>
+			<a class="BUTTON" href="/package_developer/unload/%PLUGINID%">Unload</a>
 		</td>
 	</tr>
 ]]></html></template>

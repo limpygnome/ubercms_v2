@@ -70,8 +70,10 @@ namespace CMS
             }
             public override bool handler_handlePageNotFound(Data data)
             {
+                data["Title"] = "404 - Page Not Found";
                 data["Content"] = Core.Templates.get(data.Connector, "basic404page/page_not_found");
                 data["404_PATH"] = data.PathInfo.FullPath;
+                data.Response.StatusCode = 404;
                 return true;
             }
         }

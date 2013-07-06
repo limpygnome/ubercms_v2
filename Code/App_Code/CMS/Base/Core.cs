@@ -26,6 +26,7 @@
  *                                      Modified core-start to use CmsConfigPath property.
  *                      2013-07-05      Modified content path property to be lower-case.
  *                      2013-07-06      Updated temp-path to also be lower-case.
+ *                                      Added install paths properties.
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -278,6 +279,27 @@ namespace CMS
                 get
                 {
                     return basePath + "/content";
+                }
+            }
+            public static string PathInstaller
+            {
+                get
+                {
+                    return basePath + "/installer";
+                }
+            }
+            public static string PathInstaller_Content
+            {
+                get
+                {
+                    return basePath + "/installer/content";
+                }
+            }
+            public static string PathInstaller_Templates
+            {
+                get
+                {
+                    return basePath + "/installer/templates";
                 }
             }
             /// <summary>

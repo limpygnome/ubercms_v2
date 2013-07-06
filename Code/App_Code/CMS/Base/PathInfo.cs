@@ -22,6 +22,7 @@
  *                      2013-06-29      Finished initial class.
  *                      2013-07-01      Modified this property to something more sensible (module handler at index zero).
  *                      2013-07-05      Fixed this property bug.
+ *                      2013-07-06      Fixed tailing slash bug where it would create an empty token.
  * 
  * *********************************************************************************************************************
  * Used to parse url-rewriting/request data. Plugins are invoked based on either the first directory in the URL, the
@@ -69,9 +70,10 @@ namespace CMS
                     string[] exp = pathData.Split('/');
                     if (exp.Length > 0)
                     {
+                        int totaltokens = exp[exp.Length - 1].Length == 0 ? exp.Length - 2 : exp.Length - 1; // Tailing slash empty token protection
                         moduleHandler = exp[0];
-                        subDirs = new string[exp.Length - 1];
-                        for (int i = 1; i < exp.Length; i++)
+                        subDirs = new string[totaltokens];
+                        for (int i = 1; i <= totaltokens; i++)
                             subDirs[i - 1] = exp[i];
                         // Check against empty paths
                         if (moduleHandler.Length == 0)

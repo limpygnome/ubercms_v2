@@ -22,6 +22,9 @@
  *                      2013-07-05      Added templates and content variables.
  *                      2013-07-06      Added plugin actions (install/uninstall/remove/enable/disable).
  *                                      Minor tweaks due to testing.
+ *                                      Added more core functions and core syncing.
+ *                                      Syncing now overwrites files.
+ *                                      Added plugin versioning.
  * 
  * *********************************************************************************************************************
  * A plugin to help developers produce plugins and deployable packages.
@@ -95,7 +98,10 @@ namespace CMS
                     case "enable":
                     case "disable":
                     case "remove":
+                    case "unload":
                         return pagePluginAction(data);
+                    case "core":
+                        return pageCore(data);
                     default:
                         return false;
                 }
@@ -111,6 +117,7 @@ namespace CMS
                     plugins.Append(item
                         .Replace("%PLUGINID%", plugin.PluginID.ToString())
                         .Replace("%STATE%", HttpUtility.HtmlEncode(plugin.State.ToString()))
+                        .Replace("%VERSION%", plugin.VersionMajor + "." + plugin.VersionMinor + "." + plugin.VersionBuild)
                         .Replace("%TITLE%", HttpUtility.HtmlEncode(plugin.Title))
                         );
                 }
@@ -119,13 +126,28 @@ namespace CMS
             }
             public bool pageSync(Data data)
             {
-                Plugin plugin = Core.Plugins.getPlugin(data.PathInfo[2]);
-                if (plugin == null)
-                    return false;
+                Plugin plugin;
+                string filesList;
+                if (data.PathInfo[2] == null)
+                {
+                    filesList = Core.PathInstaller + "/files.list";
+                    plugin = null;
+                }
+                else
+                {
+                    if ((plugin = Core.Plugins.getPlugin(data.PathInfo[2])) == null)
+                        return false;
+                    filesList = plugin.FullPath + "/files.list";
+                }
                 data["Title"] = "Package Developer - Sync Global Files";
                 // Check files.list exists
-                if (!File.Exists(plugin.FullPath + "/files.list"))
-                    data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync plugin '<i>" + HttpUtility.HtmlEncode(plugin.Title) + "</i>' (ID: " + plugin.PluginID + ") at '<i>" + HttpUtility.HtmlEncode(plugin.FullPath) + "</i>' - files.list does not exist!");
+                if (!File.Exists(filesList))
+                {
+                    if(plugin != null)
+                        data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync plugin '<i>" + HttpUtility.HtmlEncode(plugin.Title) + "</i>' (ID: " + plugin.PluginID + ") at '<i>" + HttpUtility.HtmlEncode(plugin.FullPath) + "</i>' - files.list does not exist!");
+                    else
+                        data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync core files - files.list does not exist in /installer!");
+                }
                 else
                 {
                     StringBuilder filesIncluded = new StringBuilder("Files synchronised:<br />");
@@ -134,18 +156,18 @@ namespace CMS
                     string line;
                     string[] file;
                     string file1, file2;
-                    foreach (string rawline in File.ReadAllText(plugin.FullPath + "/files.list").Replace("\r", "").Split('\n'))
+                    foreach (string rawline in File.ReadAllText(filesList).Replace("\r", "").Split('\n'))
                     {
                         line = rawline.Trim();
                         if (line.Length != 0 && !line.StartsWith("//") && (file = line.Split(',')).Length == 2) // Check against empty-line or comment-line
                         {
                             // Format the file path's
-                            file1 = file[0].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin.FullPath).Replace("%TEMPLATES%", plugin.PathTemplates).Replace("%CONTENT%", plugin.PathContent);
-                            file2 = file[1].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin.FullPath).Replace("%TEMPLATES%", plugin.PathTemplates).Replace("%CONTENT%", plugin.PathContent);
+                            file1 = file[0].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin == null ? Core.PathInstaller : plugin.FullPath).Replace("%TEMPLATES%", plugin == null ? Core.PathInstaller_Templates : plugin.PathTemplates).Replace("%CONTENT%", plugin == null ? Core.PathInstaller_Content : plugin.PathContent);
+                            file2 = file[1].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin == null ? Core.PathInstaller : plugin.FullPath).Replace("%TEMPLATES%", plugin == null ? Core.PathInstaller_Templates : plugin.PathTemplates).Replace("%CONTENT%", plugin == null ? Core.PathInstaller_Content : plugin.PathContent);
                             // Check if file1 is multiple files i.e. a directory
                             bool multipleFiles = file1.EndsWith("/*");
                             // Sync the files
-                            if(multipleFiles)
+                            if (multipleFiles)
                             {
                                 file1 = file1.Remove(file1.Length - 2, 2); // Remove /*
                                 string ft;
@@ -182,7 +204,7 @@ namespace CMS
                     if (!Directory.Exists(dir))
                         Directory.CreateDirectory(dir);
                     // Copy the file
-                    File.Copy(source, destination);
+                    File.Copy(source, destination, true);
                     filesIncluded.Append("<i>").Append(HttpUtility.HtmlEncode(source)).Append("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i><br />");
                 }
                 catch (Exception ex)
@@ -198,7 +220,7 @@ namespace CMS
                 data["Title"] = "Package Developer - Package Plugin";
                 // Create a new archive in the base directory, add every file in the base of the target plugin to the archive
                 StringBuilder output = new StringBuilder();
-                string archivePath = Core.BasePath + "/" + Path.GetFileName(plugin.RelativeDirectory) + ".zip";
+                string archivePath = Core.BasePath + "/" + Path.GetFileName(plugin.RelativeDirectory) + "_" + plugin.VersionMajor + "." + plugin.VersionMinor + "." + plugin.VersionBuild + ".zip";
                 output.Append("Creating archive at '").Append(HttpUtility.HtmlEncode(archivePath)).Append("'...");
                 using(ZipFile archive = new ZipFile(archivePath))
                 {
@@ -283,11 +305,36 @@ namespace CMS
                     case "remove":
                         Core.Plugins.remove(plugin, false, ref output);
                         break;
+                    case "unload":
+                        Core.Plugins.unload(plugin);
+                        output.Append("Unloaded plugin '").Append(plugin.Title).Append("' (ID: ").Append(plugin.PluginID).AppendLine(") from virtual runtime!");
+                        break;
                     default:
                         return false;
                 }
                 data["Title"] = "Package Developer - Plugin Action - <i>" + data.PathInfo[1] + "</i>";
                 data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(output.ToString()).Replace("\r", "").Replace("\n", "<br />"));
+                return true;
+            }
+            public bool pageCore(Data data)
+            {
+                StringBuilder messageOutput = new StringBuilder();
+                switch (data.PathInfo[2])
+                {
+                    case "rebuild_handler_cache":
+                        Core.Plugins.rebuildHandlerCaches();
+                        messageOutput.AppendLine("Rebuilt handler cache!");
+                        data["Title"] = "Package Developer - Core - Rebuild Handler Cache";
+                        break;
+                    case "reload_plugins":
+                        Core.Plugins.reload();
+                        messageOutput.AppendLine("Reloaded plugin runtime!");
+                        data["Title"] = "Package Developer - Core - Reload Plugins";
+                        break;
+                    default:
+                        return false;
+                }
+                data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />"));
                 return true;
             }
         }

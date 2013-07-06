@@ -26,6 +26,7 @@
  *                                      Added properties for some default paths.
  *                                      Renamed Plugin property to avoid conflict with System.IO.
  *                      2013-07-05      Modified default directory paths to be lower-case.
+ *                      2013-06-07      Added plugin versioning.
  * 
  * *********************************************************************************************************************
  * Base class for all plugins. This contains information about the plugin and methods to be implemented as handlers.
@@ -229,6 +230,36 @@ namespace CMS
 					return pluginid;
 				}
 			}
+            /// <summary>
+            /// The major version of this plugin.
+            /// </summary>
+            public virtual int VersionMajor
+            {
+                get
+                {
+                    return 1;
+                }
+            }
+            /// <summary>
+            /// The minor version of this plugin.
+            /// </summary>
+            public virtual int VersionMinor
+            {
+                get
+                {
+                    return 0;
+                }
+            }
+            /// <summary>
+            /// The build version of this plugin.
+            /// </summary>
+            public virtual int VersionBuild
+            {
+                get
+                {
+                    return 0;
+                }
+            }
             /// <summary>
             /// The plugin's title.
             /// </summary>

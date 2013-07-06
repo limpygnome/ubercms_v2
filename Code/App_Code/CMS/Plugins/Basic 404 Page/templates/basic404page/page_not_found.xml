@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic404page/page_not_found]]></path><description><![CDATA[The page displayed when a page cannot be found.]]></description><html><![CDATA[<p class="tac">
+	<img src="content/images/basic404page/404.png" alt="Page not found" />
+</p>
+<p class="tac">
+	The requested page or resource could not be found!
+</p>]]></html></template>
