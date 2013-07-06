@@ -25,6 +25,8 @@
  *                                      Improved general safety of install/uninstall/enable/disable and cycling.
  *                      2013-07-01      Invoking uninstall will now invoke disable if the plugin is enabled.
  *                                      Added getPlugin methods.
+ *                                      Fixed incorrect enum value being set in install method (enabled instead of
+ *                                      disabled).
  * 
  * *********************************************************************************************************************
  * Used to store and interact with plugins.
@@ -313,7 +315,7 @@ namespace CMS
                             return false;
                         }
                         // Update the database
-                        plugin.State = Plugin.PluginState.Enabled;
+                        plugin.State = Plugin.PluginState.Disabled;
                         plugin.save(Core.Connector);
                         // Invoke post-action handlers
                         foreach (Plugin p in Fetch)

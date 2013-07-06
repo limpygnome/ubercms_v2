@@ -20,6 +20,9 @@
  *      Change-Log:
  *                      2013-06-27      Created initial class.
  *                      2013-06-29      Finished initial class.
+ *                      2013-06-06      Added ability to just add keys, without update.
+ *                                      Added ability to remove settings by plugin, pluginid and path.
+ *                      2013-06-07      Fixed critical bug in save method, where new nodes could not be saved.
  * 
  * *********************************************************************************************************************
  * Handles settings which can be stored on disk or in a database. Thread-safe.
@@ -33,6 +36,7 @@ using System.Security;
 using System.Text;
 using System.Xml;
 using UberLib.Connector;
+using CMS.Plugins;
 
 namespace CMS
 {
@@ -60,7 +64,7 @@ namespace CMS
 				lock(this)
 				{
 					StringBuilder sqlUpdated = new StringBuilder();
-					StringBuilder sqlInserted = new StringBuilder("INSERT INTO cms_settings (path, pluginid, value, description) VALUES");
+					StringBuilder sqlInserted = new StringBuilder("INSERT INTO cms_settings (path, pluginid, description, value) VALUES");
 					int sqlInsertedDefaultLength = sqlInserted.Length;
 					// Iterate keys
                     foreach (KeyValuePair<string, SettingsNode> k in config)
@@ -77,7 +81,7 @@ namespace CMS
                                 sqlUpdated.Append("UPDATE cms_settings SET value='" + Utils.Escape(k.Value.Value) + "' WHERE path='" + Utils.Escape(k.Key) + "'; ");
                                 break;
                             case SettingsNode.SettingsNodeState.Added:
-                                sqlInserted.Append("('', '', " + (k.Value.Description == null ? "NULL" : "'" + k.Value.Description + "'") + ", " + (k.Value.Value == null ? "NULL" : "'" + k.Value.Value + "'") + ")");
+                                sqlInserted.Append("('" + Utils.Escape(k.Key) + "', '" + Utils.Escape(k.Value.PluginID.ToString()) + "', " + (k.Value.Description == null ? "NULL" : "'" + k.Value.Description + "'") + ", " + (k.Value.Value == null ? "NULL" : "'" + k.Value.Value + "'") + "),");
                                 break;
                         }
                     }
@@ -86,7 +90,7 @@ namespace CMS
 						conn.Query_Execute(sqlUpdated.ToString());
 					if(sqlInserted.Length > sqlInsertedDefaultLength)
 					{
-						sqlInserted.Remove(sqlInserted.Length - 1, 1); // Remove tailing comma
+						sqlInserted.Remove(sqlInserted.Length - 1, 1).Append(';'); // Remove tailing comma, append seperator
 						conn.Query_Execute(sqlInserted.ToString());
 					}
 				}
@@ -202,6 +206,66 @@ namespace CMS
 					    config.Add(path, new SettingsNode(value, description, pluginid, SettingsNode.SettingsNodeState.Added));
                 }
 			}
+            /// <summary>
+            /// Adds a new key to the collection. If the key already exists, nothing is changed.
+            /// </summary>
+            /// <param name="pluginid">The identifier of the plugin which owns the setting.</param>
+            /// <param name="path">The path of the node.</param>
+            /// <param name="description">A decription of the node; can be null.</param>
+            /// <param name="value">The value of a node.</param>
+            public void add(int pluginid, string path, string description, string value)
+            {
+                lock (this)
+                {
+                    if (!config.ContainsKey(path))
+                        config.Add(path, new SettingsNode(value, description, pluginid, SettingsNode.SettingsNodeState.Added));
+                }
+            }
+            /// <summary>
+            /// Removes all of the settings owned by a plugin.
+            /// </summary>
+            /// <param name="plugin">The owner of the settings to be removed.</param>
+            public void remove(Plugin plugin)
+            {
+                remove(plugin.PluginID);
+            }
+            /// <summary>
+            /// Removes all of the settings owned by a plugin.
+            /// </summary>
+            /// <param name="pluginid">The identifier of the plugin which owns the settings to be removed.</param>
+            public void remove(int pluginid)
+            {
+                lock (this)
+                {
+                    // Delete settings from the database
+                    Core.Connector.Query_Execute("DELETE FROM cms_settings WHERE pluginid='" + Utils.Escape(pluginid.ToString()) + "';");
+                    // Find keys to remove
+                    List<string> temp = new List<string>();
+                    foreach (KeyValuePair<string, SettingsNode> kv in config)
+                    {
+                        if (kv.Value.PluginID == pluginid)
+                            temp.Add(kv.Key);
+                    }
+                    // Remove the keys
+                    foreach (string s in temp)
+                        config.Remove(s);
+                }
+            }
+            /// <summary>
+            /// Removes a single configuration key.
+            /// </summary>
+            /// <param name="path">The path of the node to be removed.</param>
+            public void remove(string path)
+            {
+                lock (this)
+                {
+                    if (config.ContainsKey(path))
+                    {
+                        Core.Connector.Query_Execute("DELETE FROM cms_settings WHERE path='" + Utils.Escape(path) + "'");
+                        config.Remove(path);
+                    }
+                }
+            }
 			// Methods - Accessors *************************************************************************************
             /// <summary>
             /// Indicates if a node exists at the specified path.

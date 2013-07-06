@@ -2,5 +2,23 @@
 -----> If an exception occurs with the DB, shutdown the entire email queue service to be safe.
 >	test e-mail queue service.
 > plugin.refresh -> either conn or resultrow
-> scan and update core.settings and core.settingsdisk
 > change plugins.cs findhandlers to be view
+
+> Core CMS needs intensive testing properly.
+-> BaseUtils
+-> Core
+-> Data
+-> EmailQueue (critical)
+-> PathInfo
+-> Plugins
+-> Settings
+-> SettingsNode
+-> Templates
+-> Plugin
+-> PluginHandler
+
+Official Plugins
+----------------------------------------------------------------------------------------------------------------------->
+Package Developer
+--------------------------------------------------->
+> Add ability to install plugin from path.

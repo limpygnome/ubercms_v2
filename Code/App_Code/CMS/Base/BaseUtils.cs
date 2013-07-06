@@ -22,6 +22,8 @@
  *                      2013-06-29      Updated header and namespace.
  *                      2013-07-01      Added many functions from the old CMS plugins library.
  *                                      Added URL reservation methods.
+ *                                      Fixed critical URL reservation uninstall bug.
+ *                                      Added generateRandomString method.
  * 
  * *********************************************************************************************************************
  * A utility class of commonly used code.
@@ -417,7 +419,7 @@ namespace CMS
             /// <returns>True if successful, false if the operation fails.</returns>
             public static bool urlRewritingUninstall(Plugin plugin, ref StringBuilder messageOutput)
             {
-                return urlRewritingUninstall(plugin, "", ref messageOutput);
+                return urlRewritingUninstall(plugin, null, ref messageOutput);
             }
             /// <summary>
             /// Uninstalls all of the URL rewriting reservations associated with the specified plugin.
@@ -435,7 +437,10 @@ namespace CMS
                 }
                 try
                 {
-                    Core.Connector.Query_Execute("DELETE FROM cms_urlrewriting WHERE full_path LIKE '" + Utils.Escape(path) + "%'");
+                    if (path == null)
+                        Core.Connector.Query_Execute("DELETE FROM cms_urlrewriting WHERE pluginid='" + Utils.Escape(plugin.PluginID.ToString()) + "';");
+                    else
+                        Core.Connector.Query_Execute("DELETE FROM cms_urlrewriting WHERE full_path LIKE '" + Utils.Escape(path) + "%';");
                 }
                 catch (Exception ex)
                 {
@@ -443,6 +448,20 @@ namespace CMS
                     return false;
                 }
                 return true;
+            }
+            /// <summary>
+            /// Generates a string of random characters.
+            /// </summary>
+            /// <param name="length">The length of the string to generate.</param>
+            /// <returns>The random string generated.</returns>
+            public static string generateRandomString(int length)
+            {
+                const string chars = "abcdefghijklmnopqrstuvwxyz01234567890";
+                Random rand = new Random((int)DateTime.Now.ToBinary());
+                StringBuilder buffer = new StringBuilder();
+                for (int i = 0; i < length; i++)
+                    buffer.Append(chars[rand.Next(chars.Length - 1)]);
+                return buffer.ToString();
             }
         }
     }

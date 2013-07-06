@@ -11,6 +11,8 @@
     <RootNamespace>Code</RootNamespace>
     <AssemblyName>Code</AssemblyName>
     <UseIISExpress>false</UseIISExpress>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -35,6 +37,7 @@
       <HintPath>Code\Bin\Ionic.Zip.Reduced.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Web.Services" />
@@ -74,6 +77,8 @@
   <ItemGroup>
     <Compile Include="Code\App_Code\CMS\Base\SettingsNode.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic 404 Page\Basic404Page.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BasicSiteAuth.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Captcha\Captcha.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Package Developer\PackageDeveloper.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\PluginHandlerInfo.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Example\Example.cs" />
@@ -119,6 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Code\App_Code\CMS\Plugins\Basic 404 Page\files.list" />
+    <Content Include="Code\App_Code\CMS\Plugins\Captcha\Plugin.config" />
     <None Include="Code\installer\files.list" />
   </ItemGroup>
 </Project>
