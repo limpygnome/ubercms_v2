@@ -23,6 +23,7 @@
  *                      2013-06-06      Added ability to just add keys, without update.
  *                                      Added ability to remove settings by plugin, pluginid and path.
  *                      2013-06-07      Fixed critical bug in save method, where new nodes could not be saved.
+ *                                      Fixed critical bug in load from database method.
  * 
  * *********************************************************************************************************************
  * Handles settings which can be stored on disk or in a database. Thread-safe.
@@ -169,7 +170,7 @@ namespace CMS
 					Settings settings = new Settings();
                     Result result = conn.Query_Read("SELECT * FROM cms_view_settings_load");
 					foreach(ResultRow row in result)
-						settings.config.Add(row["path"], new SettingsNode(row["path"], row["description"], row["pluginid"].Length == 0 ? 0 : int.Parse(row["pluginid"])));
+						settings.config.Add(row["path"], new SettingsNode(row["value"], row["description"], row["pluginid"].Length == 0 ? 0 : int.Parse(row["pluginid"])));
                     return settings;
 				}
 				catch(Exception ex)

@@ -20,6 +20,7 @@
  *      Change-Log:
  *                      2013-06-25      Created initial class.
  *                      2013-06-29      Finished initial class.
+ *                      2013-07-07      Added userid field/property for universal authentication systems.
  * 
  * *********************************************************************************************************************
  * Used for passing data between the controller and plugins.
@@ -47,6 +48,7 @@ namespace CMS
 			private Stopwatch						stopwatch;			// Used to measure the current request's process speed.
 			private Dictionary<string, string>		variables;			// Used to store request variables.
 			private Connector						connector;			// The database connector.
+            private int                             userid;             // The user identifier for the user of the current request; -1 = anonymous/unauthenticated.
 			// Methods - Constructors **********************************************************************************
 			public Data(HttpRequest request, HttpResponse response, string pathData)
 			{
@@ -109,6 +111,23 @@ namespace CMS
                     variables[key] = value;
 				}
 			}
+            /// <summary>
+            /// The user identifier for the current user of the current request. This should be set by a request-start
+            /// handler (thus this should not be polled on request-start). This identifier is universal of an
+            /// authentication plugin; therefore any plugin can use this as a point for an identifier for the current
+            /// user.
+            /// </summary>
+            public int UserID
+            {
+                get
+                {
+                    return userid;
+                }
+                set
+                {
+                    userid = value;
+                }
+            }
             /// <summary>
             /// The collection of variables for the current request.
             /// </summary>

@@ -14,11 +14,26 @@
 -> Settings
 -> SettingsNode
 -> Templates
--> Plugin
--> PluginHandler
+-> 
+
+> Consider replacing Regex usage in Templates by scanning through the string. This would eradicate the need to only
+replace elements x times. We could scan, replace and start at the position of the replacement (if a replacement occurs).
+Thus only n characters would be scanned, as opposed to e.g. 3n as well as the patterns being compiled. This should, in
+theory, be far more efficient and faster.
+
+> Go over install/uninstall/disable/enable and check for booling returns and return appropriate error messages.
+--> Currently not added for speed creation of plugins.
 
 Official Plugins
 ----------------------------------------------------------------------------------------------------------------------->
 Package Developer
 --------------------------------------------------->
 > Add ability to install plugin from path.
+
+Basic Site Authentication
+--------------------------------------------------->
+> Add SSO (single session sign-on) support using a token system, with IP ban protection against brute-force attempts.
+> add protection against removing unverified/verified/banned groups!
+> add ability to change username - possibly a separate mod
+
+

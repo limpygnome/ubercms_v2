@@ -72,12 +72,18 @@
     </VisualStudio>
   </ProjectExtensions>
   <ItemGroup>
+    <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\sql\install.sql" />
+    <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\sql\uninstall.sql" />
     <Content Include="Code\App_Code\CMS\Plugins\Example\Plugin.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Code\App_Code\CMS\Base\SettingsNode.cs" />
+    <Compile Include="Code\App_Code\CMS\Base\SQLCompiler.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic 404 Page\Basic404Page.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BasicSiteAuth.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\User.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\UserGroup.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\UserGroups.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Captcha\Captcha.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Package Developer\PackageDeveloper.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\PluginHandlerInfo.cs" />

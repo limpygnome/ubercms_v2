@@ -25,6 +25,7 @@
  *                                      Added uninstall by plugin method.
  *                                      Added dump for plugin method.
  *                      2013-07-06      Fixed dump bug.
+ *                                      Fixed major multi-level rendering bug with replacementOccurred variable.
  * 
  * *********************************************************************************************************************
  * Used to load, and possibly cache, HTML templates from the database; this class also transforms the custom markup
@@ -76,6 +77,7 @@ namespace CMS
 			}
 			private void render(ref StringBuilder text, int currTree, int treeMax, ref Data data)
 			{
+                bool replacementOccurred = false; // Indicates if any changes have occurred to the text variable.
 				// Find if-statements
 				bool expressionValue;
 				bool expressionValueNegated;
@@ -134,34 +136,53 @@ namespace CMS
 					elseMC = Regex.Matches(m.Groups[2].Value, @"(.*?)<!--ELSE-->(.*$?)", RegexOptions.Singleline);
 					if (elseMC.Count == 1)
 					{
-						if (expressionValue)
-							text.Replace(m.Value, elseMC[0].Groups[1].Value);
-						else
-							text.Replace(m.Value, elseMC[0].Groups[2].Value);
+                        if (expressionValue)
+                        {
+                            text.Replace(m.Value, elseMC[0].Groups[1].Value);
+                            replacementOccurred = true;
+                        }
+                        else
+                        {
+                            text.Replace(m.Value, elseMC[0].Groups[2].Value);
+                            replacementOccurred = true;
+                        }
 					}
 					else
 					{
-						if (expressionValue)
-							text.Replace(m.Value, m.Groups[2].Value);
-						else
-							text.Replace(m.Value, string.Empty);
+                        if (expressionValue)
+                        {
+                            text.Replace(m.Value, m.Groups[2].Value);
+                            replacementOccurred = true;
+                        }
+                        else
+                            text.Replace(m.Value, string.Empty);
 					}
 				}
                 // Find fucntion callbacks
                 foreach (Match m in Regex.Matches(text.ToString(), @"<!--([a-zA-Z0-9_]*)\(([a-zA-Z0-9_,]*)\)-->"))
                 {
                     if (functions.ContainsKey(m.Groups[1].Value))
+                    {
                         text.Replace(m.Value, functions[m.Groups[1].Value](data, m.Groups[2].Value.Split(','))); // Group 1 = function name, group 2 = params i.e. a,b,c,..,n
+                        replacementOccurred = true;
+                    }
                     else
                         text.Replace(m.Value, "Function '" + m.Groups[1].Value + "' undefined!");
-                    text.Replace(m.Value, data[m.Groups[1].Value]);
                 }
 				// Find replacement tags (for replacing sections of text with request variables)
                 foreach (Match m in Regex.Matches(text.ToString(), @"<!--([a-zA-Z0-9_]*)-->"))
-                    text.Replace(m.Value, data.isKeySet(m.Groups[1].Value) ? data[m.Groups[1].Value] : "Element '" + m.Groups[1].Value + "' undefined!");
+                {
+                    if (data.isKeySet(m.Groups[1].Value))
+                    {
+                        text.Replace(m.Value, data[m.Groups[1].Value]);
+                        replacementOccurred = true;
+                    }
+                    else
+                        text.Replace(m.Value, "Element '" + m.Groups[1].Value + "' undefined!");
+                }
 				// Check if to iterate again - check we haven't surpassed max tree-level and we found a match i.e. data changed
 				currTree++;
-				if (matches.Count > 0 && currTree < treeMax)
+				if (replacementOccurred && currTree < treeMax)
 					render(ref text, currTree, treeMax, ref data);
 			}
             /// <summary>

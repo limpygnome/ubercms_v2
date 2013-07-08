@@ -22,6 +22,7 @@
  *                      2013-06-29      Updated name to Example.
  *                      2013-07-05      Updated HTML output to use paragraphs and set titles.
  *                      2013-07-06      Added output for install/uninstall/enable/disable.
+ *                      2013-07-07      Error handler now outputs a stack-trace, useful for development.
  * 
  * *********************************************************************************************************************
  * Example/debugging plugin.
@@ -62,7 +63,7 @@ namespace CMS
             public override bool handler_handlePageError(Base.Data data, Exception ex)
             {
                 data["Title"] = "Error Serving Request";
-                data["Content"] = "<p>Error '" + ex.Message + "' caught by example plugin!</p>";
+                data["Content"] = "<p>Error '" + ex.Message + "' caught by example plugin!</p><h3>Stack-trace:</h3><p>" + ex.StackTrace + "</p>";
                 return true;
             }
             public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
