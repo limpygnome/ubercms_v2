@@ -20,6 +20,7 @@
  *      Change-Log:
  *                      2013-06-25      Created initial class.
  *                      2013-06-29      Finished initial class.
+ *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  * 
  * *********************************************************************************************************************
  * An email-queue service for mass-sending e-mails in a seperate thread. This system also saves the buffer of e-mails,
@@ -36,155 +37,152 @@ using System.Text;
 using System.Threading;
 using UberLib.Connector;
 
-namespace CMS
+namespace CMS.Base
 {
-	namespace Base
+	public class EmailQueue
 	{
-		public class EmailQueue
+		// Fields **************************************************************************************************
+		private Thread cyclerThread;
+		// Fields - Settings ***************************************************************************************
+		bool	enabled;			// Indicates if settings have been specified for the e-mail queue service to run.
+		string 	mailHost,			// The mail-server host.
+				mailUsername,		// The mail-server username for authentication.
+				mailPassword,		// The mail-server password for authentication.
+				mailAddress;		// The e-mail address used in e-mails sent by the mail-server.
+		int		mailPort,			// The mail-server port.
+				errors;				// The number of errors occurred whilst sending e-mails.
+		// Methods - Constructors **********************************************************************************
+		private EmailQueue()
 		{
-			// Fields **************************************************************************************************
-			private Thread cyclerThread;
-			// Fields - Settings ***************************************************************************************
-			bool	enabled;			// Indicates if settings have been specified for the e-mail queue service to run.
-			string 	mailHost,			// The mail-server host.
-					mailUsername,		// The mail-server username for authentication.
-					mailPassword,		// The mail-server password for authentication.
-					mailAddress;		// The e-mail address used in e-mails sent by the mail-server.
-			int		mailPort,			// The mail-server port.
-					errors;				// The number of errors occurred whilst sending e-mails.
-			// Methods - Constructors **********************************************************************************
-			private EmailQueue()
+			cyclerThread = null;
+			errors = 0;
+			enabled = false;
+		}
+		// Methods *************************************************************************************************
+		/// <summary>
+		/// Adds a new e-mail message to the queue.
+		/// </summary>
+		/// <param name="conn">Database connector.</param>
+		/// <param name="destinationEmail">Destination email.</param>
+		/// <param name="subject">Subject.</param>
+		/// <param name="body">Body.</param>
+		/// <param name="html">Indicates if the body is HTML (true) or not (false).</param>
+		public void addMessage(Connector conn, string destinationEmail, string subject, string body, bool html)
+		{
+			conn.queryExecute("INSERT INTO cms_email_queue (email, subject, body, html) VALUES('" + SQLUtils.escape(destinationEmail) + "', '" + SQLUtils.escape(subject) + "', '" + SQLUtils.escape(body) + "', '" + (html ? "1" : "0") + "');");
+		}
+		// Methods - Threading and Cycling *************************************************************************
+		private void cycler()
+		{
+			// Setup the client for deploying e-mails
+			SmtpClient client = new SmtpClient();
+			client.Host = mailHost;
+			client.Port = mailPort;
+			client.Credentials = new NetworkCredential(mailUsername, mailPassword);
+			// Prepare the query for polling the database
+			int messageThroughPut = Core.SettingsDisk["settings/mail/message_throughput"].Value.Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_throughput"].Value) : 5;
+			int messagePollDelay = Core.SettingsDisk["settings/mail/message_poll_delay"].Value.Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_poll_delay"].Value) : 100;
+            if (messagePollDelay < 0 || messageThroughPut < 1)
+            {
+                stop();
+                // Protection in-case aborting the thread failed
+                cyclerThread = null;
+                return;
+            }
+			string queryPollMessages = "SELECT email, subject, body, html FROM cms_email_queue ORDER BY emailid ASC LIMIT " + messageThroughPut;
+			// Poll for messages
+			Result msgs;
+			MailMessage compiledMessage;
+			StringBuilder queryUpdate;
+			while(true)
 			{
-				cyclerThread = null;
-				errors = 0;
-				enabled = false;
-			}
-			// Methods *************************************************************************************************
-			/// <summary>
-			/// Adds a new e-mail message to the queue.
-			/// </summary>
-			/// <param name="conn">Database connector.</param>
-			/// <param name="destinationEmail">Destination email.</param>
-			/// <param name="subject">Subject.</param>
-			/// <param name="body">Body.</param>
-			/// <param name="html">Indicates if the body is HTML (true) or not (false).</param>
-			public void addMessage(Connector conn, string destinationEmail, string subject, string body, bool html)
-			{
-				conn.Query_Execute("INSERT INTO cms_email_queue (email, subject, body, html) VALUES('" + Utils.Escape(destinationEmail) + "', '" + Utils.Escape(subject) + "', '" + Utils.Escape(body) + "', '" + (html ? "1" : "0") + "');");
-			}
-			// Methods - Threading and Cycling *************************************************************************
-			private void cycler()
-			{
-				// Setup the client for deploying e-mails
-				SmtpClient client = new SmtpClient();
-				client.Host = mailHost;
-				client.Port = mailPort;
-				client.Credentials = new NetworkCredential(mailUsername, mailPassword);
-				// Prepare the query for polling the database
-				int messageThroughPut = Core.SettingsDisk["settings/mail/message_throughput"].Value.Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_throughput"].Value) : 5;
-				int messagePollDelay = Core.SettingsDisk["settings/mail/message_poll_delay"].Value.Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_poll_delay"].Value) : 100;
-                if (messagePollDelay < 0 || messageThroughPut < 1)
-                {
-                    stop();
-                    // Protection in-case aborting the thread failed
-                    cyclerThread = null;
-                    return;
-                }
-				string queryPollMessages = "SELECT email, subject, body, html FROM cms_email_queue ORDER BY emailid ASC LIMIT " + messageThroughPut;
-				// Poll for messages
-				Result msgs;
-				MailMessage compiledMessage;
-				StringBuilder queryUpdate;
-				while(true)
+				try
 				{
-					try
+					// Fetch the next message
+					msgs = Core.Connector.queryRead(queryPollMessages);
+					// Send each message
+					queryUpdate = new StringBuilder();
+					foreach(ResultRow msg in msgs)
 					{
-						// Fetch the next message
-						msgs = Core.Connector.Query_Read(queryPollMessages);
-						// Send each message
-						queryUpdate = new StringBuilder();
-						foreach(ResultRow msg in msgs)
+						try
 						{
-							try
-							{
-								compiledMessage = new MailMessage();
-								compiledMessage.To.Add(msg["email"]);
-								compiledMessage.From = new MailAddress(mailAddress);
-								compiledMessage.Subject = msg["subject"];
-								compiledMessage.Headers.Add("CMS", "Uber CMS");
-								compiledMessage.Body = msg["body"];
-								compiledMessage.IsBodyHtml = msg["html"].Equals("1");
-								client.Send(compiledMessage);
-								// Append query to update the database
-								queryUpdate.Append("DELETE FROM cms_email_queue WHERE emailid='" + Utils.Escape(msg["emailid"]) + "';");
-							}
-							catch(SmtpException)
-							{
-								if(errors < int.MaxValue - 1)
-									errors++;
-								else
-									errors = 1;
-							}
+							compiledMessage = new MailMessage();
+							compiledMessage.To.Add(msg["email"]);
+							compiledMessage.From = new MailAddress(mailAddress);
+							compiledMessage.Subject = msg["subject"];
+							compiledMessage.Headers.Add("CMS", "Uber CMS");
+							compiledMessage.Body = msg["body"];
+							compiledMessage.IsBodyHtml = msg["html"].Equals("1");
+							client.Send(compiledMessage);
+							// Append query to update the database
+							queryUpdate.Append("DELETE FROM cms_email_queue WHERE emailid='" + SQLUtils.escape(msg["emailid"]) + "';");
 						}
-						// Update the database
-						Core.Connector.Query_Execute(queryUpdate.ToString());
+						catch(SmtpException)
+						{
+							if(errors < int.MaxValue - 1)
+								errors++;
+							else
+								errors = 1;
+						}
 					}
-					catch {}
-					// Sleep to avoid excessive CPU usage
-					Thread.Sleep(messagePollDelay);
+					// Update the database
+					Core.Connector.queryExecute(queryUpdate.ToString());
 				}
+				catch {}
+				// Sleep to avoid excessive CPU usage
+				Thread.Sleep(messagePollDelay);
 			}
-			/// <summary>
-			/// Starts the e-mail queue worker.
-			/// </summary>
-			public void start()
+		}
+		/// <summary>
+		/// Starts the e-mail queue worker.
+		/// </summary>
+		public void start()
+		{
+			lock(this)
 			{
-				lock(this)
-				{
-					if(cyclerThread != null || !enabled)
-						return;
-					cyclerThread = new Thread(
-						delegate()
-						{
-							cycler();
-						}
-					);
-				}
+				if(cyclerThread != null || !enabled)
+					return;
+				cyclerThread = new Thread(
+					delegate()
+					{
+						cycler();
+					}
+				);
 			}
-			/// <summary>
-			/// Stops the e-mail queue worker.
-			/// </summary>
-			public void stop()
+		}
+		/// <summary>
+		/// Stops the e-mail queue worker.
+		/// </summary>
+		public void stop()
+		{
+			lock(this)
 			{
-				lock(this)
-				{
-				if(cyclerThread == null)
-						return;
-					cyclerThread.Abort();
-					cyclerThread = null;
-				}
+			if(cyclerThread == null)
+					return;
+				cyclerThread.Abort();
+				cyclerThread = null;
 			}
-			// Methods - Static ****************************************************************************************
-			/// <summary>
-			/// Creates a new instance of a configured and operational e-mail queue.
-			/// </summary>
-			public static EmailQueue create()
+		}
+		// Methods - Static ****************************************************************************************
+		/// <summary>
+		/// Creates a new instance of a configured and operational e-mail queue.
+		/// </summary>
+		public static EmailQueue create()
+		{
+			EmailQueue queue = new EmailQueue();
+			// Load configuration
+            queue.mailHost = Core.SettingsDisk["settings/mail/host"].Value;
+			queue.mailPort = int.Parse(Core.SettingsDisk["settings/mail/port"].Value);
+			queue.mailUsername = Core.SettingsDisk["settings/mail/user"].Value;
+			queue.mailPassword = Core.SettingsDisk["settings/mail/pass"].Value;
+			queue.mailAddress = Core.SettingsDisk["settings/mail/email"].Value;
+			if(queue.mailHost.Length != 0 && queue.mailUsername.Length != 0 && queue.mailAddress.Length != 0)
 			{
-				EmailQueue queue = new EmailQueue();
-				// Load configuration
-                queue.mailHost = Core.SettingsDisk["settings/mail/host"].Value;
-				queue.mailPort = int.Parse(Core.SettingsDisk["settings/mail/port"].Value);
-				queue.mailUsername = Core.SettingsDisk["settings/mail/user"].Value;
-				queue.mailPassword = Core.SettingsDisk["settings/mail/pass"].Value;
-				queue.mailAddress = Core.SettingsDisk["settings/mail/email"].Value;
-				if(queue.mailHost.Length != 0 && queue.mailUsername.Length != 0 && queue.mailAddress.Length != 0)
-				{
-					queue.enabled = true;
-					// Start cycler
-					queue.start();
-				}
-				return queue;
+				queue.enabled = true;
+				// Start cycler
+				queue.start();
 			}
+			return queue;
 		}
 	}
 }

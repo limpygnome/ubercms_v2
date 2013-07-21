@@ -38,7 +38,7 @@ namespace CMS
         /// </summary>
         public class User
         {
-            // Fields
+            // Fields **************************************************************************************************
             int         userID;             // The identifier of the user.
             string      username,           // The username of the user.
                         password,           // The user'ss password (hashed).
@@ -48,12 +48,12 @@ namespace CMS
             UserGroup   userGroup;          // The user's role/group.
             bool        loaded,             // Indicates if this instance has been loaded (true) or is a new user and does not exist (false).
                         modified;           // Indicates if the data has been modified.
-            // Methods - Constructors
+            // Methods - Constructors **********************************************************************************
             private User()
             {
                 modified = loaded = false;
             }
-            // Mehods - Database
+            // Mehods - Database ***************************************************************************************
             /// <summary>
             /// Loads a user from the database.
             /// </summary>
@@ -63,8 +63,8 @@ namespace CMS
             /// <returns>The user if found/valid, else null.</returns>
             public static User load(BasicSiteAuth bsa, Connector conn, int userID)
             {
-                Result result = conn.Query_Read("SELECT * FROM bsa_users WHERE userid='" + Utils.Escape(userID.ToString()) + "';");
-                if (result.Rows.Count == 1)
+                Result result = conn.queryRead("SELECT * FROM bsa_users WHERE userid='" + SQLUtils.escape(userID.ToString()) + "';");
+                if (result.Count == 1)
                     return load(bsa, result[0]);
                 else
                     return null;
@@ -107,13 +107,13 @@ namespace CMS
                     sql["secret_answer"] = secretAnswer;
                     sql["groupid"] = userGroup.GroupID.ToString();
                     if(loaded)
-                        conn.Query_Execute(sql.compileUpdate("bsa_users", "userid='" + Utils.Escape(userID.ToString()) + "'"));
+                        conn.queryExecute(sql.compileUpdate("bsa_users", "userid='" + SQLUtils.escape(userID.ToString()) + "'"));
                     else
-                        userID = int.Parse(conn.Query_Scalar(sql.compileInsert("bsa_users", "userid")).ToString());
+                        userID = int.Parse(conn.queryScalar(sql.compileInsert("bsa_users", "userid")).ToString());
                     modified = false;
                 }
             }
-            // Methods - Properties
+            // Methods - Properties ************************************************************************************
             /// <summary>
             /// The user's identifier.
             /// </summary>

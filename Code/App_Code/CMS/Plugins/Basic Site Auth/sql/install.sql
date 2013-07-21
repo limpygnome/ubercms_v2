@@ -39,3 +39,14 @@ CREATE TABLE IF NOT EXISTS bsa_users
 	groupid INT NOT NULL,
 	FOREIGN KEY(`groupid`) REFERENCES `bsa_user_groups`(`groupid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS bsa_user_bans
+(
+	banid INT PRIMARY KEY AUTO_INCREMENT,
+	userid INT,
+	FOREIGN KEY(`userid`) REFERENCES `bsa_users`(`userid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	reason TEXT,
+	datetime_start TIMESTAMP,
+	datetime_end TIMESTAMP,
+	banned_by INT,
+	FOREIGN KEY(`banned_by`) REFERENCES `bsa_users`(`userid`) ON UPDATE CASCADE ON DELETE CASCADE
+);

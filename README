@@ -36,8 +36,8 @@ Authors
 Credits
 ---------------------------------------------------------------------------------->
 Title:		DotNetZip - for compression and decompression of zip files.
-Version:	Version 1.9.1.8
-Homepage:	http://dotnetzip.codeplex.com/
+Version:	1.9.1.8
+URL:		http://dotnetzip.codeplex.com/
 Location:	/Code/Bin/Ionic.Zip.Reduced.dll
 License:	Microsoft Public License (Ms-PL)
 			URL:	http://dotnetzip.codeplex.com/license

@@ -31,61 +31,58 @@
 using System;
 using System.Collections.Generic;
 using System.Web;
+using CMS.Base;
 
-namespace CMS
+namespace CMS.Plugins
 {
-    namespace Plugins
+    public class Example : Plugin
     {
-        public class Example : Plugin
+        public Example(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo) : base(uuid, title, directory, state, handlerInfo)
+        { }
+        public override bool handler_handleRequest(Base.Data data)
         {
-            public Example(int pluginid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo) : base(pluginid, title, directory, state, handlerInfo)
+            switch (data.PathInfo.ModuleHandler)
             {
+                case "error_example":
+                    throw new Exception("An example of error catching!");
+                default:
+                    data["Title"] = "Welcome!";
+                    data["Content"] = "<p>Example handler works! Click <a href=\"/error_example\">here</a> for error-catching example.</p>";
+                    break;
             }
-            public override bool handler_handleRequest(Base.Data data)
-            {
-                switch (data.PathInfo.ModuleHandler)
-                {
-                    case "error_example":
-                        throw new Exception("An example of error catching!");
-                    default:
-                        data["Title"] = "Welcome!";
-                        data["Content"] = "<p>Example handler works! Click <a href=\"/error_example\">here</a> for error-catching example.</p>";
-                        break;
-                }
-                return true;
-            }
-            public override bool handler_handlePageNotFound(Base.Data data)
-            {
-                data["Title"] = "Page Not Found";
-                data["Content"] = "<p>Path '" + data.PathInfo.FullPath + "' not found - caught by test handler!</p>";
-                return true;
-            }
-            public override bool handler_handlePageError(Base.Data data, Exception ex)
-            {
-                data["Title"] = "Error Serving Request";
-                data["Content"] = "<p>Error '" + ex.Message + "' caught by example plugin!</p><h3>Stack-trace:</h3><p>" + ex.StackTrace + "</p>";
-                return true;
-            }
-            public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
-            {
-                messageOutput.AppendLine("Invoked example-plugin's install method!");
-                return true;
-            }
-            public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
-            {
-                messageOutput.AppendLine("Invoked example-plugin's uninstall method!");
-                return true;
-            }
-            public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
-            {
-                messageOutput.AppendLine("Invoked example-plugin's enable method!");
-                return true;
-            }
-            public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
-            {
-                messageOutput.AppendLine("Invoked example-plugin's disable method!");
-                return true;
-            }
+            return true;
+        }
+        public override bool handler_handlePageNotFound(Base.Data data)
+        {
+            data["Title"] = "Page Not Found";
+            data["Content"] = "<p>Path '" + data.PathInfo.FullPath + "' not found - caught by test handler!</p>";
+            return true;
+        }
+        public override bool handler_handlePageError(Base.Data data, Exception ex)
+        {
+            data["Title"] = "Error Serving Request";
+            data["Content"] = "<p>Error '" + ex.Message + "' caught by example plugin!</p><h3>Stack-trace:</h3><p>" + ex.StackTrace + "</p>";
+            return true;
+        }
+        public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        {
+            messageOutput.AppendLine("Invoked example-plugin's install method!");
+            return true;
+        }
+        public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        {
+            messageOutput.AppendLine("Invoked example-plugin's uninstall method!");
+            return true;
+        }
+        public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        {
+            messageOutput.AppendLine("Invoked example-plugin's enable method!");
+            return true;
+        }
+        public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        {
+            messageOutput.AppendLine("Invoked example-plugin's disable method!");
+            return true;
         }
     }
 }

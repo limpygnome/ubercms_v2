@@ -38,305 +38,302 @@ using System.Web;
 using Ionic.Zip;
 using CMS.Base;
 
-namespace CMS
+namespace CMS.Plugins
 {
-    namespace Plugins
+    /// <summary>
+    /// A plugin to help developers produce plugins and deployable packages.
+    /// </summary>
+    public class PackageDeveloper : Plugin
     {
-        /// <summary>
-        /// A plugin to help developers produce plugins and deployable packages.
-        /// </summary>
-        public class PackageDeveloper : Plugin
+        public PackageDeveloper(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
+            : base(uuid, title, directory, state, handlerInfo)
+        { }
+        public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
-            public PackageDeveloper(int pluginid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
-                : base(pluginid, title, directory, state, handlerInfo)
-            { }
-            public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+            return true;
+        }
+        public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        {
+            return true;
+        }
+        public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        {
+            // Install content
+            BaseUtils.contentInstall(PathContent, Core.PathContent, false, ref messageOutput);
+            // Install templates
+            Core.Templates.install(conn, this, PathTemplates, ref messageOutput);
+            // Install URL rewriting paths
+            BaseUtils.urlRewritingInstall(this, new string[] { "package_developer" }, ref messageOutput);
+            return true;
+        }
+        public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        {
+            // Remove content
+            BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput);
+            // Remove templates
+            Core.Templates.uninstall(this, ref messageOutput);
+            // Remove URL rewriting paths
+            BaseUtils.urlRewritingUninstall(this, ref messageOutput);
+            return true;
+        }
+        public override bool handler_handleRequest(Data data)
+        {
+            switch (data.PathInfo[1])
             {
-                return true;
+                case null:
+                case "home":
+                    return pageHome(data);
+                case "sync":
+                    return pageSync(data);
+                case "package":
+                    return pagePackage(data);
+                case "dump":
+                    return pageTemplatesDump(data);
+                case "upload":
+                    return pageTemplatesUpload(data);
+                case "install":
+                case "uninstall":
+                case "enable":
+                case "disable":
+                case "remove":
+                case "unload":
+                    return pagePluginAction(data);
+                case "core":
+                    return pageCore(data);
+                default:
+                    return false;
             }
-            public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        }
+        public bool pageHome(Data data)
+        {
+            data["Title"] = "Package Developer - Home";
+            // Generate list of plugins and options
+            string item = Core.Templates.get(data.Connector, "package_developer/home_item");
+            StringBuilder plugins = new StringBuilder();
+            foreach (Plugin plugin in Core.Plugins.Fetch)
             {
-                return true;
+                plugins.Append(item
+                    .Replace("%UUID%", plugin.UUID.HexHyphens)
+                    .Replace("%STATE%", HttpUtility.HtmlEncode(plugin.State.ToString()))
+                    .Replace("%VERSION%", plugin.VersionMajor + "." + plugin.VersionMinor + "." + plugin.VersionBuild)
+                    .Replace("%TITLE%", HttpUtility.HtmlEncode(plugin.Title))
+                    );
             }
-            public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+            data["Content"] = Core.Templates.get(data.Connector, "package_developer/home").Replace("%PLUGINS%", plugins.ToString());
+            return true;
+        }
+        public bool pageSync(Data data)
+        {
+            Plugin plugin;
+            string filesList;
+            if (data.PathInfo[2] == null)
             {
-                // Install content
-                BaseUtils.contentInstall(PathContent, Core.PathContent, false, ref messageOutput);
-                // Install templates
-                Core.Templates.install(conn, this, PathTemplates, ref messageOutput);
-                // Install URL rewriting paths
-                BaseUtils.urlRewritingInstall(this, new string[] { "package_developer" }, ref messageOutput);
-                return true;
+                filesList = Core.PathInstaller + "/files.list";
+                plugin = null;
             }
-            public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+            else
             {
-                // Remove content
-                BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput);
-                // Remove templates
-                Core.Templates.uninstall(this, ref messageOutput);
-                // Remove URL rewriting paths
-                BaseUtils.urlRewritingUninstall(this, ref messageOutput);
-                return true;
+                if ((plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]))) == null)
+                    return false;
+                filesList = plugin.FullPath + "/files.list";
             }
-            public override bool handler_handleRequest(Data data)
+            data["Title"] = "Package Developer - Sync Global Files";
+            // Check files.list exists
+            if (!File.Exists(filesList))
             {
-                switch (data.PathInfo[1])
-                {
-                    case null:
-                    case "home":
-                        return pageHome(data);
-                    case "sync":
-                        return pageSync(data);
-                    case "package":
-                        return pagePackage(data);
-                    case "dump":
-                        return pageTemplatesDump(data);
-                    case "upload":
-                        return pageTemplatesUpload(data);
-                    case "install":
-                    case "uninstall":
-                    case "enable":
-                    case "disable":
-                    case "remove":
-                    case "unload":
-                        return pagePluginAction(data);
-                    case "core":
-                        return pageCore(data);
-                    default:
-                        return false;
-                }
-            }
-            public bool pageHome(Data data)
-            {
-                data["Title"] = "Package Developer - Home";
-                // Generate list of plugins and options
-                string item = Core.Templates.get(data.Connector, "package_developer/home_item");
-                StringBuilder plugins = new StringBuilder();
-                foreach (Plugin plugin in Core.Plugins.Fetch)
-                {
-                    plugins.Append(item
-                        .Replace("%PLUGINID%", plugin.PluginID.ToString())
-                        .Replace("%STATE%", HttpUtility.HtmlEncode(plugin.State.ToString()))
-                        .Replace("%VERSION%", plugin.VersionMajor + "." + plugin.VersionMinor + "." + plugin.VersionBuild)
-                        .Replace("%TITLE%", HttpUtility.HtmlEncode(plugin.Title))
-                        );
-                }
-                data["Content"] = Core.Templates.get(data.Connector, "package_developer/home").Replace("%PLUGINS%", plugins.ToString());
-                return true;
-            }
-            public bool pageSync(Data data)
-            {
-                Plugin plugin;
-                string filesList;
-                if (data.PathInfo[2] == null)
-                {
-                    filesList = Core.PathInstaller + "/files.list";
-                    plugin = null;
-                }
+                if(plugin != null)
+                    data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync plugin '<i>" + HttpUtility.HtmlEncode(plugin.Title) + "</i>' (UUID: " + plugin.UUID.HexHyphens + ") at '<i>" + HttpUtility.HtmlEncode(plugin.FullPath) + "</i>' - files.list does not exist!");
                 else
+                    data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync core files - files.list does not exist in /installer!");
+            }
+            else
+            {
+                StringBuilder filesIncluded = new StringBuilder("Files synchronised:<br />");
+                StringBuilder filesExcluded = new StringBuilder("<br /><br />Files excluded:<br />");
+                // Begin syncing files
+                string line;
+                string[] file;
+                string file1, file2;
+                foreach (string rawline in File.ReadAllText(filesList).Replace("\r", "").Split('\n'))
                 {
-                    if ((plugin = Core.Plugins.getPlugin(data.PathInfo[2])) == null)
-                        return false;
-                    filesList = plugin.FullPath + "/files.list";
-                }
-                data["Title"] = "Package Developer - Sync Global Files";
-                // Check files.list exists
-                if (!File.Exists(filesList))
-                {
-                    if(plugin != null)
-                        data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync plugin '<i>" + HttpUtility.HtmlEncode(plugin.Title) + "</i>' (ID: " + plugin.PluginID + ") at '<i>" + HttpUtility.HtmlEncode(plugin.FullPath) + "</i>' - files.list does not exist!");
-                    else
-                        data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync core files - files.list does not exist in /installer!");
-                }
-                else
-                {
-                    StringBuilder filesIncluded = new StringBuilder("Files synchronised:<br />");
-                    StringBuilder filesExcluded = new StringBuilder("<br /><br />Files excluded:<br />");
-                    // Begin syncing files
-                    string line;
-                    string[] file;
-                    string file1, file2;
-                    foreach (string rawline in File.ReadAllText(filesList).Replace("\r", "").Split('\n'))
+                    line = rawline.Trim();
+                    if (line.Length != 0 && !line.StartsWith("//") && (file = line.Split(',')).Length == 2) // Check against empty-line or comment-line
                     {
-                        line = rawline.Trim();
-                        if (line.Length != 0 && !line.StartsWith("//") && (file = line.Split(',')).Length == 2) // Check against empty-line or comment-line
+                        // Format the file path's
+                        file1 = file[0].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin == null ? Core.PathInstaller : plugin.FullPath).Replace("%TEMPLATES%", plugin == null ? Core.PathInstaller_Templates : plugin.PathTemplates).Replace("%CONTENT%", plugin == null ? Core.PathInstaller_Content : plugin.PathContent);
+                        file2 = file[1].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin == null ? Core.PathInstaller : plugin.FullPath).Replace("%TEMPLATES%", plugin == null ? Core.PathInstaller_Templates : plugin.PathTemplates).Replace("%CONTENT%", plugin == null ? Core.PathInstaller_Content : plugin.PathContent);
+                        // Check if file1 is multiple files i.e. a directory
+                        bool multipleFiles = file1.EndsWith("/*");
+                        // Sync the files
+                        if (multipleFiles)
                         {
-                            // Format the file path's
-                            file1 = file[0].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin == null ? Core.PathInstaller : plugin.FullPath).Replace("%TEMPLATES%", plugin == null ? Core.PathInstaller_Templates : plugin.PathTemplates).Replace("%CONTENT%", plugin == null ? Core.PathInstaller_Content : plugin.PathContent);
-                            file2 = file[1].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin == null ? Core.PathInstaller : plugin.FullPath).Replace("%TEMPLATES%", plugin == null ? Core.PathInstaller_Templates : plugin.PathTemplates).Replace("%CONTENT%", plugin == null ? Core.PathInstaller_Content : plugin.PathContent);
-                            // Check if file1 is multiple files i.e. a directory
-                            bool multipleFiles = file1.EndsWith("/*");
-                            // Sync the files
-                            if (multipleFiles)
+                            file1 = file1.Remove(file1.Length - 2, 2); // Remove /*
+                            string ft;
+                            foreach (string f in Directory.GetFiles(file1, "*", SearchOption.AllDirectories))
                             {
-                                file1 = file1.Remove(file1.Length - 2, 2); // Remove /*
-                                string ft;
-                                foreach (string f in Directory.GetFiles(file1, "*", SearchOption.AllDirectories))
-                                {
-                                    ft = f.Replace('\\', '/');
-                                    pageSync_file(ft, file2 + ft.Substring(file1.Length), ref filesIncluded, ref filesExcluded);
-                                }
+                                ft = f.Replace('\\', '/');
+                                pageSync_file(ft, file2 + ft.Substring(file1.Length), ref filesIncluded, ref filesExcluded);
                             }
-                            else
-                                pageSync_file(file1, file2 + "/" + Path.GetFileName(file1), ref filesIncluded, ref filesExcluded);
+                        }
+                        else
+                            pageSync_file(file1, file2 + "/" + Path.GetFileName(file1), ref filesIncluded, ref filesExcluded);
 
-                        }
                     }
-                    data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", filesIncluded.ToString() + filesExcluded.ToString());
                 }
-                return true;
+                data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", filesIncluded.ToString() + filesExcluded.ToString());
             }
-            private void pageSync_file(string source, string destination, ref StringBuilder filesIncluded, ref StringBuilder filesExcluded)
+            return true;
+        }
+        private void pageSync_file(string source, string destination, ref StringBuilder filesIncluded, ref StringBuilder filesExcluded)
+        {
+            try
             {
-                try
+                // Check the file is not a disallowed/system file and exists
+                if (source.EndsWith("/Thumbs.db") || !File.Exists(source))
                 {
-                    // Check the file is not a disallowed/system file and exists
-                    if (source.EndsWith("/Thumbs.db") || !File.Exists(source))
+                    filesExcluded.Append("<i>").Append(HttpUtility.HtmlEncode(source)).Append("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i><br />");
+                    return;
+                }
+                // Add any protection against files loading into the assembly
+                if (destination.EndsWith(".js"))
+                    destination += ".file";
+                // Check the destination directoy exists
+                string dir = Path.GetDirectoryName(destination);
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+                // Copy the file
+                File.Copy(source, destination, true);
+                filesIncluded.Append("<i>").Append(HttpUtility.HtmlEncode(source)).Append("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i><br />");
+            }
+            catch (Exception ex)
+            {
+                filesExcluded.Append("Failed to include <i>").AppendLine(HttpUtility.HtmlEncode(source)).AppendLine("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i> - exception: '").Append(ex.Message).Append("'<br />");
+            }
+        }
+        public bool pagePackage(Data data)
+        {
+            Plugin plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]));
+            if (plugin == null)
+                return false;
+            data["Title"] = "Package Developer - Package Plugin";
+            // Create a new archive in the base directory, add every file in the base of the target plugin to the archive
+            StringBuilder output = new StringBuilder();
+            string archivePath = Core.BasePath + "/" + Path.GetFileName(plugin.RelativeDirectory) + "_" + plugin.VersionMajor + "." + plugin.VersionMinor + "." + plugin.VersionBuild + ".zip";
+            output.Append("Creating archive at '").Append(HttpUtility.HtmlEncode(archivePath)).Append("'...");
+            using(ZipFile archive = new ZipFile(archivePath))
+            {
+                int pluginPathLength = plugin.FullPath.Length;
+                foreach(string file in Directory.GetFiles(plugin.FullPath, "*", SearchOption.AllDirectories))
+                {
+                    try
                     {
-                        filesExcluded.Append("<i>").Append(HttpUtility.HtmlEncode(source)).Append("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i><br />");
-                        return;
+                        archive.AddFile(file, Path.GetDirectoryName(file.Substring(pluginPathLength)));
+                        output.Append("Added file '" + HttpUtility.HtmlEncode(file) + "'.<br />");
                     }
-                    // Add any protection against files loading into the assembly
-                    if (destination.EndsWith(".js"))
-                        destination += ".file";
-                    // Check the destination directoy exists
-                    string dir = Path.GetDirectoryName(destination);
-                    if (!Directory.Exists(dir))
-                        Directory.CreateDirectory(dir);
-                    // Copy the file
-                    File.Copy(source, destination, true);
-                    filesIncluded.Append("<i>").Append(HttpUtility.HtmlEncode(source)).Append("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i><br />");
-                }
-                catch (Exception ex)
-                {
-                    filesExcluded.Append("Failed to include <i>").AppendLine(HttpUtility.HtmlEncode(source)).AppendLine("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i> - exception: '").Append(ex.Message).Append("'<br />");
-                }
-            }
-            public bool pagePackage(Data data)
-            {
-                Plugin plugin = Core.Plugins.getPlugin(data.PathInfo[2]);
-                if (plugin == null)
-                    return false;
-                data["Title"] = "Package Developer - Package Plugin";
-                // Create a new archive in the base directory, add every file in the base of the target plugin to the archive
-                StringBuilder output = new StringBuilder();
-                string archivePath = Core.BasePath + "/" + Path.GetFileName(plugin.RelativeDirectory) + "_" + plugin.VersionMajor + "." + plugin.VersionMinor + "." + plugin.VersionBuild + ".zip";
-                output.Append("Creating archive at '").Append(HttpUtility.HtmlEncode(archivePath)).Append("'...");
-                using(ZipFile archive = new ZipFile(archivePath))
-                {
-                    int pluginPathLength = plugin.FullPath.Length;
-                    foreach(string file in Directory.GetFiles(plugin.FullPath, "*", SearchOption.AllDirectories))
+                    catch (Exception ex)
                     {
-                        try
-                        {
-                            archive.AddFile(file, Path.GetDirectoryName(file.Substring(pluginPathLength)));
-                            output.Append("Added file '" + HttpUtility.HtmlEncode(file) + "'.<br />");
-                        }
-                        catch (Exception ex)
-                        {
-                            output.Append("Failed to add file '" + HttpUtility.HtmlEncode(file) + "' to archive: '" + HttpUtility.HtmlEncode(file) + "'!<br />");
-                        }
+                        output.Append("Failed to add file '" + HttpUtility.HtmlEncode(file) + "' to archive: '" + HttpUtility.HtmlEncode(file) + "'!<br />");
                     }
-                    archive.Save();
                 }
-                data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", output.ToString());
-                return true;
+                archive.Save();
             }
-            public bool pageTemplatesDump(Data data)
+            data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", output.ToString());
+            return true;
+        }
+        public bool pageTemplatesDump(Data data)
+        {
+            string dumpDest;
+            Plugin plugin;
+            // Decide on what and where to dump templates
+            switch (data.PathInfo[2])
             {
-                string dumpDest;
-                Plugin plugin;
-                // Decide on what and where to dump templates
-                switch (data.PathInfo[2])
-                {
-                    case "core":
-                        plugin = null;
-                        dumpDest = Core.BasePath + "/installer/templates";
-                        break;
-                    default:
-                        plugin = Core.Plugins.getPlugin(data.PathInfo[2]);
-                        if (plugin == null)
-                            return false;
-                        dumpDest = plugin.PathTemplates;
-                        break;
-                }
-                data["Title"] = "Package Developer - Dump Templates";
-                // Dump the templates
-                StringBuilder messageOutput = new StringBuilder();
-                messageOutput.Append("Dumping templates to '" + HttpUtility.HtmlEncode(dumpDest) + "'...<br />");
-                Core.Templates.dumpForPlugin(dumpDest, plugin, ref messageOutput);
-                messageOutput.Replace("\r", "").Replace("\n", "<br />");
-                // Output page
-                data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", messageOutput.ToString());
-                return true;
-            }
-            public bool pageTemplatesUpload(Data data)
-            {
-                Plugin plugin = Core.Plugins.getPlugin(data.PathInfo[2]);
-                if (plugin == null)
-                    return false;
-                data["Title"] = "Package Developer - Upload Templates";
-                StringBuilder messageOutput = new StringBuilder();
-                Core.Templates.install(data.Connector, plugin, plugin.PathTemplates, ref messageOutput);
-                messageOutput.AppendLine("Finished uploading templates from '" + plugin.PathTemplates + "'.");
-                data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />"));
-                return true;
-            }
-            public bool pagePluginAction(Data data)
-            {
-                Plugin plugin = Core.Plugins.getPlugin(data.PathInfo[2]);
-                if (plugin == null)
-                    return false;
-                StringBuilder output = new StringBuilder();
-                switch (data.PathInfo[1])
-                {
-                    case "install":
-                        Core.Plugins.install(plugin, ref output);
-                        break;
-                    case "uninstall":
-                        Core.Plugins.uninstall(plugin, ref output);
-                        break;
-                    case "enable":
-                        Core.Plugins.enable(plugin, ref output);
-                        break;
-                    case "disable":
-                        Core.Plugins.disable(plugin, ref output);
-                        break;
-                    case "remove":
-                        Core.Plugins.remove(plugin, false, ref output);
-                        break;
-                    case "unload":
-                        Core.Plugins.unload(plugin);
-                        output.Append("Unloaded plugin '").Append(plugin.Title).Append("' (ID: ").Append(plugin.PluginID).AppendLine(") from virtual runtime!");
-                        break;
-                    default:
+                case "core":
+                    plugin = null;
+                    dumpDest = Core.BasePath + "/installer/templates";
+                    break;
+                default:
+                    plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]));
+                    if (plugin == null)
                         return false;
-                }
-                data["Title"] = "Package Developer - Plugin Action - <i>" + data.PathInfo[1] + "</i>";
-                data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(output.ToString()).Replace("\r", "").Replace("\n", "<br />"));
-                return true;
+                    dumpDest = plugin.PathTemplates;
+                    break;
             }
-            public bool pageCore(Data data)
+            data["Title"] = "Package Developer - Dump Templates";
+            // Dump the templates
+            StringBuilder messageOutput = new StringBuilder();
+            messageOutput.Append("Dumping templates to '" + HttpUtility.HtmlEncode(dumpDest) + "'...<br />");
+            Core.Templates.dumpForPlugin(dumpDest, plugin, ref messageOutput);
+            messageOutput.Replace("\r", "").Replace("\n", "<br />");
+            // Output page
+            data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", messageOutput.ToString());
+            return true;
+        }
+        public bool pageTemplatesUpload(Data data)
+        {
+            Plugin plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]));
+            if (plugin == null)
+                return false;
+            data["Title"] = "Package Developer - Upload Templates";
+            StringBuilder messageOutput = new StringBuilder();
+            Core.Templates.install(data.Connector, plugin, plugin.PathTemplates, ref messageOutput);
+            messageOutput.AppendLine("Finished uploading templates from '" + plugin.PathTemplates + "'.");
+            data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />"));
+            return true;
+        }
+        public bool pagePluginAction(Data data)
+        {
+            Plugin plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]));
+            if (plugin == null)
+                return false;
+            StringBuilder output = new StringBuilder();
+            switch (data.PathInfo[1])
             {
-                StringBuilder messageOutput = new StringBuilder();
-                switch (data.PathInfo[2])
-                {
-                    case "rebuild_handler_cache":
-                        Core.Plugins.rebuildHandlerCaches();
-                        messageOutput.AppendLine("Rebuilt handler cache!");
-                        data["Title"] = "Package Developer - Core - Rebuild Handler Cache";
-                        break;
-                    case "reload_plugins":
-                        Core.Plugins.reload();
-                        messageOutput.AppendLine("Reloaded plugin runtime!");
-                        data["Title"] = "Package Developer - Core - Reload Plugins";
-                        break;
-                    default:
-                        return false;
-                }
-                data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />"));
-                return true;
+                case "install":
+                    Core.Plugins.install(plugin, ref output);
+                    break;
+                case "uninstall":
+                    Core.Plugins.uninstall(plugin, ref output);
+                    break;
+                case "enable":
+                    Core.Plugins.enable(plugin, ref output);
+                    break;
+                case "disable":
+                    Core.Plugins.disable(plugin, ref output);
+                    break;
+                case "remove":
+                    Core.Plugins.remove(plugin, false, ref output);
+                    break;
+                case "unload":
+                    Core.Plugins.unload(plugin);
+                    output.Append("Unloaded plugin '").Append(plugin.Title).Append("' (UUID: '").Append(plugin.UUID.HexHyphens).AppendLine("') from virtual runtime!");
+                    break;
+                default:
+                    return false;
             }
+            data["Title"] = "Package Developer - Plugin Action - <i>" + data.PathInfo[1] + "</i>";
+            data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(output.ToString()).Replace("\r", "").Replace("\n", "<br />"));
+            return true;
+        }
+        public bool pageCore(Data data)
+        {
+            StringBuilder messageOutput = new StringBuilder();
+            switch (data.PathInfo[2])
+            {
+                case "rebuild_handler_cache":
+                    Core.Plugins.rebuildHandlerCaches();
+                    messageOutput.AppendLine("Rebuilt handler cache!");
+                    data["Title"] = "Package Developer - Core - Rebuild Handler Cache";
+                    break;
+                case "reload_plugins":
+                    Core.Plugins.reload();
+                    messageOutput.AppendLine("Reloaded plugin runtime!");
+                    data["Title"] = "Package Developer - Core - Reload Plugins";
+                    break;
+                default:
+                    return false;
+            }
+            data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />"));
+            return true;
         }
     }
 }
