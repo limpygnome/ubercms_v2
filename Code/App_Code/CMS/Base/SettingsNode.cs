@@ -215,7 +215,9 @@ namespace CMS.Base
                 state = state == SettingsNodeState.ModifiedValue ? SettingsNodeState.ModifiedAll : SettingsNodeState.ModifiedDescription;
             }
         }
-
+        /// <summary>
+        /// The data-type of the value.
+        /// </summary>
         public DataType ValueDataType
         {
             get
