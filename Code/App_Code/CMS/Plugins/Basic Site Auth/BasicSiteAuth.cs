@@ -40,48 +40,75 @@ namespace CMS.BasicSiteAuth
 {
     public class BasicSiteAuth : Plugin
     {
-        // Constants
+        // Constants ***************************************************************************************************
         public const string BSA_UUID = "943c3f9d-dfcb-483d-bf34-48ad5231a15f";
-        // Constants - Settings
+        // Constants - Settings ****************************************************************************************
         public const string SETTINGS_USERNAME_MIN = "bsa/account/username_min";
-        public const int SETTINGS_DEFAULT_USERNAME_MIN = 2;
+        public const string SETTINGS_USERNAME_MIN__DESCRIPTION = "The minimum number of characters a username can be.";
+        public const int SETTINGS_USERNAME_MIN__DEFAULT = 2;
+
         public const string SETTINGS_USERNAME_MAX = "bsa/account/username_max";
-        public const int SETTINGS_DEFAULT_USERNAME_MAX = 32;
+        public const string SETTINGS_USERNAME_MAX__DESCRIPTION = "The maximum number of characters a username can be.";
+        public const int SETTINGS_USERNAME_MAX__DEFAULT = 32;
+
         public const string SETTINGS_PASSWORD_MIN = "bsa/account/password_min";
-        public const int SETTINGS_DEFAULT_PASSWORD_MIN = 6;
+        public const string SETTINGS_PASSWORD_MIN__DESCRIPTION = "The minimum number of characters a password can be.";
+        public const int SETTINGS_PASSWORD_MIN__DEFAULT = 6;
+
         public const string SETTINGS_PASSWORD_MAX = "bsa/account/password_max";
-        public const int SETTINGS_DEFAULT_PASSWORD_MAX = 128;
+        public const string SETTINGS_PASSWORD_MAX__DESCRIPTION = "The maximum number of characters a password can be.";
+        public const int SETTINGS_PASSWORD_MAX__DEFAULT = 128;
+
         public const string SETTINGS_EMAIL_MIN = "bsa/account/email_min";
-        public const int SETTINGS_DEFAULT_EMAIL_MIN = 6;
+        public const string SETTINGS_EMAIL_MIN__DESCRIPTION = "The minimum number of characters an e-mail can be.";
+        public const int SETTINGS_EMAIL_MIN__DEFAULT = 6;
+
         public const string SETTINGS_EMAIL_MAX = "bsa/account/email_max";
-        public const int SETTINGS_DEFAULT_EMAIL_MAX = 64;
+        public const string SETTINGS_EMAIL_MAX_DESCRIPTION = "The maximum number of characters an e-mail can be.";
+        public const int SETTINGS_EMAIL_MAX__DEFAULT = 64;
+
         public const string SETTINGS_SECRETQUESTION_MIN = "bsa/account/secretquestion_min";
-        public const int SETTINGS_DEFAULT_SECRETQUESTION_MIN = 0;
+        public const string SETTINGS_SECRETQUESTION__DESCRIPTION = "The minimum characters a secret question can be.";
+        public const int SETTINGS_SECRETQUESTION_MIN__DEFAULT = 0;
+
         public const string SETTINGS_SECRETQUESTION_MAX = "bsa/account/secretquestion_max";
-        public const int SETTINGS_DEFAULT_SECRETQUESTION_MAX = 64;
-        public const string SETTINGS_SECRETANSWER_MIN = "bsa/account/ecretanswer_min";
-        public const int SETTINGS_DEFAULT_SECRETANSWER_MIN = 64;
+        public const string SETTINGS_SECRETQUESTION_MAX__DESCRIPTION = "The maximum characters a secret question can be.";
+        public const int SETTINGS_SECRETQUESTION_MAX__DEFAULT = 64;
+
+        public const string SETTINGS_SECRETANSWER_MIN = "bsa/account/secretanswer_min";
+        public const string SETTINGS_SECRETANSWER_MIN__DESCRIPTION = "The minimum characters a secret answer can be.";
+        public const int SETTINGS_SECRETANSWER_MIN__DEFAULT = 64;
+
         public const string SETTINGS_SECRETANSWER_MAX = "bsa/account/secretanswer_max";
-        public const int SETTINGS_DEFAULT_SECRETANSWER_MAX = 64;
+        public const string SETTINGS_SECRETANSWER_MAX__DESCRIPTION = "The maximum characters a secret answer can be.";
+        public const int SETTINGS_SECRETANSWER_MAX__DEFAULT = 64;
+
         public const string SETTINGS_EMAIL_VERIFICATION = "bsa/account/email_verification";
-        public const bool SETTINGS_DEFAULT_EMAIL_VERIFICATION = true;
+        public const string SETTINGS_EMAIL_VERIFICATION__DESCRIPTION = "Specifies if users need to verify their accounts via e-mail.";
+        public const bool SETTINGS_EMAIL_VERIFICATION__DEFAULT = true;
+
         public const string SETTINGS_GROUP_UNVERIFIED_GROUPID = "bsa/groups/unverified_groupid";
-        public const int SETTINGS_DEFAULT_GROUP_UNVERIFIED_GROUPID = 1;
-        public const string SETTINGS_GROUP_VERIFIED_GROUPID = "bsa/groups/verified_groupid";
-        public const int SETTINGS_DEFAULT_GROUP_VERIFIED_GROUPID = 2;
-        public const string SETTINGS_GROUP_BANNED_GROUPID = "bsa/groups/banned_groupid";
-        public const int SETTINGS_DEFAULT_GROUP_BANNED_GROUPID = 3;
-        // Fields
+        public const string SETTINGS_GROUP_UNVERIFIED_GROUPID__DESCRIPTION = "The identifier of the unverified group.";
+
+        public const string SETTINGS_GROUP_USER_GROUPID = "bsa/groups/user_groupid";
+        public const string SETTINGS_GROUP_USER_GROUPID__DESCRIPTION = "The identifier of the user group.";
+
+        public const string SETTINGS_GROUP_MODERATOR_GROUPID = "bsa/groups/moderator_groupid";
+        public const string SETTINGS_GROUP_MODERATOR_GROUPID__DESCRIPTION = "The identifier of the moderator group.";
+
+        public const string SETTINGS_GROUP_ADMINISTRATOR_GROUPID = "bsa/groups/administrator_groupid";
+        public const string SETTINGS_GROUP_ADMINISTRATOR_GROUPID__DESCRIPTION = "The identifier of the administrator group.";
+        // Fields ******************************************************************************************************
         private string                          salt1,          // The first salt, used for generating a secure SHA-512 hash.
                                                 salt2;          // The second salt, used for generating a secure SHA-512 hash.
         private UserGroups                      groups;         // A collection of all the user-groups.
-        // Methods - Constructors
+        // Methods - Constructors **************************************************************************************
         public BasicSiteAuth(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
             : base(uuid, title, directory, state, handlerInfo)
         {
             groups = null;
         }
-        // Methods - Handlers
+        // Methods - Handlers ******************************************************************************************
         public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Setup handlers
@@ -89,10 +116,88 @@ namespace CMS.BasicSiteAuth
             HandlerInfo.CmsStart = true;
             HandlerInfo.save(conn);
             // Install SQL
-
-            // Create default user-groups (1 = unverified, 2 = verified, 3 = banned, 4 = administrators)
-
+            BaseUtils.executeSQL(FullPath + "/sql/install.sql", conn, ref messageOutput);
+            // Create settings
+            //Core.Settings.add(this, SETTINGS_USERNAME_MIN, SETTINGS_USERNAME_MIN__DESCRIPTION, SETTINGS_USERNAME_MIN__DEFAULT);
+            // Create default user-groups
+            // -- Unverified
+            UserGroup ugUnverified = new UserGroup();
+            ugUnverified.Title = "Unverified";
+            ugUnverified.Description = "An unverified user unable to perform any actions.";
+            ugUnverified.save(this, conn);
+            // -- User (verified)
+            UserGroup ugUser = new UserGroup();
+            ugUser.Title = "User";
+            ugUser.Description = "A verified user able to create and modify their own content.";
+            ugUser.Comments_Create = true;
+            ugUser.Comments_DeleteOwn = true;
+            ugUser.Comments_ModifyOwn = true;
+            ugUser.Comments_Publish = true;
+            ugUser.Login = true;
+            ugUser.Media_Create = true;
+            ugUser.Media_DeleteOwn = true;
+            ugUser.Media_ModifyOwn = true;
+            ugUser.Pages_Create = true;
+            ugUser.Pages_ModifyOwn = true;
+            ugUser.Pages_Modify = true;
+            ugUser.save(this, conn);
+            // -- Moderator
+            UserGroup ugModerator = new UserGroup();
+            ugModerator.Title = "Moderator";
+            ugModerator.Description = "A user able to create, modify and delete all content.";
+            ugModerator.Administrator = true;
+            ugModerator.Comments_Create = true;
+            ugModerator.Comments_Delete = true;
+            ugModerator.Comments_DeleteOwn = true;
+            ugModerator.Comments_ModifyOwn = true;
+            ugModerator.Comments_Publish = true;
+            ugModerator.Login = true;
+            ugModerator.Media_Create = true;
+            ugModerator.Media_Delete = true;
+            ugModerator.Media_DeleteOwn = true;
+            ugModerator.Media_Modify = true;
+            ugModerator.Media_ModifyOwn = true;
+            ugModerator.Moderator = true;
+            ugModerator.Pages_Create = true;
+            ugModerator.Pages_Delete = true;
+            ugModerator.Pages_DeleteOwn = true;
+            ugModerator.Pages_Modify = true;
+            ugModerator.Pages_ModifyOwn = true;
+            ugModerator.Pages_Publish = true;
+            // -- Administrator
+            UserGroup ugAdministrator = new UserGroup();
+            ugAdministrator.Title = "Administrator";
+            ugAdministrator.Description = "A user with complete control of the system and content.";
+            ugAdministrator.Administrator = true;
+            ugAdministrator.Comments_Create = true;
+            ugAdministrator.Comments_Delete = true;
+            ugAdministrator.Comments_DeleteOwn = true;
+            ugAdministrator.Comments_ModifyOwn = true;
+            ugAdministrator.Comments_Publish = true;
+            ugAdministrator.Login = true;
+            ugAdministrator.Media_Create = true;
+            ugAdministrator.Media_Delete = true;
+            ugAdministrator.Media_DeleteOwn = true;
+            ugAdministrator.Media_Modify = true;
+            ugAdministrator.Media_ModifyOwn = true;
+            ugAdministrator.Moderator = true;
+            ugAdministrator.Pages_Create = true;
+            ugAdministrator.Pages_Delete = true;
+            ugAdministrator.Pages_DeleteOwn = true;
+            ugAdministrator.Pages_Modify = true;
+            ugAdministrator.Pages_ModifyOwn = true;
+            ugAdministrator.Pages_Publish = true;
+            ugAdministrator.save(this, conn);
             // Create default root account (user = root, pass = password)
+            User userRoot = new User();
+            userRoot.Username = "root";
+            userRoot.Password = "password";
+            userRoot.Email = "admin@localhost";
+            userRoot.SecretQuestion = string.Empty;
+            userRoot.SecretAnswer = string.Empty;
+            userRoot.UserGroup = ugAdministrator;
+            if(userRoot.save(this, conn) != User.UserCreateSaveStatus.Success)
+                messageOutput.AppendLine("Warning: failed to create root user!");
             return true;
         }
         public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
@@ -171,7 +276,7 @@ namespace CMS.BasicSiteAuth
                         return false;
                 }
         }
-        // Methods - Pages
+        // Methods - Pages *********************************************************************************************
         private bool pageLogin(Data data)
         {
             // Check for postback
@@ -235,7 +340,7 @@ namespace CMS.BasicSiteAuth
         {
             return true;
         }
-        // Methods - Static
+        // Methods - Static ********************************************************************************************
         private const string bsaCurrentUserKey = "bsa_current_user";
         /// <summary>
         /// Gets the user object for the current request; returns null if the user is anonymous. This can be invoked
@@ -268,7 +373,7 @@ namespace CMS.BasicSiteAuth
                     HttpContext.Current.Items[bsaCurrentUserKey] = null;
             }
         }
-        // Methods
+        // Methods *****************************************************************************************************
         private void setPageError(Data data, string error)
         {
             data["BsaError"] = error;
@@ -345,7 +450,7 @@ namespace CMS.BasicSiteAuth
             // Convert to base64 and return
             return Convert.ToBase64String(computedHash);
         }
-        // Methods - Properties
+        // Methods - Properties ****************************************************************************************
         public UserGroups UserGroups
         {
             get

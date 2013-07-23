@@ -27,6 +27,7 @@
  *                      2013-07-06      Fixed dump bug.
  *                                      Fixed major multi-level rendering bug with replacementOccurred variable.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
+ *                      2013-07-23      Updated the way settings are handled.
  * 
  * *********************************************************************************************************************
  * Used to load, and possibly cache, HTML templates from the database; this class also transforms the custom markup
@@ -192,7 +193,7 @@ namespace CMS.Base
         {
             lock (this)
             {
-                if (loadFromCache = Core.SettingsDisk["settings/templates/cache"].Value.Equals("1"))
+                if (loadFromCache = Core.SettingsDisk["settings/templates/cache"].get<bool>())
                 {
                     // Clear any previous templates
                     primaryCache.Clear();

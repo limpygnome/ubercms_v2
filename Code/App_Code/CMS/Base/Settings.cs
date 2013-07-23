@@ -26,6 +26,11 @@
  *                                      Fixed critical bug in load from database method.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                                      Added changes to support pluginid to UUID for plugins.
+ *                      2013-07-23      add and updateOrAdd methods take a plugin model instead of a UUID, in-case of
+ *                                      future changes to identifying plugins.
+ *                                      Major change: settings now have types for efficiency and easier editing;
+ *                                      add and updateOrAdd have been replaced by set methods. Removal of get<...>
+ *                                      methods.
  * 
  * *********************************************************************************************************************
  * Handles settings which can be stored on disk or in a database. Thread-safe.
@@ -48,6 +53,13 @@ namespace CMS.Base
     /// </summary>
 	public class Settings
 	{
+        // Enums *******************************************************************************************************
+        public enum SetAction
+        {
+            Add,
+            Update,
+            AddOrUpdate
+        }
 		// Fields ******************************************************************************************************
 		private Dictionary<string, SettingsNode> config;    // Path of setting, setting node
 		// Methods - Constructors **************************************************************************************
@@ -55,7 +67,7 @@ namespace CMS.Base
 		{
 			config = new Dictionary<string, SettingsNode>();
 		}
-		// Methods
+		// Methods *****************************************************************************************************
 		/// <summary>
 		/// Saves the settings to the database of the connector.
 		/// </summary>
@@ -65,7 +77,7 @@ namespace CMS.Base
 			lock(this)
 			{
 				StringBuilder sqlUpdated = new StringBuilder();
-				StringBuilder sqlInserted = new StringBuilder("INSERT INTO cms_settings (path, uuid, description, value) VALUES");
+				StringBuilder sqlInserted = new StringBuilder("INSERT INTO cms_settings (path, uuid, description, type, value) VALUES");
 				int sqlInsertedDefaultLength = sqlInserted.Length;
 				// Iterate keys
                 foreach (KeyValuePair<string, SettingsNode> k in config)
@@ -73,16 +85,16 @@ namespace CMS.Base
                     switch (k.Value.State)
                     {
                         case SettingsNode.SettingsNodeState.ModifiedAll:
-                            sqlUpdated.Append("UPDATE cms_settings SET value='" + SQLUtils.escape(k.Value.Value) + "', description='" + SQLUtils.escape(k.Value.Description) + "' WHERE path='" + SQLUtils.escape(k.Key) + "'; ");
+                            sqlUpdated.Append("UPDATE cms_settings SET value='").Append(SQLUtils.escape(k.Value.ToString())).Append("', type='").Append(SQLUtils.escape(k.Value.ToString())).Append("', description='").Append(SQLUtils.escape(k.Value.Description)).Append("' WHERE path='").Append(SQLUtils.escape(k.Key)).Append("'; ");
                             break;
                         case SettingsNode.SettingsNodeState.ModifiedDescription:
-                            sqlUpdated.Append("UPDATE cms_settings SET description='" + SQLUtils.escape(k.Value.Description) + "' WHERE path='" + SQLUtils.escape(k.Key) + "'; ");
+                            sqlUpdated.Append("UPDATE cms_settings SET description='").Append(SQLUtils.escape(k.Value.Description)).Append("' WHERE path='").Append(SQLUtils.escape(k.Key)).Append("'; ");
                             break;
                         case SettingsNode.SettingsNodeState.ModifiedValue:
-                            sqlUpdated.Append("UPDATE cms_settings SET value='" + SQLUtils.escape(k.Value.Value) + "' WHERE path='" + SQLUtils.escape(k.Key) + "'; ");
+                            sqlUpdated.Append("UPDATE cms_settings SET value='").Append(SQLUtils.escape(k.Value.ToString())).Append("', type='").Append(SQLUtils.escape(((int)k.Value.ValueDataType).ToString())).Append("' WHERE path='").Append(SQLUtils.escape(k.Key)).Append("'; ");
                             break;
                         case SettingsNode.SettingsNodeState.Added:
-                            sqlInserted.Append("('" + SQLUtils.escape(k.Key) + "', " + k.Value.OwnerUUID.SQLValue + ", " + (k.Value.Description == null ? "NULL" : "'" + k.Value.Description + "'") + ", " + (k.Value.Value == null ? "NULL" : "'" + k.Value.Value + "'") + "),");
+                            sqlInserted.Append("('").Append(SQLUtils.escape(k.Key)).Append("', ").Append(k.Value.OwnerUUID.SQLValue).Append(", ").Append((k.Value.Description == null ? "NULL" : "'" + k.Value.Description + "'")).Append(", '").Append(SQLUtils.escape(((int)k.Value.ValueDataType).ToString())).Append("', ").Append((k.Value.Value == null ? "NULL" : "'" + k.Value.Value + "'")).Append("),");
                             break;
                     }
                 }
@@ -114,8 +126,8 @@ namespace CMS.Base
 					loadProcessNode(ref settings, path + "/" + n.Name, n);
 				}
             // Process the current node
-			if(!nodes)
-				settings.config.Add(path, new SettingsNode(node.InnerText));
+            if (!nodes)
+                settings.config.Add(path, new SettingsNode(SettingsNode.parseType(node.Attributes["type"].Value), node.InnerText));
 		}
 		/// <summary>
 		/// Loads settings from an xml file on disk.
@@ -170,7 +182,7 @@ namespace CMS.Base
 				Settings settings = new Settings();
                 Result result = conn.queryRead("SELECT * FROM cms_view_settings_load");
 				foreach(ResultRow row in result)
-					settings.config.Add(row["path"], new SettingsNode(row["value"], row["description"], UUID.createFromHex(row["uuid"])));
+					settings.config.Add(row["path"], new SettingsNode(SettingsNode.parseType(row["type"]), row["value"], row["description"], UUID.createFromHex(row["uuid"])));
                 return settings;
 			}
 			catch(Exception ex)
@@ -181,45 +193,102 @@ namespace CMS.Base
 		}
 		// Methods - Mutators ******************************************************************************************
         /// <summary>
-        /// Updates a configuration node; however if the node does not exist, it's added to the collection. Method
-        /// 'save' must be invoked to persist the data to the data-store.
+        /// Sets a string setting.
+        /// 
+        /// Note: the method save must be called to persist the data.
         /// </summary>
-        /// <param name="uuid">The owner of the plugin; this will not be updated if the node exists.</param>
-        /// <param name="path">The path of the node.</param>
-        /// <param name="description">A description of the node; can be left null to not be updated.</param>
-        /// <param name="value">The value of the node; can be left null to not be updated.</param>
-        /// <param name="updateOnly">Indicates if to only update the node.</param>
-        /// <param name="throwExceptionNonExistant">Indicates if to throw an exception if the node does not exist; this will throw a KeyNotFound exception.</param>
-		public void updateOrAdd(UUID uuid, string path, string description, string value, bool updateOnly, bool throwExceptionNonExistant)
-		{
+        /// <param name="plugin">The owner of the setting; can be null.</param>
+        /// <param name="action">The action of the setting being set.</param>
+        /// <param name="path">The path of the setting.</param>
+        /// <param name="description">A description of the setting.</param>
+        /// <param name="value">The value of the setting.</param>
+        /// <returns>Success of operation.</returns>
+        public bool set(Plugin plugin, SetAction action, string path, string description, string value)
+        {
+            return set(plugin, action, path, description, value, SettingsNode.DataType.String);
+        }
+        /// <summary>
+        /// Sets an integer setting.
+        /// 
+        /// Note: the method save must be called to persist the data.
+        /// </summary>
+        /// <param name="plugin">The owner of the setting; can be null.</param>
+        /// <param name="action">The action of the setting being set.</param>
+        /// <param name="path">The path of the setting.</param>
+        /// <param name="description">A description of the setting.</param>
+        /// <param name="value">The value of the setting.</param>
+        /// <returns>Success of operation.</returns>
+        public bool setInt(Plugin plugin, SetAction action, string path, string description, int value)
+        {
+            return set(plugin, action, path, description, value.ToString(), SettingsNode.DataType.Integer);
+        }
+        /// <summary>
+        /// Sets a float setting.
+        /// 
+        /// Note: the method save must be called to persist the data.
+        /// </summary>
+        /// <param name="plugin">The owner of the setting; can be null.</param>
+        /// <param name="action">The action of the setting being set.</param>
+        /// <param name="path">The path of the setting.</param>
+        /// <param name="description">A description of the setting.</param>
+        /// <param name="value">The value of the setting.</param>
+        /// <returns>Success of operation.</returns>
+        public bool setFloat(Plugin plugin, SetAction action, string path, string description, float value)
+        {
+            return set(plugin, action, path, description, value.ToString(), SettingsNode.DataType.Float);
+        }
+        /// <summary>
+        /// Sets a double setting.
+        /// 
+        /// Note: the method save must be called to persist the data.
+        /// </summary>
+        /// <param name="plugin">The owner of the setting; can be null.</param>
+        /// <param name="action">The action of the setting being set.</param>
+        /// <param name="path">The path of the setting.</param>
+        /// <param name="description">A description of the setting.</param>
+        /// <param name="value">The value of the setting.</param>
+        /// <returns>Success of operation.</returns>
+        public bool setDouble(Plugin plugin, SetAction action, string path, string description, double value)
+        {
+            return set(plugin, action, path, description, value.ToString(), SettingsNode.DataType.Double);
+        }
+        /// <summary>
+        /// Sets a boolean setting.
+        /// 
+        /// Note: the method save must be called to persist the data.
+        /// </summary>
+        /// <param name="plugin">The owner of the setting; can be null.</param>
+        /// <param name="action">The action of the setting being set.</param>
+        /// <param name="path">The path of the setting.</param>
+        /// <param name="description">A description of the setting.</param>
+        /// <param name="value">The value of the setting.</param>
+        /// <returns>Success of operation.</returns>
+        public bool setBool(Plugin plugin, SetAction action, string path, string description, bool value)
+        {
+            return set(plugin, action, path, description, value ? "1" : "0", SettingsNode.DataType.Bool);
+        }
+        private bool set(Plugin plugin, SetAction action, string path, string description, string value, SettingsNode.DataType type)
+        {
             lock(this)
             {
-				if(config.ContainsKey(path))
-				{
-                    if (description != null)
+                bool exists = config.ContainsKey(path);
+                // Check if the key is to be added and exists or doesn't exist and to be updated
+                if(action == SetAction.Add && exists || action == SetAction.Update && !exists)
+                    return false;
+                // Either add or update
+                if(exists)
+                {
+                    if(description != null)
                         this[path].Description = description;
-                    if (value != null)
+                    if(value != null)
+                    {
+                        this[path].ValueDataType = type;
                         this[path].Value = value;
-				}
-				else if(throwExceptionNonExistant)
-                    throw new KeyNotFoundException("Settings node '" + path + "' not found!");
-                else if(!updateOnly)
-					config.Add(path, new SettingsNode(value, description, uuid, SettingsNode.SettingsNodeState.Added));
-            }
-		}
-        /// <summary>
-        /// Adds a new key to the collection. If the key already exists, nothing is changed.
-        /// </summary>
-        /// <param name="uuid">The identifier of the plugin which owns the setting.</param>
-        /// <param name="path">The path of the node.</param>
-        /// <param name="description">A decription of the node; can be null.</param>
-        /// <param name="value">The value of a node.</param>
-        public void add(UUID uuid, string path, string description, string value)
-        {
-            lock (this)
-            {
-                if (!config.ContainsKey(path))
-                    config.Add(path, new SettingsNode(value, description, uuid, SettingsNode.SettingsNodeState.Added));
+                    }
+                }
+                else
+                    config.Add(path, new SettingsNode(type, value, description, plugin != null ? plugin.UUID : null, SettingsNode.SettingsNodeState.Added));
+                return true;
             }
         }
         /// <summary>
@@ -278,94 +347,6 @@ namespace CMS.Base
 			return config.ContainsKey(path);
 		}
         /// <summary>
-        /// Fetches the value of a node at the specified path as an integer; no integer-safety is present for
-        /// efficiency!
-        /// </summary>
-        /// <param name="path">The path of the node.</param>
-        /// <returns></returns>
-		public int getInteger(string path)
-		{
-			return int.Parse(config[path].Value);
-		}
-        /// <summary>
-        /// Fetches the value of a node from the collection.
-        /// 
-        /// If the node does not exist, a node is created and the default value is returned.
-        /// </summary>
-        /// <param name="uuid">The identifier of the plugin which owns the setting.</param>
-        /// <param name="path">The path of the node.</param>
-        /// <param name="description">A description of the node.</param>
-        /// <param name="defaultValue">The default value of the node.</param>
-        /// <returns>The value of the node.</returns>
-		public string get(UUID uuid, string path, string description, string defaultValue)
-		{
-			if(config.ContainsKey(path))
-				return config[path].Value;
-			else
-			{
-				updateOrAdd(uuid, path, description, defaultValue, false, false);
-				return defaultValue;
-			}
-		}
-        /// <summary>
-        /// Returns the value of the node at the specified path; if the node does not exist, null is returned.
-        /// </summary>
-        /// <param name="path">The path of the node.</param>
-        /// <returns>The value of the setting at the specified path.</returns>
-        public string get(string path)
-        {
-            return config.ContainsKey(path) ? config[path].Value : null;
-        }
-        /// <summary>
-        /// Fetches the value of a node from the collection as an integer.
-        /// 
-        /// If the node does not exist, a node is created and the default value is returned.
-        /// </summary>
-        /// <param name="uuid">The identifier of the plugin which owns the setting.</param>
-        /// <param name="path">The path of the node.</param>
-        /// <param name="description">A description of the node.</param>
-        /// <param name="defaultValue">The default value of the node.</param>
-        /// <returns>The integer value of the node.</returns>
-		public int getInteger(UUID uuid, string path, string description, int defaultValue)
-		{
-			if(config.ContainsKey(path))
-				return int.Parse(config[path].Value);
-			else
-			{
-				updateOrAdd(uuid, path, description, defaultValue.ToString(), false, false);
-				return defaultValue;
-			}
-		}
-        /// <summary>
-        /// Fetches the value of a node from the collection as an integer with range checking.
-        /// 
-        /// If the node does not exist, a node is created and the default value is returned. If the value is not
-        /// within the range, only the default value is returned (the node is not updated).
-        /// </summary>
-        /// <param name="uuid">The identifier of the plugin which owns the setting.</param>
-        /// <param name="path">The path of the node.</param>
-        /// <param name="description">A description of the node.</param>
-        /// <param name="defaultValue">The default value of the node.</param>
-        /// <param name="min">The inclusive minimum allowed for the value.</param>
-        /// <param name="max">The inclusive maximum allowed for the value.</param>
-        /// <returns></returns>
-        public int getInteger(UUID uuid, string path, string description, int defaultValue, int min, int max)
-		{
-			if(config.ContainsKey(path))
-			{
-				int v = int.Parse(config[path].Value);
-				if(v < min || v > max)
-					return defaultValue;
-				else
-					return v;
-			}
-			else
-			{
-				updateOrAdd(uuid, path, description, defaultValue.ToString(), false, false);
-				return defaultValue;
-			}
-		}
-        /// <summary>
         /// A debug function for outputting the settings. Lines are broken by HTML tag 'br'.
         /// </summary>
         /// <returns></returns>
@@ -373,7 +354,7 @@ namespace CMS.Base
         {
             StringBuilder debug = new StringBuilder();
             foreach (KeyValuePair<string, SettingsNode> node in config)
-                debug.Append("'" + node.Key + "'='" + node.Value.Value + "' (plugin UUID: '" + node.Value.OwnerUUID.HexHyphens + "')<br />");
+                debug.Append("'" + node.Key + "'='" + node.Value.ToString() + "' (plugin UUID: '" + node.Value.OwnerUUID.HexHyphens + "')<br />");
             return debug.ToString();
         }
         // Methods - Properties ****************************************************************************************

@@ -21,6 +21,7 @@
  *                      2013-06-25      Created initial class.
  *                      2013-06-29      Finished initial class.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
+ *                      2013-07-23      Updated retrieval of settings.
  * 
  * *********************************************************************************************************************
  * An email-queue service for mass-sending e-mails in a seperate thread. This system also saves the buffer of e-mails,
@@ -41,9 +42,9 @@ namespace CMS.Base
 {
 	public class EmailQueue
 	{
-		// Fields **************************************************************************************************
+		// Fields ******************************************************************************************************
 		private Thread cyclerThread;
-		// Fields - Settings ***************************************************************************************
+		// Fields - Settings *******************************************************************************************
 		bool	enabled;			// Indicates if settings have been specified for the e-mail queue service to run.
 		string 	mailHost,			// The mail-server host.
 				mailUsername,		// The mail-server username for authentication.
@@ -51,14 +52,14 @@ namespace CMS.Base
 				mailAddress;		// The e-mail address used in e-mails sent by the mail-server.
 		int		mailPort,			// The mail-server port.
 				errors;				// The number of errors occurred whilst sending e-mails.
-		// Methods - Constructors **********************************************************************************
+		// Methods - Constructors **************************************************************************************
 		private EmailQueue()
 		{
 			cyclerThread = null;
 			errors = 0;
 			enabled = false;
 		}
-		// Methods *************************************************************************************************
+		// Methods *****************************************************************************************************
 		/// <summary>
 		/// Adds a new e-mail message to the queue.
 		/// </summary>
@@ -71,7 +72,7 @@ namespace CMS.Base
 		{
 			conn.queryExecute("INSERT INTO cms_email_queue (email, subject, body, html) VALUES('" + SQLUtils.escape(destinationEmail) + "', '" + SQLUtils.escape(subject) + "', '" + SQLUtils.escape(body) + "', '" + (html ? "1" : "0") + "');");
 		}
-		// Methods - Threading and Cycling *************************************************************************
+		// Methods - Threading and Cycling *****************************************************************************
 		private void cycler()
 		{
 			// Setup the client for deploying e-mails
@@ -80,8 +81,8 @@ namespace CMS.Base
 			client.Port = mailPort;
 			client.Credentials = new NetworkCredential(mailUsername, mailPassword);
 			// Prepare the query for polling the database
-			int messageThroughPut = Core.SettingsDisk["settings/mail/message_throughput"].Value.Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_throughput"].Value) : 5;
-			int messagePollDelay = Core.SettingsDisk["settings/mail/message_poll_delay"].Value.Length > 0 ? int.Parse(Core.SettingsDisk["settings/mail/message_poll_delay"].Value) : 100;
+			int messageThroughPut = Core.SettingsDisk["settings/mail/message_throughput"].get<int>();
+			int messagePollDelay = Core.SettingsDisk["settings/mail/message_poll_delay"].get<int>();
             if (messagePollDelay < 0 || messageThroughPut < 1)
             {
                 stop();
@@ -163,7 +164,7 @@ namespace CMS.Base
 				cyclerThread = null;
 			}
 		}
-		// Methods - Static ****************************************************************************************
+		// Methods - Static ********************************************************************************************
 		/// <summary>
 		/// Creates a new instance of a configured and operational e-mail queue.
 		/// </summary>
@@ -171,11 +172,11 @@ namespace CMS.Base
 		{
 			EmailQueue queue = new EmailQueue();
 			// Load configuration
-            queue.mailHost = Core.SettingsDisk["settings/mail/host"].Value;
-			queue.mailPort = int.Parse(Core.SettingsDisk["settings/mail/port"].Value);
-			queue.mailUsername = Core.SettingsDisk["settings/mail/user"].Value;
-			queue.mailPassword = Core.SettingsDisk["settings/mail/pass"].Value;
-			queue.mailAddress = Core.SettingsDisk["settings/mail/email"].Value;
+            queue.mailHost = Core.SettingsDisk["settings/mail/host"].get<string>();
+			queue.mailPort = Core.SettingsDisk["settings/mail/port"].get<int>();
+			queue.mailUsername = Core.SettingsDisk["settings/mail/user"].get<string>();
+			queue.mailPassword = Core.SettingsDisk["settings/mail/pass"].get<string>();
+			queue.mailAddress = Core.SettingsDisk["settings/mail/email"].get<string>();
 			if(queue.mailHost.Length != 0 && queue.mailUsername.Length != 0 && queue.mailAddress.Length != 0)
 			{
 				queue.enabled = true;

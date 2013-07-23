@@ -24,6 +24,7 @@
  *                                      Fixed critical URL reservation uninstall bug.
  *                                      Added generateRandomString method.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
+ *                      2013-07-23      Changed executeSQL parameters and return-type from CMS v1 to v2 format.
  * 
  * *********************************************************************************************************************
  * A utility class of commonly used code.
@@ -51,12 +52,15 @@ namespace CMS.Base
         /// <param name="path">The path of the file to execute.</param>
         /// <param name="conn">The connector on-which to execute the file's data/SQL.</param>
         /// <returns></returns>
-        public static string executeSQL(string path, Connector conn)
+        public static bool executeSQL(string path, Connector conn, ref StringBuilder messageOutput)
         {
             try
             {
                 if (!File.Exists(path))
-                    throw new Exception("SQL script '" + path + "' could not be found!");
+                {
+                    messageOutput.Append("SQL script '").Append(path).AppendLine("' could not be found!");
+                    return false;
+                }
                 else
                 {
                     StringBuilder statements = new StringBuilder();
@@ -73,12 +77,13 @@ namespace CMS.Base
                     }
                     // Execute the statements
                     conn.queryExecute(statements.ToString());
-                    return null;
+                    return true;
                 }
             }
             catch (Exception ex)
             {
-                return "Failed to execute SQL file '" + path + "' - " + ex.Message + " - " + ex.GetBaseException().Message + "!";
+                messageOutput.Append("Failed to execute SQL file '").Append(path).Append("' - ").Append(ex.Message).Append(" - ").Append(ex.GetBaseException().Message).AppendLine("!");
+                return false;
             }
         }
         /// <summary>

@@ -94,7 +94,14 @@ public partial class _Default : System.Web.UI.Page
                     }
                     // Set an error message if the page has still not been handled
                     if (!handled)
-                        data["Content"] = "Page could not be found; no handler could serve the request!";
+                    {
+#if DEBUG
+                        data["Content"] = "<h2>Page Not Found</h2><p>Page could not be found; no handler could serve the request!</p><h3>Debug Information</h3><p>Full-path: '" + data.PathInfo.FullPath + "'<br />Module Handler: '" + data.PathInfo.ModuleHandler + "'</p>";
+#else
+                        data["Content"] = "<h2>Page Not Found</h2><p>Page could not be found; no handler could serve the request!</p>";
+#endif
+                        Response.StatusCode = 404;
+                    }
                 }
                 // Invoke request-end handlers
                 foreach (Plugin p in Core.Plugins.HandlerCache_RequestEnd)
@@ -103,7 +110,13 @@ public partial class _Default : System.Web.UI.Page
             }
             catch (Exception ex)
             {
-                Core.Plugins.handlePageError(data, ex);
+                if (Core.Plugins != null)
+                    Core.Plugins.handlePageError(data, ex);
+                else
+                {
+                    Response.Write("Core failure occurred during request; refresh for message.");
+                    Response.End();
+                }
             }
             // Check if to specify page
             if(!data.isKeySet("page"))

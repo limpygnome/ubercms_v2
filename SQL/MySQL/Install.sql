@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS cms_plugins
 CREATE TABLE IF NOT EXISTS cms_plugin_handlers
 (
 	uuid CHAR(16) PRIMARY KEY,
+	FOREIGN KEY(`uuid`) REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	request_start VARCHAR(1) DEFAULT 0,
 	request_end VARCHAR(1) DEFAULT 0,
 	page_error VARCHAR(1) DEFAULT 0,
@@ -35,6 +36,7 @@ CREATE TABLE IF NOT EXISTS cms_settings
 	path VARCHAR(128) PRIMARY KEY,
 	uuid CHAR(16),
 	FOREIGN KEY(`uuid`) REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	type VARCHAR(1) NOT NULL,
 	value TEXT,
 	description TEXT
 );
@@ -77,10 +79,10 @@ CREATE TABLE IF NOT EXISTS cms_email_queue
 );
 -- Create views
 CREATE OR REPLACE VIEW cms_view_plugins_loadinfo AS
-	SELECT HEX(p.uuid) AS uuid, p.title, p.directory, p.classpath, p.priority, p.state, ph.request_start, ph.request_end, ph.page_error, ph.page_not_found, ph.cms_start, ph.cms_end, ph.cms_plugin_action, ph.cycle_interval FROM cms_plugins AS p LEFT OUTER JOIN cms_plugin_handlers AS ph ON ph.uuid=p.uuid ORDER BY p.priority DESC;
+	SELECT HEX(p.uuid) AS uuid, p.uuid AS uuid_raw, p.title, p.directory, p.classpath, p.priority, p.state, ph.request_start, ph.request_end, ph.page_error, ph.page_not_found, ph.cms_start, ph.cms_end, ph.cms_plugin_action, ph.cycle_interval FROM cms_plugins AS p LEFT OUTER JOIN cms_plugin_handlers AS ph ON ph.uuid=p.uuid ORDER BY p.priority DESC;
 
 CREATE OR REPLACE VIEW cms_view_settings_load AS
-	SELECT path, HEX(uuid) AS uuid, value, description FROM cms_settings;
+	SELECT path, HEX(uuid) AS uuid, type, value, description FROM cms_settings;
 
 -- Insert core settings
 INSERT INTO cms_settings (path, uuid, value, description) VALUES('core/default_handler', NULL, 'home', 'The default module-handler for the home-page/an empty request path.');

@@ -1,19 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[package_developer/home_item]]></path><description><![CDATA[An item/plugin on the home-page.]]></description><html><![CDATA[	<tr>
-		<td>%PLUGINID%</td>
+		<td>%UUID%</td>
 		<td>%TITLE%</td>
 		<td>%STATE%</td>
 		<td>%VERSION%</td>
 		<td>
-			<a class="BUTTON" href="/package_developer/sync/%PLUGINID%">Sync Files</a>
-			<a class="BUTTON" href="/package_developer/package/%PLUGINID%">Package ZIP</a>
-			<a class="BUTTON" href="/package_developer/dump/%PLUGINID%">Dump Templates</a>
-			<a class="BUTTON" href="/package_developer/upload/%PLUGINID%">Upload  Templates</a>
-			<a class="BUTTON" href="/package_developer/install/%PLUGINID%">Install</a>
-			<a class="BUTTON" href="/package_developer/uninstall/%PLUGINID%">Uninstall</a>
-			<a class="BUTTON" href="/package_developer/remove/%PLUGINID%">Remove</a>
-			<a class="BUTTON" href="/package_developer/enable/%PLUGINID%">Enable</a>
-			<a class="BUTTON" href="/package_developer/disable/%PLUGINID%">Disable</a>
-			<a class="BUTTON" href="/package_developer/unload/%PLUGINID%">Unload</a>
+			<a class="BUTTON" href="/package_developer/sync/%UUID%">Sync Files</a>
+			<a class="BUTTON" href="/package_developer/package/%UUID%">Package ZIP</a>
+			<a class="BUTTON" href="/package_developer/dump/%UUID%">Dump Templates</a>
+			<a class="BUTTON" href="/package_developer/upload/%UUID%">Upload  Templates</a>
+			<a class="BUTTON" href="/package_developer/install/%UUID%">Install</a>
+			<a class="BUTTON" href="/package_developer/uninstall/%UUID%">Uninstall</a>
+			<a class="BUTTON" href="/package_developer/remove/%UUID%">Remove</a>
+			<a class="BUTTON" href="/package_developer/enable/%UUID%">Enable</a>
+			<a class="BUTTON" href="/package_developer/disable/%UUID%">Disable</a>
+			<a class="BUTTON" href="/package_developer/unload/%UUID%">Unload</a>
 		</td>
 	</tr>
 ]]></html></template>

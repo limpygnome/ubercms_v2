@@ -21,7 +21,8 @@
  *                      2013-07-06      Created initial class.
  * 
  * *********************************************************************************************************************
- * A model to represent a user of the basic site authentication plugin.
+ * A model to represent a user of the basic site authentication plugin. Modifying the settings of a user can be dirty,
+ * with the data validated by the save method.
  * *********************************************************************************************************************
  */
 using System;
@@ -34,10 +35,28 @@ namespace CMS
     namespace BasicSiteAuth
     {
         /// <summary>
-        /// A model to represent a user of the basic site authentication plugin.
+        /// A model to represent a user of the basic site authentication plugin. Modifying the settings of a user
+        /// can be dirty, with the data validated by the save method.
         /// </summary>
         public class User
         {
+            // Enums ***************************************************************************************************
+            /// <summary>
+            /// The status of saving a user.
+            /// </summary>
+            public enum UserCreateSaveStatus
+            {
+                Success = 0,
+                InvalidUsername_Length = 100,
+                InvalidUsername_AlreadyExists = 101,
+                InvalidPassword_Length = 200,
+                InvalidEmail_Length = 300,
+                InvalidEmail_Format = 301,
+                InvalidSecretQuestion_Length = 400,
+                InvalidSecretAnswer_Length = 500,
+                InvalidUserGroup = 600,
+                Error_Regisration = 900
+            };
             // Fields **************************************************************************************************
             int         userID;             // The identifier of the user.
             string      username,           // The username of the user.
@@ -46,10 +65,11 @@ namespace CMS
                         secretQuestion,     // Account recovery: secret question.
                         secretAnswer;       // Account recovery: secret answer.
             UserGroup   userGroup;          // The user's role/group.
+            DateTime    registered;         // The date and time of when the user registered.
             bool        loaded,             // Indicates if this instance has been loaded (true) or is a new user and does not exist (false).
                         modified;           // Indicates if the data has been modified.
             // Methods - Constructors **********************************************************************************
-            private User()
+            public User()
             {
                 modified = loaded = false;
             }
@@ -89,16 +109,34 @@ namespace CMS
                 usr.secretQuestion = data["secret_question"];
                 usr.secretAnswer = data["secret_answer"];
                 usr.userGroup = ug;
+                usr.registered = data.get2<DateTime>("datetime_register");
                 return usr;
             }
             /// <summary>
             /// Persists the user's data to the database.
             /// </summary>
             /// <param name="conn">Database connector.</param>
-            public void save(Connector conn)
+            /// <returns>The state from attempting to persist the user.</returns>
+            public UserCreateSaveStatus save(BasicSiteAuth bsa, Connector conn)
             {
                 lock(this)
                 {
+                    // Validate the data
+                    if (username.Length < Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MIN].get<int>() || username.Length > Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MAX].get<int>())
+                        return UserCreateSaveStatus.InvalidUsername_Length;
+                    else if (password.Length < Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() || password.Length > Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>())
+                        return UserCreateSaveStatus.InvalidPassword_Length;
+                    else if (email.Length < Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MIN].get<int>() || email.Length > Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MAX].get<int>())
+                        return UserCreateSaveStatus.InvalidEmail_Length;
+                    else if (secretQuestion.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() || secretQuestion.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MAX].get<int>())
+                        return UserCreateSaveStatus.InvalidSecretQuestion_Length;
+                    else if (secretAnswer.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MIN].get<int>() || secretAnswer.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MAX].get<int>())
+                        return UserCreateSaveStatus.InvalidSecretAnswer_Length;
+                    else if (userGroup == null || !bsa.UserGroups.contains(userGroup))
+                        return UserCreateSaveStatus.InvalidUserGroup;
+                    else if (!BSAUtils.validEmail(email))
+                        return UserCreateSaveStatus.InvalidEmail_Format;
+                    // Persist the data
                     SQLCompiler sql = new SQLCompiler();
                     sql["username"] = username;
                     sql["password"] = password;
@@ -106,11 +144,14 @@ namespace CMS
                     sql["secret_question"] = secretQuestion;
                     sql["secret_answer"] = secretAnswer;
                     sql["groupid"] = userGroup.GroupID.ToString();
+                    sql["datetime_register"] = registered.ToString("YYYY-MM-dd HH:mm:ss");
                     if(loaded)
                         conn.queryExecute(sql.compileUpdate("bsa_users", "userid='" + SQLUtils.escape(userID.ToString()) + "'"));
                     else
                         userID = int.Parse(conn.queryScalar(sql.compileInsert("bsa_users", "userid")).ToString());
+                    // Success! Reset flags and return status
                     modified = false;
+                    return UserCreateSaveStatus.Success;
                 }
             }
             // Methods - Properties ************************************************************************************

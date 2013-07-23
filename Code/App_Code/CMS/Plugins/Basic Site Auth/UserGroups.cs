@@ -19,6 +19,7 @@
  * 
  *      Change-Log:
  *                      2013-07-07      Created initial class.
+ *                      2013-07-23      Changed way user-groups are added, added contains method.
  * 
  * *********************************************************************************************************************
  * A data-structure for managing the collection of user-groups for the basic site authentication plugin.
@@ -34,24 +35,30 @@ namespace CMS.BasicSiteAuth
 {
     public class UserGroups
     {
-        // Fields
-        private Dictionary<int, UserGroup> groups;     // Cached list of user-groups.
-        // Methods - Constructors.
+        // Fields ******************************************************************************************************
+        private BasicSiteAuth bsa;                      // The parent BSA plugin.
+        private Dictionary<int, UserGroup> groups;      // Cached list of user-groups.
+        // Methods - Constructors **************************************************************************************
         private UserGroups()
         {
             groups = new Dictionary<int, UserGroup>();
         }
-        // Methods
+        // Methods *****************************************************************************************************
         /// <summary>
         /// Adds a new user-group; note: the specified group-id will be ignored!
         /// </summary>
         /// <param name="ug">The user-group to be added.</param>
-        public void add(UserGroup ug)
+        /// <returns>True if successful, false if failed.</returns>
+        public bool add(UserGroup ug)
         {
             lock (this)
             {
-                ug.save(Core.Connector, true);
+                if (!ug.IsSaved)
+                    return false;
+                else if (groups.ContainsKey(ug.GroupID))
+                    return false;
                 groups.Add(ug.GroupID, ug);
+                return true;
             }
         }
         /// <summary>
@@ -66,6 +73,15 @@ namespace CMS.BasicSiteAuth
                 if (groups.ContainsKey(ug.GroupID))
                     groups.Remove(ug.GroupID);
             }
+        }
+        /// <summary>
+        /// Checks if the group, based on the group ID, exists.
+        /// </summary>
+        /// <param name="ug">The user group to check.</param>
+        /// <returns>True = user-group is within the collection, false = the user group is not in the collection.</returns>
+        public bool contains(UserGroup ug)
+        {
+            return groups.ContainsKey(ug.GroupID);
         }
         /// <summary>
         /// Reloads the collection of user-groups from the database.
@@ -85,7 +101,7 @@ namespace CMS.BasicSiteAuth
                 }
             }
         }
-        // Methods - Static
+        // Methods - Static ********************************************************************************************
         /// <summary>
         /// Loads a new instance of the user-groups collection.
         /// </summary>
@@ -97,7 +113,7 @@ namespace CMS.BasicSiteAuth
             ugs.reload(conn);
             return ugs;
         }
-        // Methods - Properties
+        // Methods - Properties ****************************************************************************************
         /// <summary>
         /// Fetch a user-group based on its identifier/groupid.
         /// </summary>

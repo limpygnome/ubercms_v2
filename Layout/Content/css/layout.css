@@ -3,6 +3,26 @@
 {
     clear: both;
 }
+.tal
+{
+	text-align: left;
+}
+.tar
+{
+	text-align: right;
+}
+.tac
+{
+	text-align: center;
+}
+.fl
+{
+	float: left;
+}
+.fr
+{
+	float: right;
+}
 /* Layout */
 body
 {
@@ -190,7 +210,7 @@ body
 {
 	color: #06C;
 }
-/* Data Table */
+/* Table - Data */
 .AREA_CONTENT table
 {
 	border: solid 0.1em #333;
@@ -213,7 +233,7 @@ body
 	background: #06C;
 	color: #FFF;
 }
-/* Layout Table */
+/* Table - Layout */
 .TABLE
 {
     display: block;
@@ -254,36 +274,53 @@ body
 {
 	font-size: small;
 }
-.TABLE input[type=text], .TABLE input[type=submit], .BUTTON
+.TABLE input[type=text], .TABLE input[type=password], .TABLE input[type=submit], .BUTTON, .TEXTBOX
 {
 	padding: 0.25em 0.5em;
 	border-radius: 0.25em;
 }
-.TABLE input[type=text]
+.TABLE input[type=text], .TABLE input[type=password], .TEXTBOX
 {
 	border: solid 0.1em #333;
 	background: #CCC;
 	box-shadow: inset 0em 0em 0.5em #666, 0em 0em 0.5em #CCC;
 	padding: 0.25em 0.5em;
 }
-.TABLE input[type=text]:hover, .TABLE input[type=text]:focus
+.TABLE input[type=text]:hover, .TABLE input[type=text]:focus, .TABLE input[type=password]:hover, .TABLE input[type=password]:focus, .TEXTBOX:hover, .TEXTBOX:focus
 {
 	background: #999;
 }
 .TABLE input[type=submit], .BUTTON
 {
+	display: inline-block;
 	background: #333;
 	border: none;
 	color: #FFF !important;
 	box-shadow: 0em 0em 0.3em #333;
 	text-decoration: none;
-	margin: 0em 0.25em 0em 0em;
-	padding: 0.25em 0.5em;
-	height: 2em; line-height: 2em;
+	margin-bottom: 0.25em;
+	font: inherit;
 }
 .TABLE input[type=submit]:hover, .TABLE input[type=submit]:focus, .BUTTON:hover, .BUTTON:focus
 {
 	background: #CCC;
 	color: #333 !important;
 	cursor: pointer;
+}
+/* Error Box */
+.ERROR, .SUCCESS
+{
+	padding: 0.5em;
+}
+.ERROR
+{
+	font-weight: bold;
+	background: pink;
+	border: solid 0.2em red;
+}
+.SUCCESS
+{
+	background: lightgreen;
+	border: solid 0.2em darkgreen;
+	color: darkgreen;
 }

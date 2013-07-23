@@ -35,7 +35,7 @@ namespace CMS.BasicSiteAuth
         /// <param name="conn">Database connector.</param>
         /// <param name="user">The user of the bans.</param>
         /// <returns>An array of all the bans belonging to a user.</returns>
-        public UserBan[] loadByUser(Connector conn, User user)
+        public static UserBan[] loadByUser(Connector conn, User user)
         {
             List<UserBan> bans = new List<UserBan>();
             UserBan ub;
@@ -53,7 +53,7 @@ namespace CMS.BasicSiteAuth
         /// <param name="conn">Database connector.</param>
         /// <param name="banid">Ban identifier.</param>
         /// <returns>Returns the model for the ban or returns null.</returns>
-        public UserBan load(Connector conn, int banid)
+        public static UserBan load(Connector conn, int banid)
         {
             Result data = conn.queryRead("SELECT * FROM bsa_user_bans WHERE banid='" + SQLUtils.escape(banid.ToString()) + "';");
             if (data.Count == 1)
@@ -66,7 +66,7 @@ namespace CMS.BasicSiteAuth
         /// </summary>
         /// <param name="row">Database row.</param>
         /// <returns>Returns the model for the ban or returns null.</returns>
-        public UserBan load(ResultRow row)
+        public static UserBan load(ResultRow row)
         {
             UserBan ub = new UserBan();
             ub.banid = row.get2<int>("banid");
@@ -86,8 +86,8 @@ namespace CMS.BasicSiteAuth
             SQLCompiler compiler = new SQLCompiler();
             compiler["banned_by"] = bannedBy.ToString();
             compiler["reason"] = reason;
-            compiler["datetime_start"] = datetimeStart.ToString();
-            compiler["datetime_end"] = datetimeEnd.ToString();
+            compiler["datetime_start"] = datetimeStart.ToString("YYYY-MM-dd HH:mm:ss");
+            compiler["datetime_end"] = datetimeEnd.ToString("YYYY-MM-dd HH:mm:ss");
             compiler["userid"] = userid.ToString();
             if (banid < 0)
                 conn.queryExecute("INSERT INTO bsa_user_bans (userid, reason, datetime_start, datetime_end, banned_by) VALUES('" + SQLUtils.escape(userid.ToString()) + "', '" + SQLUtils.escape(reason) + "', '" + SQLUtils.escape(datetimeStart.ToString()) + "', '" + SQLUtils.escape(datetimeEnd.ToString()) + "', " + (bannedBy < 0 ? "NULL" : "'" + SQLUtils.escape(bannedBy.ToString()) + "'") + ");");

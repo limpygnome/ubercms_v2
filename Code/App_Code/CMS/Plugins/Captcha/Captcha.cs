@@ -19,6 +19,7 @@
  * 
  *      Change-Log:
  *                      2013-07-06      Created initial class.
+ *                      2013-07-23      Updated the way settings are handled.
  * 
  * *********************************************************************************************************************
  * A custom captcha plugin for verifying a human user, as protection against automated/machine requests.
@@ -33,24 +34,35 @@ namespace CMS.Plugins
 {
     public class Captcha : Plugin
     {
-        // Constants - Settings
-        public const string SETTING_RANDOM_TEXT_MIN = "captcah_random_text_min";
-        public const int SETTINGS_DEFAULT_RANDOM_TEXT_MIN = 5;
-        public const string SETTING_RANDOM_TEXT_MAX = "captcha_random_text_max";
-        public const int SETTINGS_DEFAULT_RANDOM_TEXT_MAX = 10;
+        // Constants - Settings ****************************************************************************************
+        public const string SETTINGS_RANDOM_TEXT_MIN = "captcah_random_text_min";
+        public const string SETTINGS_RANDOM_TEXT_MIN__DESCRIPTION = "The minimum number of random characters to generate.";
+        public const int SETTINGS_RANDOM_TEXT_MIN__DEFAULT = 5;
+
+        public const string SETTINGS_RANDOM_TEXT_MAX = "captcha_random_text_max";
+        public const string SETTINGS_RANDOM_TEXT_MAX__DESCRIPTION = "The maximum number of random characters to generate.";
+        public const int SETTINGS_RANDOM_TEXT_MAX__DEFAULT = 10;
+
         public const string SETTINGS_WIDTH = "captcha_width";
-        public const int SETTINGS_DEFAULT_WIDTH = 160;
+        public const string SETTINGS_WIDTH__DESCRIPTION = "The width of the captcha image.";
+        public const int SETTINGS_WIDTH__DEFAULT = 160;
+
         public const string SETTINGS_HEIGHT = "captcha_height";
-        public const int SETTINGS_DEFAULT_HEIGHT = 70;
+        public const string SETTINGS_HEIGHT__DESCRIPTION = "The height of the captcha image.";
+        public const int SETTINGS_HEIGHT__DEFAULT = 70;
+
         public const string SETTINGS_FONT_SIZE_MIN = "captcha_font_size_min";
-        public const int SETTINGS_DEFAULT_FONT_SIZE_MIN = 20;
+        public const string SETTINGS_FONT_SIZE_MIN__DESCRIPTION = "he minimum font-size of the captcha text.";
+        public const int SETTINGS_FONT_SIZE_MIN__DEFAULT = 20;
+
         public const string SETTINGS_FONT_SIZE_MAX = "captcha_font_size_max";
-        public const int SETTINGS_DEFAULT_FONT_SIZE_MAX = 24;
-        // Methods - Constructors
+        public const string SETTINGS_FONT_SIZE_MAX__DESCRIPTION = "The maximum font-size of the captcha text.";
+        public const int SETTINGS_FONT_SIZE_MAX__DEFAULT = 24;
+        // Methods - Constructors **************************************************************************************
         public Captcha(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
             : base(uuid, title, directory, state, handlerInfo)
         { }
-        // Methods - Handlers
+        // Methods - Handlers ******************************************************************************************
         public override bool handler_handleRequest(Data data)
         {
             switch (data.PathInfo.ModuleHandler)
@@ -64,12 +76,12 @@ namespace CMS.Plugins
         public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Install settings
-            Core.Settings.updateOrAdd(UUID, SETTING_RANDOM_TEXT_MIN, "The minimum number of random characters to generate.", SETTINGS_DEFAULT_RANDOM_TEXT_MIN.ToString(), false, false);
-            Core.Settings.updateOrAdd(UUID, SETTING_RANDOM_TEXT_MAX, "The maximum number of random characters to generate.", SETTINGS_DEFAULT_RANDOM_TEXT_MIN.ToString(), false, false);
-            Core.Settings.updateOrAdd(UUID, SETTINGS_WIDTH, "The width of the captcha image.", SETTINGS_DEFAULT_WIDTH.ToString(), false, false);
-            Core.Settings.updateOrAdd(UUID, SETTINGS_HEIGHT, "The height of the captcha image.", SETTINGS_DEFAULT_HEIGHT.ToString(), false, false);
-            Core.Settings.updateOrAdd(UUID, SETTINGS_FONT_SIZE_MIN, "The minimum font-size of the captcha text.", SETTINGS_DEFAULT_FONT_SIZE_MIN.ToString(), false, false);
-            Core.Settings.updateOrAdd(UUID, SETTINGS_FONT_SIZE_MAX, "The maximum font-size of the captcha text.", SETTINGS_DEFAULT_FONT_SIZE_MAX.ToString(), false, false);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_RANDOM_TEXT_MIN, SETTINGS_RANDOM_TEXT_MIN__DESCRIPTION, SETTINGS_RANDOM_TEXT_MIN__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_RANDOM_TEXT_MAX, SETTINGS_RANDOM_TEXT_MAX__DESCRIPTION, SETTINGS_RANDOM_TEXT_MAX__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_WIDTH, SETTINGS_WIDTH__DESCRIPTION, SETTINGS_WIDTH__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_HEIGHT, SETTINGS_HEIGHT__DESCRIPTION, SETTINGS_HEIGHT__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_FONT_SIZE_MIN, SETTINGS_FONT_SIZE_MIN__DESCRIPTION, SETTINGS_FONT_SIZE_MIN__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_FONT_SIZE_MAX, SETTINGS_FONT_SIZE_MAX__DESCRIPTION, SETTINGS_FONT_SIZE_MAX__DEFAULT);
             Core.Settings.save(conn);
             return true;
         }
@@ -119,15 +131,15 @@ namespace CMS.Plugins
             Random rand = new Random((int)DateTime.Now.ToBinary());
             string text;
             {
-                int chars = rand.Next(Core.Settings.getInteger(SETTING_RANDOM_TEXT_MIN), Core.Settings.getInteger(SETTING_RANDOM_TEXT_MAX));
+                int chars = rand.Next(Core.Settings[SETTINGS_RANDOM_TEXT_MIN].get<int>(), Core.Settings[SETTINGS_RANDOM_TEXT_MAX].get<int>());
                 text = BaseUtils.generateRandomString(chars);
             }
             // Setup render parameters
-            int width = Core.Settings.getInteger(SETTINGS_WIDTH);
-            int height = Core.Settings.getInteger(SETTINGS_HEIGHT);
+            int width = Core.Settings[SETTINGS_WIDTH].get<int>();
+            int height = Core.Settings[SETTINGS_HEIGHT].get<int>();
             int strikesA = rand.Next(15, 35);
             int strikesB = rand.Next(15, 35);
-            Font font = new Font(captchaFonts[rand.Next(captchaFonts.Length - 1)], (float)rand.Next(Core.Settings.getInteger(SETTINGS_FONT_SIZE_MIN), Core.Settings.getInteger(SETTINGS_FONT_SIZE_MAX)), FontStyle.Regular, GraphicsUnit.Pixel);
+            Font font = new Font(captchaFonts[rand.Next(captchaFonts.Length - 1)], (float)rand.Next(Core.Settings[SETTINGS_FONT_SIZE_MIN].get<int>(), Core.Settings[SETTINGS_FONT_SIZE_MAX].get<int>()), FontStyle.Regular, GraphicsUnit.Pixel);
             // Begin rendering
             Bitmap temp = new Bitmap(width, height);
             Graphics gi = Graphics.FromImage(temp);

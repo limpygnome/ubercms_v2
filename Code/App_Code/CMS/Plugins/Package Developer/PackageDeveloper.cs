@@ -45,6 +45,9 @@ namespace CMS.Plugins
     /// </summary>
     public class PackageDeveloper : Plugin
     {
+        // Constants ***************************************************************************************************
+        private const string ERROR_BOX_VARIDENT = "PackageDeveloperError";
+        private const string SUCCESS_BOX_VARIDENT = "PackageDeveloperSuccess";
         public PackageDeveloper(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
             : base(uuid, title, directory, state, handlerInfo)
         { }
@@ -58,8 +61,6 @@ namespace CMS.Plugins
         }
         public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
-            // Install content
-            BaseUtils.contentInstall(PathContent, Core.PathContent, false, ref messageOutput);
             // Install templates
             Core.Templates.install(conn, this, PathTemplates, ref messageOutput);
             // Install URL rewriting paths
@@ -68,8 +69,6 @@ namespace CMS.Plugins
         }
         public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
-            // Remove content
-            BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput);
             // Remove templates
             Core.Templates.uninstall(this, ref messageOutput);
             // Remove URL rewriting paths
@@ -107,6 +106,20 @@ namespace CMS.Plugins
         public bool pageHome(Data data)
         {
             data["Title"] = "Package Developer - Home";
+            // Check postback
+            string relativePath = data.Request.Form["relative_path"];
+            if (relativePath != null && relativePath.Length > 0)
+            {
+                if(!Directory.Exists(Core.BasePath + "/" + relativePath))
+                    data[ERROR_BOX_VARIDENT] = "The path '" + Core.BasePath + "/" + relativePath + "' does not exist!";
+                else
+                {
+                    StringBuilder messageOutput = new StringBuilder();
+                    data[Core.Plugins.createFromDirectory(Core.BasePath + "/" + relativePath, ref messageOutput) ? SUCCESS_BOX_VARIDENT : ERROR_BOX_VARIDENT] = messageOutput.Length == 0 ? "No output from the operation." : HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />");
+                }
+            }
+            else
+                relativePath = "App_Code/CMS/Plugins/";
             // Generate list of plugins and options
             string item = Core.Templates.get(data.Connector, "package_developer/home_item");
             StringBuilder plugins = new StringBuilder();
@@ -119,7 +132,7 @@ namespace CMS.Plugins
                     .Replace("%TITLE%", HttpUtility.HtmlEncode(plugin.Title))
                     );
             }
-            data["Content"] = Core.Templates.get(data.Connector, "package_developer/home").Replace("%PLUGINS%", plugins.ToString());
+            data["Content"] = Core.Templates.get(data.Connector, "package_developer/home").Replace("%BASE_PATH%", HttpUtility.HtmlEncode(Core.BasePath)).Replace("%RELATIVE_PATH%", HttpUtility.HtmlEncode(relativePath)).Replace("%PLUGINS%", plugins.ToString());
             return true;
         }
         public bool pageSync(Data data)
@@ -304,7 +317,7 @@ namespace CMS.Plugins
                     Core.Plugins.remove(plugin, false, ref output);
                     break;
                 case "unload":
-                    Core.Plugins.unload(plugin);
+                    Core.Plugins.pluginUnload(plugin);
                     output.Append("Unloaded plugin '").Append(plugin.Title).Append("' (UUID: '").Append(plugin.UUID.HexHyphens).AppendLine("') from virtual runtime!");
                     break;
                 default:

@@ -127,17 +127,20 @@ namespace CMS.BasicSiteAuth
         /// <summary>
         /// Persists the data to the database.
         /// </summary>
+        /// <param name="bsa">BSA plugin.</param>
         /// <param name="conn">Database connector.</param>
-        public void save(Connector conn)
+        public void save(BasicSiteAuth bsa, Connector conn)
         {
-            save(conn, false);
+            save(bsa, conn, false);
         }
         /// <summary>
-        /// Persists the data to the database.
+        /// Persists the data to the database. If the user-group is new, it will be automatically added to the
+        /// user-groups model in the BSA plugin.
         /// </summary>
+        /// <param name="bsa">BSA plugin.</param>
         /// <param name="conn">Database connector.</param>
         /// <param name="forceInsert">Indicates if the data should be inserted, regardless of the data already existing.</param>
-        public void save(Connector conn, bool forceInsert)
+        public void save(BasicSiteAuth bsa, Connector conn, bool forceInsert)
         {
             lock(this)
             {
@@ -171,7 +174,10 @@ namespace CMS.BasicSiteAuth
                 if (!forceInsert && loaded)
                     conn.queryExecute(sql.compileUpdate("bsa_user_groups", "groupid='" + SQLUtils.escape(groupID.ToString()) + "'"));
                 else
+                {
                     groupID = int.Parse(conn.queryScalar(sql.compileInsert("bsa_user_groups", "groupid")).ToString());
+                    bsa.UserGroups.add(this);
+                }
                 modified = false;
             }
         }
@@ -507,6 +513,21 @@ namespace CMS.BasicSiteAuth
             get
             {
                 return login;
+            }
+            set
+            {
+                modified = true;
+                login = value;
+            }
+        }
+        /// <summary>
+        /// Indicates if this user-group is persisted on the database.
+        /// </summary>
+        public bool IsSaved
+        {
+            get
+            {
+                return loaded;
             }
         }
     }

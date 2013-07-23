@@ -1,4 +1,30 @@
-﻿using System;
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ * 
+ *      Path:           /App_Code/CMS/Base/UUID.cs
+ * 
+ *      Change-Log:
+ *                      2013-07-21      Created initial class.
+ * 
+ * *********************************************************************************************************************
+ * A model for representing a universally unique identifier, following the RFC 4122 standard:
+ * http://tools.ietf.org/html/rfc4122
+ * *********************************************************************************************************************
+ */
+using System;
 
 namespace CMS.Base
 {
@@ -14,13 +40,18 @@ namespace CMS.Base
         // Methods - Constructors **************************************************************************************
         private UUID(string hex)
         {
-            this.hex = hex;
-            this.hashcode = int.Parse(hex.Substring(0, 8), System.Globalization.NumberStyles.HexNumber);
+            this.hex = hex.ToUpper();
+            this.hashcode = int.Parse(hex.Substring(0, 7), System.Globalization.NumberStyles.HexNumber);
         }
         // Methods *****************************************************************************************************
         public override int GetHashCode()
         {
             return hashcode;
+        }
+        public override bool Equals(object obj)
+        {
+            UUID t = obj as UUID;
+            return t != null && t.hashcode == hashcode && t.hex == hex;
         }
         // Methods - Factory Creators **********************************************************************************
         /// <summary>

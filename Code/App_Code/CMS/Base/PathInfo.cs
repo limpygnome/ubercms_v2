@@ -38,16 +38,16 @@ namespace CMS.Base
 {
 	public class PathInfo
 	{
-		// Fields **************************************************************************************************
+		// Fields ******************************************************************************************************
 		private string 		moduleHandler;          // The top-directory of the request.
 		private string[] 	subDirs;                // Subsequent directories of the request, in order from 0 to n.
 		private string 		fullPath;               // The full rebuilt path of the request (excludes query-string data).
-		// Methods - Constructors **********************************************************************************
+		// Methods - Constructors **************************************************************************************
 		public PathInfo(string pathData)
 		{
 			parse(pathData);
 		}
-		// Methods *************************************************************************************************
+		// Methods *****************************************************************************************************
         /// <summary>
         /// Parses the current request for its request path.
         /// </summary>
@@ -57,7 +57,7 @@ namespace CMS.Base
             // Check against null reference
             if (pathData == null)
             {
-                moduleHandler = Core.SettingsDisk["settings/core/default_handler"].Value;
+                moduleHandler = Core.SettingsDisk["settings/core/default_handler"].get<string>();
                 subDirs = new string[0];
             }
             else
@@ -69,21 +69,21 @@ namespace CMS.Base
                 string[] exp = pathData.Split('/');
                 if (exp.Length > 0)
                 {
-                    int totaltokens = exp[exp.Length - 1].Length > 1 ? exp.Length - 2 : exp.Length - 1; // Tailing slash empty token protection
-                    moduleHandler = exp[0];
-                    subDirs = new string[totaltokens];
-                    for (int i = 1; i <= totaltokens; i++)
+                    int totaltokens = exp.Length == 0 ? 0 : exp[exp.Length - 1].Length > 0 ? exp.Length : exp.Length - 1; // Tailing slash empty token protection
+                    moduleHandler = totaltokens == 0 ? string.Empty : exp[0];
+                    subDirs = new string[totaltokens > 0 ? totaltokens - 1 : 0];
+                    for (int i = 1; i < totaltokens; i++)
                         subDirs[i - 1] = exp[i];
                     // Check against empty paths
                     if (moduleHandler.Length == 0)
                     {
-                        moduleHandler = Core.SettingsDisk["settings/core/default_handler"].Value;
+                        moduleHandler = Core.SettingsDisk["settings/core/default_handler"].get<string>();
                         if(subDirs.Length != 0) // Protection against invalid paths
                             subDirs = new string[0];
                     }
                 }
                 else
-                    moduleHandler = Core.SettingsDisk["settings/core/default_handler"].Value;
+                    moduleHandler = Core.SettingsDisk["settings/core/default_handler"].get<string>();
             }
 			// Build full-path
 			StringBuilder sb = new StringBuilder();
@@ -93,7 +93,7 @@ namespace CMS.Base
 			sb.Remove(sb.Length - 1, 1);
 			fullPath = sb.ToString();
 		}
-		// Methods - Accessors *************************************************************************************
+		// Methods - Accessors *****************************************************************************************
         /// <summary>
         /// Returns debug information about the current path.
         /// </summary>
@@ -111,7 +111,7 @@ namespace CMS.Base
 			sb.Append(" : sub-dir count: '" + subDirs.Length + "'");
 			return sb.ToString();
 		}
-		// Methods - Properties ************************************************************************************
+		// Methods - Properties ****************************************************************************************
         /// <summary>
         /// Gets the directory at the specified index; returns null if the directory cannot be found.
         /// 0 = module handler.

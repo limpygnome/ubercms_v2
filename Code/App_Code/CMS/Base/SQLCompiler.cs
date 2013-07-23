@@ -19,6 +19,7 @@
  *      Change-Log:
  *                      2013-07-07      Created initial class.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
+ *                      2013-07-23      compileInsert method now uses transactions when selecting the max identifier.
  * 
  * *********************************************************************************************************************
  * A class for compiling large SQL statements.
@@ -54,6 +55,8 @@ namespace CMS.Base
         public string compileInsert(string table, string identifierColumn)
         {
             StringBuilder buffer = new StringBuilder();
+            if (identifierColumn != null && identifierColumn.Length > 0)
+                buffer.Append("BEGIN;");
             buffer.Append("INSERT INTO ").Append(table).Append(" (");
             // Add attributes
             foreach (KeyValuePair<string, string> kv in attributes)
@@ -64,7 +67,7 @@ namespace CMS.Base
                 buffer.Append("'").Append(SQLUtils.escape(kv.Value)).Append("',");
             buffer.Remove(buffer.Length - 1, 1).Append(");");
             if (identifierColumn != null && identifierColumn.Length > 0)
-                buffer.Append(" SEELECT MAX(").Append(identifierColumn.ToString()).Append(") FROM ").Append(table).Append(";");
+                buffer.Append(" SEELECT MAX(").Append(identifierColumn.ToString()).Append(") FROM ").Append(table).Append("; END;");
             return buffer.ToString();
         }
         /// <summary>
@@ -88,7 +91,7 @@ namespace CMS.Base
                 buffer.Append(";");
             return buffer.ToString();
         }
-        // Methods - Properties
+        // Methods - Properties ****************************************************************************************
         /// <summary>
         /// Gets/sets an attributes value.
         /// </summary>

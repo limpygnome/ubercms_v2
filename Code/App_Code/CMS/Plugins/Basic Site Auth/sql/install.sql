@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS bsa_users
 	secret_question VARCHAR(64),
 	secret_answer VARCHAR(64),
 	groupid INT NOT NULL,
-	FOREIGN KEY(`groupid`) REFERENCES `bsa_user_groups`(`groupid`) ON UPDATE CASCADE ON DELETE CASCADE
+	FOREIGN KEY(`groupid`) REFERENCES `bsa_user_groups`(`groupid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	datetime_register TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS bsa_user_bans
 (

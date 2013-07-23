@@ -27,6 +27,7 @@
  *                      2013-07-06      Updated temp-path to also be lower-case.
  *                                      Added install paths properties.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
+ *                      2013-07-23      Updated the way settings are handled.
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -42,7 +43,7 @@ namespace CMS.Base
 {
 	public static class Core
 	{
-		// Enums ***************************************************************************************************
+		// Enums *******************************************************************************************************
 		public enum CoreState
 		{
 			Failed,
@@ -55,20 +56,20 @@ namespace CMS.Base
             None,
 			MySQL
 		}
-		// Fields - Runtime ****************************************************************************************
+		// Fields - Runtime ********************************************************************************************
 		private static string				basePath;							// The base path to the CMS on disk.
         private static string               tempPath;                           // The path of the temporary folder, created when the core starts and deleted when the core stops.
 		private static CoreState			currentState = CoreState.Stopped;	// The current state of the core.
 		private static DatabaseType			dbType;								// The type of database connector to create (faster than checking config value each time).
 		private static string 				errorMessage;				        // Used to store the exception message when loading the core (if one occurs).
-		// Fields - Services/Connections/Data **********************************************************************
+		// Fields - Services/Connections/Data **************************************************************************
 		private static Connector			connector;							// The core connector.
 		private static Plugins				plugins;							// Plugin management.
 		private static EmailQueue			emailQueue;							// E-mail queue sending service.
 		private static Templates			templates;							// Template storage and rendering.
 		private static Settings				settingsDisk;						// Disk, read-only, settings.
 		private static Settings				settings;							// The main settings for the CMS, stored in the database.
-		// Methods - starting/stopping *****************************************************************************
+		// Methods - starting/stopping *********************************************************************************
         /// <summary>
         /// Starts the core; this loads objects shared over requests.
         /// </summary>
@@ -108,7 +109,7 @@ namespace CMS.Base
                     else
                     {
                         // Setup connector
-                        switch (settingsDisk["settings/database/provider"].Value)
+                        switch (settingsDisk["settings/database/provider"].get<string>())
                         {
                             case "mysql":
                                 dbType = DatabaseType.MySQL;
@@ -137,7 +138,7 @@ namespace CMS.Base
                                 // Invoke plugin handlers
                                 foreach (Plugin p in plugins.Fetch)
                                     if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.CmsStart && !p.handler_cmsStart(connector))
-                                        plugins.unload(p);
+                                        plugins.pluginUnload(p);
                             }
                         }
                     }
@@ -207,11 +208,11 @@ namespace CMS.Base
 			{
 			case DatabaseType.MySQL:
                 MySQL m = new MySQL();
-                m.SettingsHost = settingsDisk["settings/database/host"].Value;
-                m.SettingsPort = settingsDisk.getInteger("settings/database/port");
-                m.SettingsUser = settingsDisk["settings/database/user"].Value;
-                m.SettingsPass = settingsDisk["settings/database/pass"].Value;
-                m.SettingsDatabase = settingsDisk["settings/database/db"].Value;
+                m.SettingsHost = settingsDisk["settings/database/host"].get<string>();
+                m.SettingsPort = settingsDisk["settings/database/port"].get<int>();
+                m.SettingsUser = settingsDisk["settings/database/user"].get<string>();
+                m.SettingsPass = settingsDisk["settings/database/pass"].get<string>();
+                m.SettingsDatabase = settingsDisk["settings/database/db"].get<string>();
                 m.SettingsConnectionString += "Charset=utf8;";
                 if (persist)
                 {

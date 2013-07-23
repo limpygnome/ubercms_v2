@@ -38,7 +38,10 @@ namespace CMS.Base
     /// </summary>
     public class SettingsNode
     {
-        // Enums ***************************************************************************************************
+        // Enums *******************************************************************************************************
+        /// <summary>
+        /// The state of the node.
+        /// </summary>
         public enum SettingsNodeState
         {
             None,
@@ -47,56 +50,121 @@ namespace CMS.Base
             ModifiedAll,
             Added
         }
-        // Fields **************************************************************************************************
+        /// <summary>
+        /// The type of data of the node.
+        /// </summary>
+        public enum DataType
+        {
+            String = 0,
+            Integer = 1,
+            Float = 2,
+            Double = 3,
+            Bool = 4
+        }
+        // Fields ******************************************************************************************************
         private UUID uuid;                      // The owner (plugin) of the setting.
-        private string value, description;      // The value and description of the setting.
+        private string description;             // The description of the setting.
         private SettingsNodeState state;        // The persisted state of the setting between this and the data-store.
-        // Methods - Constructors **********************************************************************************
+        private object value;                   // The value of the node.
+        private DataType type;                  // The data-type of the node.
+        // Methods - Constructors **************************************************************************************
         /// <summary>
         /// Creates a new unmodified settings node with only a value.
         /// </summary>
-        /// <param name="value"></param>
-        public SettingsNode(string value)
+        /// <param name="type">The type of value specified.</param>
+        /// <param name="value">The string value of the node</param>
+        public SettingsNode(DataType type, string value)
         {
-            this.value = value;
             this.state = SettingsNodeState.None;
+            setup(type, value);
         }
         /// <summary>
         /// Creates a new node with a value and state but no owner.
         /// </summary>
-        /// <param name="value">The value of the node.</param>
+        /// <param name="type">The type of value specified.</param>
+        /// <param name="value">The string value of the node.</param>
         /// <param name="state">The state of the node.</param>
-        public SettingsNode(string value, SettingsNodeState state)
+        public SettingsNode(DataType type, string value, SettingsNodeState state)
         {
             this.state = state;
+            setup(type, value);
         }
         /// <summary>
         /// Creates a new node with an owner, value and description.
         /// </summary>
-        /// <param name="value">The value of the node.</param>
+        /// <param name="type">The type of value specified.</param>
+        /// <param name="value">The string value of the node.</param>
         /// <param name="description">A description of the node.</param>
         /// <param name="uuid">The owner of the node.</param>
-        public SettingsNode(string value, string description, UUID uuid)
+        public SettingsNode(DataType type, string value, string description, UUID uuid)
         {
-            this.value = value;
             this.description = description;
             this.uuid = uuid;
+            setup(type, value);
         }
         /// <summary>
         /// Creates a new node with an owner, description, value and state.
         /// </summary>
-        /// <param name="value">The value of the node.</param>
+        /// <param name="type">The type of value specified.</param>
+        /// <param name="value">The string value of the node.</param>
         /// <param name="description">A description of the node.</param>
         /// <param name="uuid">The owner of the node.</param>
         /// <param name="state">The state of the node.</param>
-        public SettingsNode(string value, string description, UUID uuid, SettingsNodeState state)
+        public SettingsNode(DataType type, string value, string description, UUID uuid, SettingsNodeState state)
         {
-            this.value = value;
             this.description = description;
             this.uuid = uuid;
             this.state = state;
+            setup(type, value);
         }
-        // Methods - Properties ************************************************************************************
+        // Methods *****************************************************************************************************
+        private void setup(DataType type, string value)
+        {
+            this.type = type;
+            switch (type)
+            {
+                case DataType.String:
+                    this.value = value;
+                    break;
+                case DataType.Integer:
+                    this.value = int.Parse(value);
+                    break;
+                case DataType.Float:
+                    this.value = float.Parse(value);
+                    break;
+                case DataType.Double:
+                    this.value = double.Parse(value);
+                    break;
+                case DataType.Bool:
+                    this.value = value == "1";
+                    break;
+            }
+        }
+        // Methods - Static ********************************************************************************************
+        /// <summary>
+        /// Parses the string type into the data-type enum.
+        /// </summary>
+        /// <param name="type">String numeric value of type.</param>
+        /// <returns>The parsed data-type as an enum.</returns>
+        public static DataType parseType(string type)
+        {
+            return (DataType)Enum.Parse(typeof(DataType), type);
+        }
+        // Methods - Accessors *****************************************************************************************
+        /// <summary>
+        /// Fetches the value as a type; there is no type safety, use with caution!
+        /// </summary>
+        /// <typeparam name="T">The type of the object; refer to DataType enum in this class for supported types.</typeparam>
+        /// <returns>The object as the specified type.</returns>
+        public T get<T>()
+        {
+            return (T)value;
+        }
+        public override string ToString()
+        {
+            return value.ToString();
+        }
+        // Methods - Properties ****************************************************************************************
         /// <summary>
         /// The persisted state of this setting between this application and the data-store.
         /// </summary>
@@ -120,7 +188,7 @@ namespace CMS.Base
         /// <summary>
         /// The value of this setting.
         /// </summary>
-        public string Value
+        public object Value
         {
             get
             {
@@ -145,6 +213,19 @@ namespace CMS.Base
             {
                 description = value;
                 state = state == SettingsNodeState.ModifiedValue ? SettingsNodeState.ModifiedAll : SettingsNodeState.ModifiedDescription;
+            }
+        }
+
+        public DataType ValueDataType
+        {
+            get
+            {
+                return type;
+            }
+            set
+            {
+                this.type = value;
+                state = state == SettingsNodeState.ModifiedDescription ? SettingsNodeState.ModifiedAll : SettingsNodeState.ModifiedValue;
             }
         }
     }
