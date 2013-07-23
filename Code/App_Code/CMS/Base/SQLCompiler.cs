@@ -48,6 +48,8 @@ namespace CMS.Base
         // Methods - Compilation
         /// <summary>
         /// Compiles the attributes into an SQL insert statement, terminated with a semi-colon.
+        /// 
+        /// Values are also escaped.
         /// </summary>
         /// <param name="table">The table the values are being inserted into.</param>
         /// <param name="identifierColumn">The identifier column to be returned; this can be null or empty to not be returned.</param>
@@ -72,6 +74,8 @@ namespace CMS.Base
         }
         /// <summary>
         /// Compiles the attributes into an SQL update statement, terminated with a semi-colon.
+        /// 
+        /// Values are also escaped.
         /// </summary>
         /// <param name="table">The table being updated.</param>
         /// <param name="whereClauses">The where-clause part of the query; this is appended between 'WHERE ' and ';'. This can be left null or empty to be ignored.</param>
