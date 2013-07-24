@@ -196,7 +196,7 @@ namespace CMS.Base
 			errorMessage = reason;
 			currentState = CoreState.Failed;
 		}
-		// Methods - Database **************************************************************************************
+		// Methods - Database ******************************************************************************************
         /// <summary>
         /// Creates a database connection.
         /// </summary>
@@ -208,12 +208,12 @@ namespace CMS.Base
 			{
 			case DatabaseType.MySQL:
                 MySQL m = new MySQL();
-                m.SettingsHost = settingsDisk["settings/database/host"].get<string>();
-                m.SettingsPort = settingsDisk["settings/database/port"].get<int>();
-                m.SettingsUser = settingsDisk["settings/database/user"].get<string>();
-                m.SettingsPass = settingsDisk["settings/database/pass"].get<string>();
-                m.SettingsDatabase = settingsDisk["settings/database/db"].get<string>();
-                m.SettingsConnectionString += "Charset=utf8;";
+                m.SettingsHost = DatabaseHost;
+                m.SettingsPort = DatabasePort;
+                m.SettingsUser = DatabaseUser;
+                m.SettingsPass = DatabasePass;
+                m.SettingsDatabase = DatabaseSchema;
+                m.SettingsConnectionString += DatabaseConnectionString;
                 if (persist)
                 {
                     m.SettingsTimeoutConnection = 864000; // 10 days
@@ -225,7 +225,69 @@ namespace CMS.Base
 				throw new Exception("Could not create connector, core failure!");
 			}
 		}
-		// Methods - Properties ************************************************************************************
+        // Methods - Properties - Database *****************************************************************************
+        /// <summary>
+        /// The host of the DBMS.
+        /// </summary>
+        public static string DatabaseHost
+        {
+            get
+            {
+                return settingsDisk["settings/database/host"].get<string>();
+            }
+        }
+        /// <summary>
+        /// The port of the DBMS.
+        /// </summary>
+        public static int DatabasePort
+        {
+            get
+            {
+                return settingsDisk["settings/database/port"].get<int>();
+            }
+        }
+        /// <summary>
+        /// The username for authentication of the DBMS.
+        /// </summary>
+        public static string DatabaseUser
+        {
+            get
+            {
+                return settingsDisk["settings/database/user"].get<string>();
+            }
+        }
+        /// <summary>
+        /// The password for authentication of the DBMS.
+        /// </summary>
+        public static string DatabasePass
+        {
+            get
+            {
+                return settingsDisk["settings/database/pass"].get<string>();
+            }
+        }
+        /// <summary>
+        /// The databse/schema on the DBMS to use.
+        /// </summary>
+        public static string DatabaseSchema
+        {
+            get
+            {
+                return settingsDisk["settings/database/db"].get<string>();
+            }
+        }
+        /// <summary>
+        /// The database connection string, for any additional parameters. This property is used if the DBMS is actually
+        /// a file; in such a situation, this property should contain the file-path.
+        /// </summary>
+        public static string DatabaseConnectionString
+        {
+            get
+            {
+                return settingsDisk["settings/database/connection_string"].get<string>();
+            }
+        }
+		// Methods - Properties ****************************************************************************************
         /// <summary>
         /// The base-base of the application. The path directories are separated with '/', with the end of the path
         /// NOT ending/tailing with '/'.

@@ -68,7 +68,7 @@ namespace CMS.BasicSiteAuth
         public const int SETTINGS_EMAIL_MAX__DEFAULT = 64;
 
         public const string SETTINGS_SECRETQUESTION_MIN = "bsa/account/secretquestion_min";
-        public const string SETTINGS_SECRETQUESTION__DESCRIPTION = "The minimum characters a secret question can be.";
+        public const string SETTINGS_SECRETQUESTION_MIN__DESCRIPTION = "The minimum characters a secret question can be.";
         public const int SETTINGS_SECRETQUESTION_MIN__DEFAULT = 0;
 
         public const string SETTINGS_SECRETQUESTION_MAX = "bsa/account/secretquestion_max";
@@ -118,7 +118,17 @@ namespace CMS.BasicSiteAuth
             // Install SQL
             BaseUtils.executeSQL(FullPath + "/sql/install.sql", conn, ref messageOutput);
             // Create settings
-            //Core.Settings.add(this, SETTINGS_USERNAME_MIN, SETTINGS_USERNAME_MIN__DESCRIPTION, SETTINGS_USERNAME_MIN__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_USERNAME_MIN, SETTINGS_USERNAME_MIN__DESCRIPTION, SETTINGS_USERNAME_MIN__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_USERNAME_MAX, SETTINGS_USERNAME_MAX__DESCRIPTION, SETTINGS_USERNAME_MAX__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_PASSWORD_MIN, SETTINGS_PASSWORD_MIN__DESCRIPTION, SETTINGS_PASSWORD_MIN__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_PASSWORD_MAX, SETTINGS_PASSWORD_MAX__DESCRIPTION, SETTINGS_PASSWORD_MAX__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_EMAIL_MIN, SETTINGS_EMAIL_MIN__DESCRIPTION, SETTINGS_EMAIL_MIN__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_EMAIL_MAX, SETTINGS_EMAIL_MAX_DESCRIPTION, SETTINGS_EMAIL_MAX__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_SECRETQUESTION_MIN, SETTINGS_SECRETQUESTION_MIN__DESCRIPTION, SETTINGS_SECRETQUESTION_MIN__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_SECRETQUESTION_MAX, SETTINGS_SECRETQUESTION_MAX__DESCRIPTION, SETTINGS_SECRETQUESTION_MAX__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_SECRETANSWER_MIN, SETTINGS_SECRETANSWER_MIN__DESCRIPTION, SETTINGS_SECRETANSWER_MIN__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_SECRETANSWER_MAX, SETTINGS_SECRETANSWER_MAX__DESCRIPTION, SETTINGS_SECRETANSWER_MAX__DEFAULT);
+            Core.Settings.setBool(this, Settings.SetAction.AddOrUpdate, SETTINGS_EMAIL_VERIFICATION, SETTINGS_EMAIL_VERIFICATION__DESCRIPTION, SETTINGS_EMAIL_VERIFICATION__DEFAULT);
             // Create default user-groups
             // -- Unverified
             UserGroup ugUnverified = new UserGroup();
@@ -128,7 +138,7 @@ namespace CMS.BasicSiteAuth
             // -- User (verified)
             UserGroup ugUser = new UserGroup();
             ugUser.Title = "User";
-            ugUser.Description = "A verified user able to create and modify their own content.";
+            ugUser.Description = "A verified user able to create, modify and delete their own content.";
             ugUser.Comments_Create = true;
             ugUser.Comments_DeleteOwn = true;
             ugUser.Comments_ModifyOwn = true;
@@ -188,6 +198,11 @@ namespace CMS.BasicSiteAuth
             ugAdministrator.Pages_ModifyOwn = true;
             ugAdministrator.Pages_Publish = true;
             ugAdministrator.save(this, conn);
+            // Save group ID's
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_UNVERIFIED_GROUPID, SETTINGS_GROUP_UNVERIFIED_GROUPID__DESCRIPTION, ugUnverified.GroupID);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_USER_GROUPID, SETTINGS_GROUP_USER_GROUPID__DESCRIPTION, ugUser.GroupID);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_MODERATOR_GROUPID, SETTINGS_GROUP_MODERATOR_GROUPID__DESCRIPTION, ugModerator.GroupID);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_ADMINISTRATOR_GROUPID, SETTINGS_GROUP_ADMINISTRATOR_GROUPID__DESCRIPTION, ugAdministrator.GroupID);
             // Create default root account (user = root, pass = password)
             User userRoot = new User();
             userRoot.Username = "root";
@@ -202,6 +217,16 @@ namespace CMS.BasicSiteAuth
         }
         public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
+            // Check if the user table exists; if so, abort and inform the user to manually remove it
+            if (conn.queryCount("SELECT COUNT('') FROM information_schema.tables WHERE table_schema='" + SQLUtils.escape(Core.DatabaseSchema) + "' AND table_name='bsa_users';") > 0)
+            {
+                messageOutput.AppendLine("Basic site authentication cannot be uninstalled until you remove the users table (bsa_users) from the database! This is protection against accidental uninstallation of the user data.");
+                return false;
+            }
+            // Remove SQL
+
+            // Remove settings
+
             return true;
         }
         public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)

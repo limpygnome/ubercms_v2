@@ -32,7 +32,7 @@ namespace CMS.Base
         /// <summary>
         /// The current version major.
         /// </summary>
-        public int Major
+        public static int Major
         {
             get
             {
@@ -42,7 +42,7 @@ namespace CMS.Base
         /// <summary>
         /// The current version minor.
         /// </summary>
-        public int Minor
+        public static int Minor
         {
             get
             {
@@ -52,7 +52,7 @@ namespace CMS.Base
         /// <summary>
         /// The current version build.
         /// </summary>
-        public int Build
+        public static int Build
         {
             get
             {
