@@ -22,6 +22,7 @@
  *                                      Finished initial class.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                                      Added changes for pluginid to UUID and more comments.
+ *                      2013-07-25      Moved parsing of values to a public static method, for usage elsewhere.
  * 
  * *********************************************************************************************************************
  * Represents a setting stored in a settings (CMS.Base.Settings) collection.
@@ -76,7 +77,8 @@ namespace CMS.Base
         public SettingsNode(DataType type, string value)
         {
             this.state = SettingsNodeState.None;
-            setup(type, value);
+            this.type = type;
+            this.value = parseTypeValue(type, value);
         }
         /// <summary>
         /// Creates a new node with a value and state but no owner.
@@ -87,7 +89,8 @@ namespace CMS.Base
         public SettingsNode(DataType type, string value, SettingsNodeState state)
         {
             this.state = state;
-            setup(type, value);
+            this.type = type;
+            this.value = parseTypeValue(type, value);
         }
         /// <summary>
         /// Creates a new node with an owner, value and description.
@@ -100,7 +103,8 @@ namespace CMS.Base
         {
             this.description = description;
             this.uuid = uuid;
-            setup(type, value);
+            this.type = type;
+            this.value = parseTypeValue(type, value);
         }
         /// <summary>
         /// Creates a new node with an owner, description, value and state.
@@ -115,29 +119,26 @@ namespace CMS.Base
             this.description = description;
             this.uuid = uuid;
             this.state = state;
-            setup(type, value);
+            this.type = type;
+            this.value = parseTypeValue(type, value);
         }
         // Methods *****************************************************************************************************
-        private void setup(DataType type, string value)
+        public static object parseTypeValue(DataType type, string value)
         {
-            this.type = type;
             switch (type)
             {
                 case DataType.String:
-                    this.value = value;
-                    break;
+                    return value;
                 case DataType.Integer:
-                    this.value = int.Parse(value);
-                    break;
+                    return int.Parse(value);
                 case DataType.Float:
-                    this.value = float.Parse(value);
-                    break;
+                    return float.Parse(value);
                 case DataType.Double:
-                    this.value = double.Parse(value);
-                    break;
+                    return double.Parse(value);
                 case DataType.Bool:
-                    this.value = value == "1";
-                    break;
+                    return value == "1";
+                default:
+                    throw new InvalidOperationException("Unknown data-type specified for value '" + value + "'; type: '" + (int)type + "'!");
             }
         }
         // Methods - Static ********************************************************************************************

@@ -19,6 +19,8 @@
  * 
  *      Change-Log:
  *                      2013-07-06      Created initial class.
+ *                      2013-07-24      Modified password mechanism for automatic hashing.
+ *                                      Increased security with a third salt for every user.
  * 
  * *********************************************************************************************************************
  * A model to represent a user of the basic site authentication plugin. Modifying the settings of a user can be dirty,
@@ -61,17 +63,18 @@ namespace CMS
             int         userID;             // The identifier of the user.
             string      username,           // The username of the user.
                         password,           // The user'ss password (hashed).
+                        passwordSalt,       // The unique salt for the user's password, used for additional hashing complexity.
                         email,              // The user's e-mail.
                         secretQuestion,     // Account recovery: secret question.
                         secretAnswer;       // Account recovery: secret answer.
             UserGroup   userGroup;          // The user's role/group.
             DateTime    registered;         // The date and time of when the user registered.
-            bool        loaded,             // Indicates if this instance has been loaded (true) or is a new user and does not exist (false).
+            bool        persisted,          // Indicates if this model has been persisted to the database.
                         modified;           // Indicates if the data has been modified.
             // Methods - Constructors **********************************************************************************
             public User()
             {
-                modified = loaded = false;
+                modified = persisted = false;
             }
             // Mehods - Database ***************************************************************************************
             /// <summary>
@@ -101,13 +104,14 @@ namespace CMS
                 if (ug == null)
                     return null;
                 User usr = new User();
-                usr.loaded = true;
+                usr.persisted = true;
                 usr.userID = int.Parse(data["userid"]);
                 usr.username = data["username"];
                 usr.password = data["password"];
+                usr.passwordSalt = data["password_salt"];
                 usr.email = data["email"];
-                usr.secretQuestion = data["secret_question"];
-                usr.secretAnswer = data["secret_answer"];
+                usr.secretQuestion = data.isNull("secret_question") ? string.Empty : data["secret_question"];
+                usr.secretAnswer = data.isNull("secret_answer") ? string.Empty : data["secret_answer"];
                 usr.userGroup = ug;
                 usr.registered = data.get2<DateTime>("datetime_register");
                 return usr;
@@ -140,19 +144,32 @@ namespace CMS
                     SQLCompiler sql = new SQLCompiler();
                     sql["username"] = username;
                     sql["password"] = password;
+                    sql["password_salt"] = passwordSalt;
                     sql["email"] = email;
                     sql["secret_question"] = secretQuestion;
                     sql["secret_answer"] = secretAnswer;
                     sql["groupid"] = userGroup.GroupID.ToString();
                     sql["datetime_register"] = registered.ToString("YYYY-MM-dd HH:mm:ss");
-                    if(loaded)
+                    if(persisted)
                         conn.queryExecute(sql.compileUpdate("bsa_users", "userid='" + SQLUtils.escape(userID.ToString()) + "'"));
                     else
-                        userID = int.Parse(conn.queryScalar(sql.compileInsert("bsa_users", "userid")).ToString());
+                        userID = (int)conn.queryScalar(sql.compileInsert("bsa_users", "userid"));
                     // Success! Reset flags and return status
                     modified = false;
                     return UserCreateSaveStatus.Success;
                 }
+            }
+            // Methods - Mutators **************************************************************************************
+            /// <summary>
+            /// Sets the user's password. This method will generate a new unique salt for the user, as well as hash
+            /// the specified new password.
+            /// </summary>
+            /// <param name="newPassword">The plain-text new password, to be hashed.</param>
+            public void setPassword(BasicSiteAuth bsa, string newPassword)
+            {
+                Random rand = new Random((int)DateTime.Now.Ticks);
+                this.passwordSalt = BaseUtils.generateRandomString(rand.Next(BasicSiteAuth.BSA_UNIQUE_USER_HASH_MIN, BasicSiteAuth.BSA_UNIQUE_USER_HASH_MAX));
+                this.password = bsa.generateHash(newPassword, this.passwordSalt);
             }
             // Methods - Properties ************************************************************************************
             /// <summary>
@@ -189,10 +206,15 @@ namespace CMS
                 {
                     return password;
                 }
-                set
+            }
+            /// <summary>
+            /// The user's unique salt for password hashing.
+            /// </summary>
+            public string PasswordSalt
+            {
+                get
                 {
-                    modified = true;
-                    password = value;
+                    return passwordSalt;
                 }
             }
             /// <summary>

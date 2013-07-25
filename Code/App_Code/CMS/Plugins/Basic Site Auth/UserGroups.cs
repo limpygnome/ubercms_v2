@@ -33,10 +33,12 @@ using CMS.Base;
 
 namespace CMS.BasicSiteAuth
 {
+    /// <summary>
+    /// A data-structure for managing the collection of user-groups for the basic site authentication plugin.
+    /// </summary>
     public class UserGroups
     {
         // Fields ******************************************************************************************************
-        private BasicSiteAuth bsa;                      // The parent BSA plugin.
         private Dictionary<int, UserGroup> groups;      // Cached list of user-groups.
         // Methods - Constructors **************************************************************************************
         private UserGroups()
@@ -53,7 +55,7 @@ namespace CMS.BasicSiteAuth
         {
             lock (this)
             {
-                if (!ug.IsSaved)
+                if (!ug.IsPersisted)
                     return false;
                 else if (groups.ContainsKey(ug.GroupID))
                     return false;
@@ -123,7 +125,8 @@ namespace CMS.BasicSiteAuth
         {
             get
             {
-                return groups.ContainsKey(groupID) ? groups[groupID] : null;
+                lock(this)
+                    return groups.ContainsKey(groupID) ? groups[groupID] : null;
             }
         }
     }

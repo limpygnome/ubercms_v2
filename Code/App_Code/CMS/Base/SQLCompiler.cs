@@ -20,6 +20,7 @@
  *                      2013-07-07      Created initial class.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-23      compileInsert method now uses transactions when selecting the max identifier.
+ *                      2013-07-24      Support for null values.
  * 
  * *********************************************************************************************************************
  * A class for compiling large SQL statements.
@@ -45,7 +46,18 @@ namespace CMS.Base
         {
             attributes = new Dictionary<string, string>();
         }
-        // Methods - Compilation
+        // Methods - Compilation ***************************************************************************************
+        /// <summary>
+        /// Compiles the attributes into an SQL insert statement, terminated with a semi-colon.
+        /// 
+        /// Values are also escaped.
+        /// </summary>
+        /// <param name="table">The table the values are being inserted into.</param>
+        /// <returns>The compiled insert statement.</returns>
+        public string compileInsert(string table)
+        {
+            return compileInsert(table, null);
+        }
         /// <summary>
         /// Compiles the attributes into an SQL insert statement, terminated with a semi-colon.
         /// 
@@ -66,7 +78,10 @@ namespace CMS.Base
             buffer.Remove(buffer.Length - 1, 1).Append(") VALUES(");
             // Add values
             foreach (KeyValuePair<string, string> kv in attributes)
-                buffer.Append("'").Append(SQLUtils.escape(kv.Value)).Append("',");
+                if (kv.Value == null)
+                    buffer.Append("NULL,");
+                else
+                    buffer.Append("'").Append(SQLUtils.escape(kv.Value)).Append("',");
             buffer.Remove(buffer.Length - 1, 1).Append(");");
             if (identifierColumn != null && identifierColumn.Length > 0)
                 buffer.Append(" SEELECT MAX(").Append(identifierColumn.ToString()).Append(") FROM ").Append(table).Append("; END;");
@@ -86,7 +101,10 @@ namespace CMS.Base
             buffer.Append("UPDATE ").Append(table).Append(" SET");
             // Add attributes with values
             foreach (KeyValuePair<string, string> kv in attributes)
-                buffer.Append(kv.Key).Append("='").Append(SQLUtils.escape(kv.Value)).Append("',");
+                if (kv.Value == null)
+                    buffer.Append(kv.Key).Append("=NULL,");
+                else
+                    buffer.Append(kv.Key).Append("='").Append(SQLUtils.escape(kv.Value)).Append("',");
             buffer.Remove(buffer.Length - 1, 1);
             // Add where clause
             if (whereClauses != null && whereClauses.Length > 0)
@@ -100,7 +118,7 @@ namespace CMS.Base
         /// Gets/sets an attributes value.
         /// </summary>
         /// <param name="key">The column/key-name of the attribute.</param>
-        /// <returns>The value of the attribute.</returns>
+        /// <returns>The value of the attribute. Can be null.</returns>
         public string this[string key]
         {
             get

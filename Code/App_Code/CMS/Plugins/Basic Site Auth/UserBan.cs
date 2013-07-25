@@ -1,4 +1,30 @@
-﻿using System;
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ * 
+ *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/UserBan.cs
+ * 
+ *      Change-Log:
+ *                      2013-07-24      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * Used as a model to represent user bans. Infinite bans should set the datetime-end to null; this will be set to
+ * C#'s DateTime.MaxValue.
+ * *********************************************************************************************************************
+ */
+using System;
 using System.Collections.Generic;
 using System.Web;
 using CMS.Base;
@@ -9,7 +35,8 @@ namespace CMS.BasicSiteAuth
     public class UserBan
     {
         // Fields ******************************************************************************************************
-        private bool        modified;       // A flag for indicating if the data has been modified.
+        private bool        loaded,         // A flag for indicating if the data was loaded.
+                            modified;       // A flag for indicating if the data has been modified.
         private int         banid,          // The identifier of the ban; -1 if new. This should only have read-only access.
                             userid,         // User identifier.
                             bannedBy;       // User identifier of the user who created the ban.
@@ -17,16 +44,9 @@ namespace CMS.BasicSiteAuth
         private DateTime    datetimeStart,  // The datetime of when the ban was created.
                             datetimeEnd;    // The datetime of when the ban ends.
         // Methods - Constructors **************************************************************************************
-        private UserBan()
-        { }
-        public UserBan(int bannedBy, string reason, DateTime datetimeStart, DateTime datetimeEnd)
+        public UserBan()
         {
-            this.modified = false;
-            this.banid = -1;
-            this.bannedBy = bannedBy;
-            this.reason = reason;
-            this.datetimeStart = datetimeStart;
-            this.datetimeEnd = datetimeEnd;
+            this.loaded = this.modified = false;
         }
         // Methods - Database ******************************************************************************************
         /// <summary>
@@ -40,6 +60,24 @@ namespace CMS.BasicSiteAuth
             List<UserBan> bans = new List<UserBan>();
             UserBan ub;
             foreach (ResultRow row in conn.queryRead("SELECT * FROM bsa_user_bans WHERE userid='" + SQLUtils.escape(user.UserID.ToString()) + "';"))
+            {
+                ub = load(row);
+                if (ub != null)
+                    bans.Add(ub);
+            }
+            return bans.ToArray();
+        }
+        /// <summary>
+        /// Loads all of the active bans for a user.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="user">The user of the bans.</param>
+        /// <returns>An array of all the bans currently enforced.</returns>
+        public static UserBan[] loadByUserActive(Connector conn, User user)
+        {
+            List<UserBan> bans = new List<UserBan>();
+            UserBan ub;
+            foreach (ResultRow row in conn.queryRead("SELECT * FROM bsa_user_bans WHERE userid='" + SQLUtils.escape(user.UserID.ToString()) + "' AND (datetime_end > CURRENT_TIMESTAMP OR datetime_end=NULL);"))
             {
                 ub = load(row);
                 if (ub != null)
@@ -69,12 +107,13 @@ namespace CMS.BasicSiteAuth
         public static UserBan load(ResultRow row)
         {
             UserBan ub = new UserBan();
+            ub.loaded = true;
             ub.banid = row.get2<int>("banid");
             ub.userid = row.get2<int>("userid");
-            ub.reason = row["reason"];
+            ub.reason = row.isNull("reason") ? string.Empty : row["reason"];
             ub.datetimeStart = row.get2<DateTime>("datetime_start");
-            ub.datetimeEnd = row.get2<DateTime>("datetime_end");
-            ub.bannedBy = row.get2<int>("banned_by");
+            ub.datetimeEnd = row.isNull("datetime_end") ? DateTime.MaxValue : row.get2<DateTime>("datetime_end");
+            ub.bannedBy = row.isNull("banned_by") ? -1 : row.get2<int>("banned_by");
             return ub;
         }
         /// <summary>
@@ -84,15 +123,15 @@ namespace CMS.BasicSiteAuth
         public void save(Connector conn)
         {
             SQLCompiler compiler = new SQLCompiler();
-            compiler["banned_by"] = bannedBy.ToString();
-            compiler["reason"] = reason;
-            compiler["datetime_start"] = datetimeStart.ToString("YYYY-MM-dd HH:mm:ss");
-            compiler["datetime_end"] = datetimeEnd.ToString("YYYY-MM-dd HH:mm:ss");
             compiler["userid"] = userid.ToString();
-            if (banid < 0)
-                conn.queryExecute("INSERT INTO bsa_user_bans (userid, reason, datetime_start, datetime_end, banned_by) VALUES('" + SQLUtils.escape(userid.ToString()) + "', '" + SQLUtils.escape(reason) + "', '" + SQLUtils.escape(datetimeStart.ToString()) + "', '" + SQLUtils.escape(datetimeEnd.ToString()) + "', " + (bannedBy < 0 ? "NULL" : "'" + SQLUtils.escape(bannedBy.ToString()) + "'") + ");");
+            compiler["banned_by"] = bannedBy == -1 ? null : bannedBy.ToString();
+            compiler["reason"] = reason.Length == 0 ? null : reason;
+            compiler["datetime_start"] = datetimeStart.ToString("YYYY-MM-dd HH:mm:ss");
+            compiler["datetime_end"] = datetimeEnd == DateTime.MaxValue ? null : datetimeEnd.ToString("YYYY-MM-dd HH:mm:ss");
+            if (loaded)
+                compiler.compileUpdate("bsa_user_bans", "banid='" + SQLUtils.escape(banid.ToString()) + "'");
             else
-                conn.queryExecute("UPDATE bsa_user_bans SET userid='" + SQLUtils.escape(userid.ToString()) + "', reason='" + SQLUtils.escape(reason) + "', datetime_start='" + SQLUtils.escape(datetimeStart.ToString()) + "', datetime_end='" + SQLUtils.escape(datetimeEnd.ToString()) + "', banned_by='" + SQLUtils.escape(bannedBy.ToString()) + "' WHERE banid='" + SQLUtils.escape(banid.ToString()) + "';");
+                banid = (int)conn.queryScalar(compiler.compileInsert("bsa_user_bans", "banid"));
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>
@@ -153,6 +192,26 @@ namespace CMS.BasicSiteAuth
             {
                 bannedBy = value;
                 modified = true;
+            }
+        }
+        /// <summary>
+        /// Indicates if this model has been persisted to the database.
+        /// </summary>
+        public bool IsPersisted
+        {
+            get
+            {
+                return persisted;
+            }
+        }
+        /// <summary>
+        /// Indicates if the model has been modified.
+        /// </summary>
+        public bool IsModified
+        {
+            get
+            {
+                return modified;
             }
         }
     }

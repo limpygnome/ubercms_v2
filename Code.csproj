@@ -82,8 +82,12 @@
     <Compile Include="Code\App_Code\CMS\Base\SQLCompiler.cs" />
     <Compile Include="Code\App_Code\CMS\Base\Version.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic 404 Page\Basic404Page.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AccountEvent.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AccountEventType.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AccountEventTypes.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BasicSiteAuth.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BSAUtils.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\RecoveryCode.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\User.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\UserBan.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\UserGroup.cs" />
@@ -122,6 +126,8 @@
   <ItemGroup>
     <Folder Include="Code\App_Code\CMS\Plugins\Admin Panel\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Articles\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\content\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Downloads\" />
     <Folder Include="Code\Content\CSS\" />
   </ItemGroup>

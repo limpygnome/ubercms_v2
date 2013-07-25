@@ -38,10 +38,15 @@ using UberLib.Connector;
 
 namespace CMS.BasicSiteAuth
 {
+    /// <summary>
+    /// A basic authentication plugin, featuring user-groups and banning.
+    /// </summary>
     public class BasicSiteAuth : Plugin
     {
         // Constants ***************************************************************************************************
         public const string BSA_UUID = "943c3f9d-dfcb-483d-bf34-48ad5231a15f";
+        public const int BSA_UNIQUE_USER_HASH_MIN = 10;
+        public const int BSA_UNIQUE_USER_HASH_MAX = 16;
         // Constants - Settings ****************************************************************************************
         public const string SETTINGS_USERNAME_MIN = "bsa/account/username_min";
         public const string SETTINGS_USERNAME_MIN__DESCRIPTION = "The minimum number of characters a username can be.";
@@ -99,9 +104,10 @@ namespace CMS.BasicSiteAuth
         public const string SETTINGS_GROUP_ADMINISTRATOR_GROUPID = "bsa/groups/administrator_groupid";
         public const string SETTINGS_GROUP_ADMINISTRATOR_GROUPID__DESCRIPTION = "The identifier of the administrator group.";
         // Fields ******************************************************************************************************
-        private string                          salt1,          // The first salt, used for generating a secure SHA-512 hash.
-                                                salt2;          // The second salt, used for generating a secure SHA-512 hash.
-        private UserGroups                      groups;         // A collection of all the user-groups.
+        private string                          salt1,                  // The first salt, used for generating a secure SHA-512 hash.
+                                                salt2;                  // The second salt, used for generating a secure SHA-512 hash.
+        private UserGroups                      groups;                 // A collection of all the user-groups.
+        private AccountEventTypes               accountEventTypes;      // A collection of all the account event types.
         // Methods - Constructors **************************************************************************************
         public BasicSiteAuth(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
             : base(uuid, title, directory, state, handlerInfo)
@@ -114,9 +120,11 @@ namespace CMS.BasicSiteAuth
             // Setup handlers
             HandlerInfo.RequestStart = true;
             HandlerInfo.CmsStart = true;
+            HandlerInfo.CycleInterval = 3600000; // Every hour
             HandlerInfo.save(conn);
             // Install SQL
-            BaseUtils.executeSQL(FullPath + "/sql/install.sql", conn, ref messageOutput);
+            if (!BaseUtils.executeSQL(FullPath + "/sql/install.sql", conn, ref messageOutput))
+                return false;
             // Create settings
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_USERNAME_MIN, SETTINGS_USERNAME_MIN__DESCRIPTION, SETTINGS_USERNAME_MIN__DEFAULT);
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_USERNAME_MAX, SETTINGS_USERNAME_MAX__DESCRIPTION, SETTINGS_USERNAME_MAX__DEFAULT);
@@ -206,7 +214,7 @@ namespace CMS.BasicSiteAuth
             // Create default root account (user = root, pass = password)
             User userRoot = new User();
             userRoot.Username = "root";
-            userRoot.Password = "password";
+            userRoot.setPassword(this, "password");
             userRoot.Email = "admin@localhost";
             userRoot.SecretQuestion = string.Empty;
             userRoot.SecretAnswer = string.Empty;
@@ -224,40 +232,64 @@ namespace CMS.BasicSiteAuth
                 return false;
             }
             // Remove SQL
-
+            if (!BaseUtils.executeSQL(FullPath + "/sql/uninstall.sql", conn, ref messageOutput))
+                return false;
             // Remove settings
-
+            Core.Settings.remove(this);
             return true;
         }
         public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Reserve URLs
-            BaseUtils.urlRewritingInstall(this, new string[]
+            if (!BaseUtils.urlRewritingInstall(this, new string[]
             {
                 "login",
                 "register",
                 "account_recovery",
                 "my_account",
-                "account_log",
-                "members"
-            }, ref messageOutput);
+                "account_log"
+            }, ref messageOutput))
+                return false;
             // Add directives
-            BaseUtils.preprocessorDirective_Add("bsa", ref messageOutput);
+            if (!BaseUtils.preprocessorDirective_Add("bsa", ref messageOutput))
+                return false;
+            // Install templates
+            if (!Core.Templates.install(conn, this, PathTemplates, ref messageOutput))
+                return false;
+            // Install content
+            if (!BaseUtils.contentInstall(PathContent, Core.PathContent, true, ref messageOutput))
+                return false;
             return true;
         }
         public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Unreserve URLs
-            BaseUtils.urlRewritingUninstall(this, ref messageOutput);
+            if (!BaseUtils.urlRewritingUninstall(this, ref messageOutput))
+                return false;
             // Remove directives
-            BaseUtils.preprocessorDirective_Remove("bsa", ref messageOutput);
+            if (!BaseUtils.preprocessorDirective_Remove("bsa", ref messageOutput))
+                return false;
+            // Remove templates
+            if (!Core.Templates.uninstall(this, ref messageOutput))
+                return false;
+            // Remove content
+            if (!BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput))
+                return false;
             return true;
         }
         public override bool handler_cmsStart(UberLib.Connector.Connector conn)
         {
             loadSalts();
             groups = UserGroups.load(conn);
+            accountEventTypes = AccountEventTypes.load(conn);
             return true;
+        }
+        public override void handler_cmsCycle()
+        {
+            // Clean old recovery codes
+
+            // Delete old failed authentication attempts
+
         }
         public override void handler_requestStart(Data data)
         {
@@ -446,11 +478,19 @@ namespace CMS.BasicSiteAuth
                 File.WriteAllText(salts, saltsConfig.ToString());
             }
         }
-        private string generateHash(string data)
+        /// <summary>
+        /// Generates a hash for a piece of string data, primarily intended for usage with user passwords.
+        /// </summary>
+        /// <param name="data">The string to be hashed.</param>
+        /// <param name="uniqueSalt">A salt unique for this hash; this must have a length of at least two!</param>
+        /// <returns></returns>
+        public string generateHash(string data, string uniqueSalt)
         {
-            byte[] rawData = Encoding.UTF8.GetBytes(data);
+            int usLenHalf = uniqueSalt.Length / 2;
+            byte[] rawData = Encoding.UTF8.GetBytes(uniqueSalt.Substring(0, usLenHalf) + data + uniqueSalt.Substring(usLenHalf));
             byte[] rawSalt1 = Encoding.UTF8.GetBytes(salt1);
             byte[] rawSalt2 = Encoding.UTF8.GetBytes(salt2);
+            int usLenInd = uniqueSalt.Length - 1;
             // Apply salt
             int s1, s2;
             long buffer;
@@ -461,6 +501,8 @@ namespace CMS.BasicSiteAuth
                 for (s1 = 0; s1 < rawSalt1.Length; s1++)
                     for (s2 = 0; s2 < rawSalt2.Length; s2++)
                         buffer = rawData[i] + ((salt1.Length + rawData[i]) * (rawSalt1[s1] + salt2.Length) * (rawSalt2[s2] + rawData.Length));
+                // Apply third (unique user) hash
+                buffer |= uniqueSalt[usLenInd % i];
                 // Round it down within numeric range of byte
                 while (buffer > byte.MaxValue)
                     buffer -= byte.MaxValue;
@@ -476,11 +518,24 @@ namespace CMS.BasicSiteAuth
             return Convert.ToBase64String(computedHash);
         }
         // Methods - Properties ****************************************************************************************
+        /// <summary>
+        /// A collection of all the user-groups.
+        /// </summary>
         public UserGroups UserGroups
         {
             get
             {
                 return groups;
+            }
+        }
+        /// <summary>
+        /// A collection of all the account event types.
+        /// </summary>
+        public AccountEventTypes AccountEventTypes
+        {
+            get
+            {
+                return accountEventTypes;
             }
         }
     }

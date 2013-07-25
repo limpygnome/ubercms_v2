@@ -65,12 +65,12 @@ namespace CMS.BasicSiteAuth
                 administrator,      // Indicates administrator/root permissions.
                 login;              // Indicates if the user is allowed to login.
 
-        bool    loaded,             // Indicates if this instance was loaded; true = loaded and exists, false = new.
+        bool    persisted,          // Indicates if this model has been persisted to the database.
                 modified;           // Indicates if anything has been modified.
         // Methods - Constructors
         public UserGroup()
         {
-            loaded = modified = false;
+            persisted = modified = false;
         }
         // Methods - Database
         /// <summary>
@@ -95,10 +95,10 @@ namespace CMS.BasicSiteAuth
         public static UserGroup load(ResultRow data)
         {
             UserGroup g = new UserGroup();
-            g.loaded = true;
+            g.persisted = true;
             g.groupID = int.Parse(data["groupid"]);
             g.title = data["title"];
-            g.description = data["description"];
+            g.description = data.isNull("description") ? string.Empty : data["description"];
 
             g.pagesCreate = data["pages_create"].Equals("1");
             g.pagesModify = data["pages_modify"].Equals("1");
@@ -146,7 +146,7 @@ namespace CMS.BasicSiteAuth
             {
                 SQLCompiler sql = new SQLCompiler();
                 sql["title"] = title;
-                sql["description"] = description;
+                sql["description"] = description.Length == 0 ? null : description;
 
                 sql["pages_create"] = pagesCreate ? "1" : "0";
                 sql["pages_modify"] = pagesModify ? "1" : "0";
@@ -171,12 +171,13 @@ namespace CMS.BasicSiteAuth
                 sql["administrator"] = administrator ? "1" : "0";
                 sql["login"] = login ? "1" : "0";
 
-                if (!forceInsert && loaded)
+                if (!forceInsert && persisted)
                     conn.queryExecute(sql.compileUpdate("bsa_user_groups", "groupid='" + SQLUtils.escape(groupID.ToString()) + "'"));
                 else
                 {
-                    groupID = int.Parse(conn.queryScalar(sql.compileInsert("bsa_user_groups", "groupid")).ToString());
+                    groupID = (int)conn.queryScalar(sql.compileInsert("bsa_user_groups", "groupid"));
                     bsa.UserGroups.add(this);
+                    persisted = true;
                 }
                 modified = false;
             }
@@ -521,13 +522,23 @@ namespace CMS.BasicSiteAuth
             }
         }
         /// <summary>
-        /// Indicates if this user-group is persisted on the database.
+        /// Indicates if this model has been persisted to the database.
         /// </summary>
-        public bool IsSaved
+        public bool IsPersisted
         {
             get
             {
-                return loaded;
+                return persisted;
+            }
+        }
+        /// <summary>
+        /// Indicates if the model has been modified.
+        /// </summary>
+        public bool IsModified
+        {
+            get
+            {
+                return modified;
             }
         }
     }
