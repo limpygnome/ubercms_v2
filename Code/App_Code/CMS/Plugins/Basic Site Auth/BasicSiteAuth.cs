@@ -48,6 +48,7 @@ namespace CMS.BasicSiteAuth
         public const int BSA_UNIQUE_USER_HASH_MIN = 10;
         public const int BSA_UNIQUE_USER_HASH_MAX = 16;
         // Constants - Settings ****************************************************************************************
+        // -- User Restrictions ****************************************************************************************
         public const string SETTINGS_USERNAME_MIN = "bsa/account/username_min";
         public const string SETTINGS_USERNAME_MIN__DESCRIPTION = "The minimum number of characters a username can be.";
         public const int SETTINGS_USERNAME_MIN__DEFAULT = 2;
@@ -91,7 +92,7 @@ namespace CMS.BasicSiteAuth
         public const string SETTINGS_EMAIL_VERIFICATION = "bsa/account/email_verification";
         public const string SETTINGS_EMAIL_VERIFICATION__DESCRIPTION = "Specifies if users need to verify their accounts via e-mail.";
         public const bool SETTINGS_EMAIL_VERIFICATION__DEFAULT = true;
-
+        // -- User Groups **********************************************************************************************
         public const string SETTINGS_GROUP_UNVERIFIED_GROUPID = "bsa/groups/unverified_groupid";
         public const string SETTINGS_GROUP_UNVERIFIED_GROUPID__DESCRIPTION = "The identifier of the unverified group.";
 
@@ -103,6 +104,18 @@ namespace CMS.BasicSiteAuth
 
         public const string SETTINGS_GROUP_ADMINISTRATOR_GROUPID = "bsa/groups/administrator_groupid";
         public const string SETTINGS_GROUP_ADMINISTRATOR_GROUPID__DESCRIPTION = "The identifier of the administrator group.";
+        // -- Authentication Failed Attempts ***************************************************************************
+        public const string SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD = "bsa/authfailedattempts/ban_period";
+        public const string SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD__DESCRIPTION = "The duration an IP is banned from being able to login after reaching the failed attempts threshold.";
+        public const int SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD__DEFAULT = 3600000;
+
+        public const string SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD = "bsa/authfailedattempts/threshold";
+        public const string SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD__DESCRIPTION = "The threshold/maximum number of failed attempts allowed; once exceeded, an IP is banned for a period.";
+        public const int SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD__DEFAULT = 5;
+        // -- Recovery Codes *******************************************************************************************
+        public const string SETTINGS_RECOVERYCODES_EXPIRE = "bsa/recoverycodes/expire";
+        public const string SETTINGS_RECOVERYCODES_EXPIRE__DESCRIPTION = "The life-span of a recovery code in milliseconds.";
+        public const int SETTINGS_RECOVERYCODES_EXPIRE__DEFAULT = 3600000;
         // Fields ******************************************************************************************************
         private string                          salt1,                  // The first salt, used for generating a secure SHA-512 hash.
                                                 salt2;                  // The second salt, used for generating a secure SHA-512 hash.
@@ -126,6 +139,7 @@ namespace CMS.BasicSiteAuth
             if (!BaseUtils.executeSQL(FullPath + "/sql/install.sql", conn, ref messageOutput))
                 return false;
             // Create settings
+            // -- User restrictions
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_USERNAME_MIN, SETTINGS_USERNAME_MIN__DESCRIPTION, SETTINGS_USERNAME_MIN__DEFAULT);
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_USERNAME_MAX, SETTINGS_USERNAME_MAX__DESCRIPTION, SETTINGS_USERNAME_MAX__DEFAULT);
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_PASSWORD_MIN, SETTINGS_PASSWORD_MIN__DESCRIPTION, SETTINGS_PASSWORD_MIN__DEFAULT);
@@ -137,6 +151,11 @@ namespace CMS.BasicSiteAuth
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_SECRETANSWER_MIN, SETTINGS_SECRETANSWER_MIN__DESCRIPTION, SETTINGS_SECRETANSWER_MIN__DEFAULT);
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_SECRETANSWER_MAX, SETTINGS_SECRETANSWER_MAX__DESCRIPTION, SETTINGS_SECRETANSWER_MAX__DEFAULT);
             Core.Settings.setBool(this, Settings.SetAction.AddOrUpdate, SETTINGS_EMAIL_VERIFICATION, SETTINGS_EMAIL_VERIFICATION__DESCRIPTION, SETTINGS_EMAIL_VERIFICATION__DEFAULT);
+            // -- -- Authentication failed attempts
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD, SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD__DESCRIPTION, SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD__DEFAULT);
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD, SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD__DESCRIPTION, SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD__DEFAULT);
+            // -- -- Recovery codes
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_RECOVERYCODES_EXPIRE, SETTINGS_RECOVERYCODES_EXPIRE__DESCRIPTION, SETTINGS_RECOVERYCODES_EXPIRE__DEFAULT);
             // Create default user-groups
             // -- Unverified
             UserGroup ugUnverified = new UserGroup();

@@ -87,3 +87,4 @@ CREATE TABLE IF NOT EXISTS bsa_authentication_failed_attempts
 	datetime TIMESTAMP NOT NULL,
 	type VARCHAR(1) NOT NULL
 );
+CREATE INDEX bsa_index_authentication_failed_attempts ON bsa_authentication_failed_attempts(ip);

@@ -85,6 +85,7 @@
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AccountEvent.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AccountEventType.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AccountEventTypes.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AuthFailedAttempt.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BasicSiteAuth.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BSAUtils.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\RecoveryCode.cs" />

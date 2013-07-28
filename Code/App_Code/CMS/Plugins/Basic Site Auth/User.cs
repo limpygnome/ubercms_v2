@@ -48,15 +48,49 @@ namespace CMS
             /// </summary>
             public enum UserCreateSaveStatus
             {
+                /// <summary>
+                /// User successfully created.
+                /// </summary>
                 Success = 0,
+                /// <summary>
+                /// Invalid username length.
+                /// </summary>
                 InvalidUsername_Length = 100,
+                /// <summary>
+                /// Username already taken.
+                /// </summary>
                 InvalidUsername_AlreadyExists = 101,
+                /// <summary>
+                /// Invalid password length.
+                /// </summary>
                 InvalidPassword_Length = 200,
+                /// <summary>
+                /// Password is too obvious.
+                /// </summary>
+                InvalidPassword_Security = 201,
+                /// <summary>
+                /// Invalid e-mail length.
+                /// </summary>
                 InvalidEmail_Length = 300,
+                /// <summary>
+                /// Invalid e-mail format.
+                /// </summary>
                 InvalidEmail_Format = 301,
+                /// <summary>
+                /// Invalid secret question length.
+                /// </summary>
                 InvalidSecretQuestion_Length = 400,
+                /// <summary>
+                /// Invalid secret answer length.
+                /// </summary>
                 InvalidSecretAnswer_Length = 500,
+                /// <summary>
+                /// Invalid user-group.
+                /// </summary>
                 InvalidUserGroup = 600,
+                /// <summary>
+                /// An unknown exception occurred registering the user.
+                /// </summary>
                 Error_Regisration = 900
             };
             // Fields **************************************************************************************************
@@ -126,15 +160,17 @@ namespace CMS
                 lock(this)
                 {
                     // Validate the data
-                    if (username.Length < Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MIN].get<int>() || username.Length > Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MAX].get<int>())
+                    if (username == null || username.Length < Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MIN].get<int>() || username.Length > Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MAX].get<int>())
                         return UserCreateSaveStatus.InvalidUsername_Length;
-                    else if (password.Length < Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() || password.Length > Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>())
+                    else if (password == null || password.Length < Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() || password.Length > Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>())
                         return UserCreateSaveStatus.InvalidPassword_Length;
-                    else if (email.Length < Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MIN].get<int>() || email.Length > Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MAX].get<int>())
+                    else if (password.ToLower() == "password" || password == "123456" || password == "12345678" ||  password == "abc123" || password == "qwerty")
+                        return UserCreateSaveStatus.InvalidPassword_Security;
+                    else if (email == null || email.Length < Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MIN].get<int>() || email.Length > Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MAX].get<int>())
                         return UserCreateSaveStatus.InvalidEmail_Length;
-                    else if (secretQuestion.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() || secretQuestion.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MAX].get<int>())
+                    else if (secretQuestion == null || secretQuestion.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() || secretQuestion.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MAX].get<int>())
                         return UserCreateSaveStatus.InvalidSecretQuestion_Length;
-                    else if (secretAnswer.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MIN].get<int>() || secretAnswer.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MAX].get<int>())
+                    else if (secretAnswer == null || secretAnswer.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MIN].get<int>() || secretAnswer.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MAX].get<int>())
                         return UserCreateSaveStatus.InvalidSecretAnswer_Length;
                     else if (userGroup == null || !bsa.UserGroups.contains(userGroup))
                         return UserCreateSaveStatus.InvalidUserGroup;
