@@ -130,10 +130,11 @@ namespace CMS.Base
                     buffer.Append(kv.Key).Append("='").Append(SQLUtils.escape(kv.Value.ToString())).Append("',");
             buffer.Remove(buffer.Length - 1, 1);
             // Add where clause
-            if (whereClauses != null && whereClauses.Length > 0)
-                buffer.Append(" WHERE ").Append(whereClauses).Append(";");
-            else
-                buffer.Append(";");
+            if (whereClauses != null)
+                buffer.Append(" WHERE ").Append(whereClauses);
+            else if (updateAttribute != null)
+                buffer.Append("WHERE ").Append(updateAttribute).Append("=").Append(updateValue == null ? "NULL" : "'" + SQLUtils.escape(updateValue.ToString()) + "'");
+            buffer.Append(";");
             return buffer.ToString();
         }
         /// <summary>
@@ -214,6 +215,9 @@ namespace CMS.Base
             switch(conn.Type)
             {
                 case Connector.ConnectorType.MySQL:
+                    // Create prepared statement
+                    PreparedStatement ps = new PreparedStatement();
+                    ps.Parameters = this.attributes;
                     // Build query
                     string query;
                     {
@@ -223,12 +227,15 @@ namespace CMS.Base
                             s.Append(kv.Key).Append("=?").Append(kv.Key).Append(",");
                         s.Remove(s.Length - 1, 1);
                         if (whereClauses != null)
-                            s.Append(whereClauses);
+                            s.Append(" WHERE ").Append(whereClauses);
+                        else if(updateAttribute != null)
+                        {
+                            s.Append(" WHERE ?ua_").Append(updateAttribute);
+                            ps["?ua_" + updateAttribute] = updateValue;
+                        }
                         query = s.Append(";").ToString();
                     }
-                    // Create and executed prepared statement
-                    PreparedStatement ps = new PreparedStatement();
-                    ps.Parameters = this.attributes;
+                    // Execute prepared statement
                     conn.queryExecute(ps);
                     break;
                 default:
@@ -256,6 +263,8 @@ namespace CMS.Base
         /// <summary>
         /// The attribute filter for update-statements. For example `UPDATE ... WHERE key='';`, this property is for
         /// the key/attribute part.
+        /// 
+        /// If a where-clause is specified, this is ignored.
         /// </summary>
         public string UpdateAttribute
         {
@@ -271,6 +280,8 @@ namespace CMS.Base
         /// <summary>
         /// The attribute filter value for update-statements. For example `UPDATE ... WHERE key='value';`, this property
         /// is for the 'value' (without quotations) part.
+        /// 
+        /// If a where-clause is specified, this is ignored.
         /// </summary>
         public object UpdateValue
         {
