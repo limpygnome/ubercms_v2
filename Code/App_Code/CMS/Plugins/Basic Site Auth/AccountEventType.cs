@@ -103,9 +103,17 @@ namespace CMS.BasicSiteAuth
             c["render_classpath"] = renderClasspath;
             c["render_function"] = renderFunction;
             if (persisted)
-                c.compileUpdate("bsa_account_event_types", "eventtypeid='" + SQLUtils.escape(eventTypeID.ToString()) + "'");
+            {
+                c.UpdateAttribute = "eventtypeid";
+                c.UpdateValue = eventTypeID;
+                c.executeUpdate(conn, "bsa_account_event_types");
+            }
             else
-                eventTypeID = (int)conn.queryScalar(c.compileInsert("bsa_account_event_types", "eventtypeid"));
+            {
+                eventTypeID = c.executeInsert(conn, "bsa_account_event_types")[0].get2<int>("eventtypeid");
+                persisted = true;
+            }
+            modified = false;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>

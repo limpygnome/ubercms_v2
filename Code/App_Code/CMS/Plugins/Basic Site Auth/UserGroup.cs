@@ -172,11 +172,14 @@ namespace CMS.BasicSiteAuth
                 sql["login"] = login ? "1" : "0";
 
                 if (!forceInsert && persisted)
-                    conn.queryExecute(sql.compileUpdate("bsa_user_groups", "groupid='" + SQLUtils.escape(groupID.ToString()) + "'"));
+                {
+                    sql.UpdateAttribute = "groupid";
+                    sql.UpdateValue = groupID;
+                    sql.executeUpdate(conn, "bsa_user_groups");
+                }
                 else
                 {
-                    groupID = (int)conn.queryScalar(sql.compileInsert("bsa_user_groups", "groupid"));
-                    bsa.UserGroups.add(this);
+                    groupID = sql.executeInsert(conn, "bsa_user_groups", "groupid")[0].get2<int>("groupid");
                     persisted = true;
                 }
                 modified = false;

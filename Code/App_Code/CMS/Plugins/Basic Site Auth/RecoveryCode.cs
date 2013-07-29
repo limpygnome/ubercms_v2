@@ -57,6 +57,7 @@ namespace CMS.BasicSiteAuth
         public void generateNewCode()
         {
             this.code = BaseUtils.generateRandomString(32);
+            this.modified = true;
         }
         // Methods - Database Persistence ******************************************************************************
         /// <summary>
@@ -114,7 +115,11 @@ namespace CMS.BasicSiteAuth
             c["userid"] = userID.ToString();
             c["datetime_created"] = datetimeCreated.ToString("YYYY-MM-dd HH:mm:ss");
             if(persisted)
-                conn.queryExecute(c.compileUpdate("bsa_recovery_codes", "code='" + SQLUtils.escape(oldCode) + "'");
+            {
+                c.UpdateAttribute = "code";
+                c.UpdateValue = oldCode;
+                c.executeUpdate(conn, "bsa_recovery_codes");
+            }
             else
             {
                 int attempts = 0;
@@ -122,7 +127,7 @@ namespace CMS.BasicSiteAuth
                 {
                     try
                     {
-                        conn.queryExecute(c.compileInsert("bsa_recovery_codes"));
+                        c.executeInsert(conn, "bsa_recovery_codes");
                         break;
                     }
                     catch(DuplicateEntryException)
@@ -133,6 +138,8 @@ namespace CMS.BasicSiteAuth
                         c["code"] = code;
                     }
                 }
+                if (attempts < 5)
+                    persisted = true;
             }
             oldCode = code;
             modified = false;
@@ -216,6 +223,26 @@ namespace CMS.BasicSiteAuth
             {
                 datetimeCreated = value;
                 modified = true;
+            }
+        }
+        /// <summary>
+        /// Indicates if this model has been persisted to the database.
+        /// </summary>
+        public bool IsPersisted
+        {
+            get
+            {
+                return persisted;
+            }
+        }
+        /// <summary>
+        /// Indicates if the model has been modified.
+        /// </summary>
+        public bool IsModified
+        {
+            get
+            {
+                return modified;
             }
         }
     }

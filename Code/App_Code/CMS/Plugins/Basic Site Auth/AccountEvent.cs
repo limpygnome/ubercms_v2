@@ -157,9 +157,17 @@ namespace CMS.BasicSiteAuth
             c["param1_datatype"] = ((int)param1DataType).ToString();
             c["param2_datatype"] = ((int)param2DataType).ToString();
             if (persisted)
-                conn.queryExecute(c.compileUpdate("bsa_account_events", "eventid='" + SQLUtils.escape(eventid.ToString()) + "'"));
+            {
+                c.UpdateAttribute = "eventid";
+                c.UpdateValue = eventid;
+                c.executeUpdate(conn, "bsa_account_events");
+            }
             else
-                eventid = (int)conn.queryScalar(c.compileInsert("bsa_account_events", "eventid"));
+            {
+                eventid = c.executeInsert(conn, "bsa_account_events", "eventid")[0].get2<int>("eventid");
+                persisted = true;
+            }
+            modified = false;
         }
         // Methods *****************************************************************************************************
         private string buildSorting(Sorting sorting)

@@ -186,10 +186,17 @@ namespace CMS
                     sql["secret_answer"] = secretAnswer;
                     sql["groupid"] = userGroup.GroupID.ToString();
                     sql["datetime_register"] = registered.ToString("YYYY-MM-dd HH:mm:ss");
-                    if(persisted)
-                        conn.queryExecute(sql.compileUpdate("bsa_users", "userid='" + SQLUtils.escape(userID.ToString()) + "'"));
+                    if (persisted)
+                    {
+                        sql.UpdateAttribute = "userid";
+                        sql.UpdateValue = userID;
+                        sql.executeUpdate(conn, "bsa_users");
+                    }
                     else
-                        userID = (int)conn.queryScalar(sql.compileInsert("bsa_users", "userid"));
+                    {
+                        userID = sql.executeInsert(conn, "bsa_users", "userid")[0].get2<int>("userid");
+                        persisted = true;
+                    }
                     // Success! Reset flags and return status
                     modified = false;
                     return UserCreateSaveStatus.Success;
@@ -314,7 +321,17 @@ namespace CMS
                 }
             }
             /// <summary>
-            /// Indicates if the data has been modified.
+            /// Indicates if this model has been persisted to the database.
+            /// </summary>
+            public bool IsPersisted
+            {
+                get
+                {
+                    return persisted;
+                }
+            }
+            /// <summary>
+            /// Indicates if the model has been modified.
             /// </summary>
             public bool IsModified
             {

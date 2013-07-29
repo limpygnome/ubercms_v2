@@ -166,7 +166,8 @@ namespace CMS.BasicSiteAuth
             sql["datetime"] = datetime.ToString("YYYY-MM-dd HH:mm:ss");
             sql["type"] = getAuthTypeStr(type);
             // Execute
-            conn.queryExecute(sql.compileInsert("bsa_authentication_failed_attempts"));
+            sql.executeInsert(conn, "bsa_authentication_failed_attempts");
+            modified = false;
         }
         // Methods - Static ********************************************************************************************
         /// <summary>
@@ -233,6 +234,16 @@ namespace CMS.BasicSiteAuth
             {
                 type = value;
                 modified = true;
+            }
+        }
+        /// <summary>
+        /// Indicates if the model has been modified.
+        /// </summary>
+        public bool IsModified
+        {
+            get
+            {
+                return modified;
             }
         }
     }

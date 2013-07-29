@@ -64,7 +64,7 @@ namespace CMS.BasicSiteAuth
             }
         }
         /// <summary>
-        /// Removes a user-group.
+        /// Removes a user-group. Also unpersists the data from the database.
         /// </summary>
         /// <param name="ug">The user-group to be removed.</param>
         public void remove(UserGroup ug)

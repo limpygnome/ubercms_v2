@@ -35,8 +35,8 @@ namespace CMS.BasicSiteAuth
     public class UserBan
     {
         // Fields ******************************************************************************************************
-        private bool        loaded,         // A flag for indicating if the data was loaded.
-                            modified;       // A flag for indicating if the data has been modified.
+        private bool        persisted,      // Indicates if this model has been persisted.
+                            modified;       // Indicates if this model has been modified.
         private int         banid,          // The identifier of the ban; -1 if new. This should only have read-only access.
                             userid,         // User identifier.
                             bannedBy;       // User identifier of the user who created the ban.
@@ -46,7 +46,7 @@ namespace CMS.BasicSiteAuth
         // Methods - Constructors **************************************************************************************
         public UserBan()
         {
-            this.loaded = this.modified = false;
+            this.persisted = this.modified = false;
         }
         // Methods - Database ******************************************************************************************
         /// <summary>
@@ -107,7 +107,7 @@ namespace CMS.BasicSiteAuth
         public static UserBan load(ResultRow row)
         {
             UserBan ub = new UserBan();
-            ub.loaded = true;
+            ub.persisted = true;
             ub.banid = row.get2<int>("banid");
             ub.userid = row.get2<int>("userid");
             ub.reason = row.isNull("reason") ? string.Empty : row["reason"];
@@ -122,16 +122,24 @@ namespace CMS.BasicSiteAuth
         /// <param name="conn">Database connector.</param>
         public void save(Connector conn)
         {
-            SQLCompiler compiler = new SQLCompiler();
-            compiler["userid"] = userid.ToString();
-            compiler["banned_by"] = bannedBy == -1 ? null : bannedBy.ToString();
-            compiler["reason"] = reason.Length == 0 ? null : reason;
-            compiler["datetime_start"] = datetimeStart.ToString("YYYY-MM-dd HH:mm:ss");
-            compiler["datetime_end"] = datetimeEnd == DateTime.MaxValue ? null : datetimeEnd.ToString("YYYY-MM-dd HH:mm:ss");
-            if (loaded)
-                compiler.compileUpdate("bsa_user_bans", "banid='" + SQLUtils.escape(banid.ToString()) + "'");
+            SQLCompiler sql = new SQLCompiler();
+            sql["userid"] = userid.ToString();
+            sql["banned_by"] = bannedBy == -1 ? null : bannedBy.ToString();
+            sql["reason"] = reason.Length == 0 ? null : reason;
+            sql["datetime_start"] = datetimeStart.ToString("YYYY-MM-dd HH:mm:ss");
+            sql["datetime_end"] = datetimeEnd == DateTime.MaxValue ? null : datetimeEnd.ToString("YYYY-MM-dd HH:mm:ss");
+            if (persisted)
+            {
+                sql.UpdateAttribute = "banid";
+                sql.UpdateValue = banid;
+                sql.executeUpdate(conn, "bsa_user_bans");
+            }
             else
-                banid = (int)conn.queryScalar(compiler.compileInsert("bsa_user_bans", "banid"));
+            {
+                banid = sql.executeInsert(conn, "bsa_user_bans", "banid")[0].get2<int>("banid");
+                persisted = true;
+            }
+            modified = false;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>

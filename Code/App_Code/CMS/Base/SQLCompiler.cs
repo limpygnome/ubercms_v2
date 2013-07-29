@@ -160,8 +160,9 @@ namespace CMS.Base
             switch(conn.Type)
             {
                 case Connector.ConnectorType.MySQL:
+                    // Create prepared statement
+                    PreparedStatement ps = new PreparedStatement();
                     // Build query
-                    string query;
                     {
                         StringBuilder k = new StringBuilder();
                         StringBuilder v = new StringBuilder();
@@ -184,11 +185,10 @@ namespace CMS.Base
                                     throw new Exception("Unsupported Connector type!");
                             }
                         }
-                        query = k.ToString();
+                        ps.Query = k.ToString();
                     }
-                    // Create and executed prepared statement
-                    PreparedStatement ps = new PreparedStatement();
                     ps.Parameters = this.attributes;
+                    // Execute prepared statement
                     return conn.queryRead(ps);
                 default:
                     return conn.queryRead(compileInsert(table, uniqueAttribute, conn.Type));
@@ -219,7 +219,6 @@ namespace CMS.Base
                     PreparedStatement ps = new PreparedStatement();
                     ps.Parameters = this.attributes;
                     // Build query
-                    string query;
                     {
                         StringBuilder s = new StringBuilder();
                         s.Append("UPDATE ").Append(table).Append(" SET ");
@@ -233,7 +232,7 @@ namespace CMS.Base
                             s.Append(" WHERE ?ua_").Append(updateAttribute);
                             ps["?ua_" + updateAttribute] = updateValue;
                         }
-                        query = s.Append(";").ToString();
+                        ps.Query = s.Append(";").ToString();
                     }
                     // Execute prepared statement
                     conn.queryExecute(ps);
