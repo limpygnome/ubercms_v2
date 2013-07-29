@@ -31,6 +31,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Xml;
+using System.Web.Security;
 using CMS.Base;
 using CMS.Plugins;
 using UberLib.Connector;
@@ -46,6 +47,7 @@ namespace CMS.BasicSiteAuth
         public const string BSA_UUID = "943c3f9d-dfcb-483d-bf34-48ad5231a15f";
         public const int BSA_UNIQUE_USER_HASH_MIN = 10;
         public const int BSA_UNIQUE_USER_HASH_MAX = 16;
+        private const string HTTPCONTEXTITEMS_BSA_CURRENT_USER = "bsa_current_user";
         // Constants - Settings ****************************************************************************************
         // -- User Restrictions ****************************************************************************************
         public const string SETTINGS_USERNAME_MIN = "bsa/account/username_min";
@@ -125,6 +127,7 @@ namespace CMS.BasicSiteAuth
             : base(uuid, title, directory, state, handlerInfo)
         {
             groups = null;
+            accountEventTypes = null;
         }
         // Methods - Handlers ******************************************************************************************
         public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
@@ -234,8 +237,8 @@ namespace CMS.BasicSiteAuth
             userRoot.Username = "root";
             userRoot.setPassword(this, "password");
             userRoot.Email = "admin@localhost";
-            userRoot.SecretQuestion = string.Empty;
-            userRoot.SecretAnswer = string.Empty;
+            userRoot.SecretQuestion = null;
+            userRoot.SecretAnswer = null;
             userRoot.UserGroup = ugAdministrator;
             if(userRoot.save(this, conn) != User.UserCreateSaveStatus.Success)
                 messageOutput.AppendLine("Warning: failed to create root user!");
@@ -310,20 +313,21 @@ namespace CMS.BasicSiteAuth
         public override void handler_cmsCycle()
         {
             // Clean old recovery codes
-
+            RecoveryCode.remove(Core.Connector);
             // Delete old failed authentication attempts
-
+            AuthFailedAttempt.remove(Core.Connector);
         }
         public override void handler_requestStart(Data data)
         {
             // Fetch the user for the current request
             User user = getCurrentUser(data);
-            // Check if the user is banned/unable to login
-
+            // Check if the user is banned/unable to login - invalidate the model
+            if (UserBan.isBanned(data.Connector, user))
+                user = null;
             // Set the user's information
-            if (user != null)
+            else if (user != null)
             {
-                // Render elements
+                // Set elements
                 data["Username"] = user.Username;
             }
         }
@@ -421,7 +425,6 @@ namespace CMS.BasicSiteAuth
             return true;
         }
         // Methods - Static ********************************************************************************************
-        private const string bsaCurrentUserKey = "bsa_current_user";
         /// <summary>
         /// Gets the user object for the current request; returns null if the user is anonymous. This can be invoked
         /// at any stage; if the user for the current request has not been loaded, it will be loaded.
@@ -429,28 +432,40 @@ namespace CMS.BasicSiteAuth
         /// <returns>The user model which represents the user of the current request.</returns>
         public static User getCurrentUser(Data data)
         {
-            if (!HttpContext.Current.Items.Contains(bsaCurrentUserKey))
+            if (!HttpContext.Current.Items.Contains(HTTPCONTEXTITEMS_BSA_CURRENT_USER))
                 loadCurrentUser(data);
-            return (User)HttpContext.Current.Items[bsaCurrentUserKey];
+            return (User)HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER];
+        }
+        public static void invalidCurrentUserSession()
+        {
+            // Destroy model
+            HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] = null;
+            // Destroy authentication
+            FormsAuthentication.SignOut();
+            // Destroy entire session
+            HttpContext.Current.Session.Abandon();
         }
         private static void loadCurrentUser(Data data)
         {
             // Check the user object has not already been loaded
-            if (HttpContext.Current.Items[bsaCurrentUserKey] != null)
+            if (HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] != null)
                 return;
             // Check if the user is authenticated
             if (!HttpContext.Current.User.Identity.IsAuthenticated)
-                HttpContext.Current.Items[bsaCurrentUserKey] = null;
+                HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] = null;
             else
             {
                 // Fetch the BSA plugin
                 BasicSiteAuth bsa = (BasicSiteAuth)Core.Plugins.getPlugin(UUID.createFromHexHyphens(BasicSiteAuth.BSA_UUID));
-                // Load and set user object
-                User usr = User.load(bsa, data.Connector, int.Parse(HttpContext.Current.User.Identity.Name));
-                if(usr.UserGroup.Login)
-                    HttpContext.Current.Items[bsaCurrentUserKey] = usr;
-                else
-                    HttpContext.Current.Items[bsaCurrentUserKey] = null;
+                if (bsa != null)
+                {
+                    // Load and set user object
+                    User usr = User.load(bsa, data.Connector, int.Parse(HttpContext.Current.User.Identity.Name));
+                    if (usr != null && usr.UserGroup.Login)
+                        HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] = usr;
+                    else
+                        HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] = null;
+                }
             }
         }
         // Methods *****************************************************************************************************

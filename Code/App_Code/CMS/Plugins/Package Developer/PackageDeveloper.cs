@@ -188,7 +188,7 @@ namespace CMS.Plugins
                             }
                         }
                         else
-                            pageSync_file(file1, file2 + "/" + Path.GetFileName(file1), ref filesIncluded, ref filesExcluded);
+                            pageSync_file(file1, file2 + "/" + System.IO.Path.GetFileName(file1), ref filesIncluded, ref filesExcluded);
 
                     }
                 }
@@ -210,7 +210,7 @@ namespace CMS.Plugins
                 if (destination.EndsWith(".js"))
                     destination += ".file";
                 // Check the destination directoy exists
-                string dir = Path.GetDirectoryName(destination);
+                string dir = System.IO.Path.GetDirectoryName(destination);
                 if (!Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
                 // Copy the file
@@ -230,7 +230,7 @@ namespace CMS.Plugins
             data["Title"] = "Package Developer - Package Plugin";
             // Create a new archive in the base directory, add every file in the base of the target plugin to the archive
             StringBuilder output = new StringBuilder();
-            string archivePath = Core.BasePath + "/" + Path.GetFileName(plugin.RelativeDirectory) + "_" + plugin.VersionMajor + "." + plugin.VersionMinor + "." + plugin.VersionBuild + ".zip";
+            string archivePath = Core.BasePath + "/" + System.IO.Path.GetFileName(plugin.RelativeDirectory) + "_" + plugin.VersionMajor + "." + plugin.VersionMinor + "." + plugin.VersionBuild + ".zip";
             output.Append("Creating archive at '").Append(HttpUtility.HtmlEncode(archivePath)).Append("'...");
             using(ZipFile archive = new ZipFile(archivePath))
             {
@@ -239,7 +239,7 @@ namespace CMS.Plugins
                 {
                     try
                     {
-                        archive.AddFile(file, Path.GetDirectoryName(file.Substring(pluginPathLength)));
+                        archive.AddFile(file, System.IO.Path.GetDirectoryName(file.Substring(pluginPathLength)));
                         output.Append("Added file '" + HttpUtility.HtmlEncode(file) + "'.<br />");
                     }
                     catch (Exception ex)

@@ -225,16 +225,6 @@ namespace CMS.BasicSiteAuth
                 description = value;
             }
         }
-        /// <summary>
-        /// Indicates if the data has been modified.
-        /// </summary>
-        public bool IsModified
-        {
-            get
-            {
-                return modified;
-            }
-        }
         // Methods - Properties - Pages
         /// <summary>
         /// Permission to create pages.

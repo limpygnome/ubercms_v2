@@ -48,7 +48,7 @@ namespace CMS.BasicSiteAuth
         {
             this.persisted = this.modified = false;
         }
-        // Methods - Database ******************************************************************************************
+        // Methods - Database Persistence ******************************************************************************
         /// <summary>
         /// Loads all the bans for a user.
         /// </summary>
@@ -140,6 +140,26 @@ namespace CMS.BasicSiteAuth
                 persisted = true;
             }
             modified = false;
+        }
+        /// <summary>
+        /// Indicates if a user is banned.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="user">The user model to check.</param>
+        /// <returns>True if banned, false if not banned.</returns>
+        public static bool isBanned(Connector conn, User user)
+        {
+            return isBanned(conn, user.UserID);
+        }
+        /// <summary>
+        /// Indicates if a user is banned.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="userID">The identifier of the user.</param>
+        /// <returns>True if banned, false if not banned.</returns>
+        public static bool isBanned(Connector conn, int userID)
+        {
+            return conn.queryCount("SELECT COUNT('') FROM bsa_user_bans WHERE userid='" + SQLUtils.escape(userID.ToString()) + "' AND (datetime_end=NULL OR datetime_end > CURRENT_TIMESTAMP)") > 0;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>

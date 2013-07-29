@@ -143,8 +143,8 @@ namespace CMS
                 usr.password = data["password"];
                 usr.passwordSalt = data["password_salt"];
                 usr.email = data["email"];
-                usr.secretQuestion = data.isNull("secret_question") ? string.Empty : data["secret_question"];
-                usr.secretAnswer = data.isNull("secret_answer") ? string.Empty : data["secret_answer"];
+                usr.secretQuestion = data["secret_question"];
+                usr.secretAnswer = data["secret_answer"];
                 usr.userGroup = ug;
                 usr.registered = data.get2<DateTime>("datetime_register");
                 return usr;
