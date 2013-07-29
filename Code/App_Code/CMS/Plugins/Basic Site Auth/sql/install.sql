@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS bsa_account_events
 	datetime TIMESTAMP NOT NULL,
 	param1 TEXT,
 	param1_datatype VARCHAR(1),
-	param2 TEXT
+	param2 TEXT,
 	param2_datatype VARCHAR(1)
 );
 CREATE TABLE IF NOT EXISTS bsa_recovery_codes

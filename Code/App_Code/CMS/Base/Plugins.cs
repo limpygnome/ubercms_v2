@@ -684,11 +684,11 @@ namespace CMS.Base
                     {
                         try
                         {
-                            Directory.Delete(plugin.FullPath, true);
+                            Directory.Delete(plugin.Path, true);
                         }
                         catch (Exception ex)
                         {
-                            messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - warning - exception occurred removing the directory ('" + plugin.FullPath + "'): '" + ex.Message + "'; you will need to remove the directory manually!");
+                            messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - warning - exception occurred removing the directory ('" + plugin.Path + "'): '" + ex.Message + "'; you will need to remove the directory manually!");
                         }
                     }
                 }

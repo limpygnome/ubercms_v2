@@ -29,6 +29,7 @@
  *                      2013-07-20      Changed pluginid to uuid (universally unique identifier).
  *                                      Moved namespace to Core.Base.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
+ *                      2013-07-29      Refactored FullPath to Path.
  * 
  * *********************************************************************************************************************
  * Base class for all plugins. This contains information about the plugin and methods to be implemented as handlers.
@@ -283,7 +284,7 @@ namespace CMS.Base
         /// <summary>
         /// Returns the full path to the plugin's base-directory.
         /// </summary>
-        public string FullPath
+        public string Path
         {
             get
             {
@@ -297,7 +298,7 @@ namespace CMS.Base
         {
             get
             {
-                return FullPath + "/content";
+                return Path + "/content";
             }
         }
         /// <summary>
@@ -307,7 +308,7 @@ namespace CMS.Base
         {
             get
             {
-                return FullPath + "/templates";
+                return Path + "/templates";
             }
         }
         /// <summary>
@@ -317,7 +318,7 @@ namespace CMS.Base
         {
             get
             {
-                return FullPath + "/sql";
+                return Path + "/sql";
             }
         }
         /// <summary>

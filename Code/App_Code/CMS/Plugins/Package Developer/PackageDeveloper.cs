@@ -147,14 +147,14 @@ namespace CMS.Plugins
             {
                 if ((plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]))) == null)
                     return false;
-                filesList = plugin.FullPath + "/files.list";
+                filesList = plugin.Path + "/files.list";
             }
             data["Title"] = "Package Developer - Sync Global Files";
             // Check files.list exists
             if (!File.Exists(filesList))
             {
                 if(plugin != null)
-                    data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync plugin '<i>" + HttpUtility.HtmlEncode(plugin.Title) + "</i>' (UUID: " + plugin.UUID.HexHyphens + ") at '<i>" + HttpUtility.HtmlEncode(plugin.FullPath) + "</i>' - files.list does not exist!");
+                    data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync plugin '<i>" + HttpUtility.HtmlEncode(plugin.Title) + "</i>' (UUID: " + plugin.UUID.HexHyphens + ") at '<i>" + HttpUtility.HtmlEncode(plugin.Path) + "</i>' - files.list does not exist!");
                 else
                     data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", "Cannot sync core files - files.list does not exist in /installer!");
             }
@@ -172,8 +172,8 @@ namespace CMS.Plugins
                     if (line.Length != 0 && !line.StartsWith("//") && (file = line.Split(',')).Length == 2) // Check against empty-line or comment-line
                     {
                         // Format the file path's
-                        file1 = file[0].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin == null ? Core.PathInstaller : plugin.FullPath).Replace("%TEMPLATES%", plugin == null ? Core.PathInstaller_Templates : plugin.PathTemplates).Replace("%CONTENT%", plugin == null ? Core.PathInstaller_Content : plugin.PathContent);
-                        file2 = file[1].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin == null ? Core.PathInstaller : plugin.FullPath).Replace("%TEMPLATES%", plugin == null ? Core.PathInstaller_Templates : plugin.PathTemplates).Replace("%CONTENT%", plugin == null ? Core.PathInstaller_Content : plugin.PathContent);
+                        file1 = file[0].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin == null ? Core.PathInstaller : plugin.Path).Replace("%TEMPLATES%", plugin == null ? Core.PathInstaller_Templates : plugin.PathTemplates).Replace("%CONTENT%", plugin == null ? Core.PathInstaller_Content : plugin.PathContent);
+                        file2 = file[1].Trim().Replace("%GLOBAL%", Core.BasePath).Replace("%LOCAL%", plugin == null ? Core.PathInstaller : plugin.Path).Replace("%TEMPLATES%", plugin == null ? Core.PathInstaller_Templates : plugin.PathTemplates).Replace("%CONTENT%", plugin == null ? Core.PathInstaller_Content : plugin.PathContent);
                         // Check if file1 is multiple files i.e. a directory
                         bool multipleFiles = file1.EndsWith("/*");
                         // Sync the files
@@ -234,8 +234,8 @@ namespace CMS.Plugins
             output.Append("Creating archive at '").Append(HttpUtility.HtmlEncode(archivePath)).Append("'...");
             using(ZipFile archive = new ZipFile(archivePath))
             {
-                int pluginPathLength = plugin.FullPath.Length;
-                foreach(string file in Directory.GetFiles(plugin.FullPath, "*", SearchOption.AllDirectories))
+                int pluginPathLength = plugin.Path.Length;
+                foreach(string file in Directory.GetFiles(plugin.Path, "*", SearchOption.AllDirectories))
                 {
                     try
                     {

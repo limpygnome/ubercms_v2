@@ -135,7 +135,7 @@ namespace CMS.BasicSiteAuth
             HandlerInfo.CycleInterval = 3600000; // Every hour
             HandlerInfo.save(conn);
             // Install SQL
-            if (!BaseUtils.executeSQL(FullPath + "/sql/install.sql", conn, ref messageOutput))
+            if (!BaseUtils.executeSQL(PathSQL + "/install.sql", conn, ref messageOutput))
                 return false;
             // Create settings
             // -- User restrictions
@@ -244,13 +244,18 @@ namespace CMS.BasicSiteAuth
         public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Check if the user table exists; if so, abort and inform the user to manually remove it
-            if (conn.queryCount("SELECT COUNT('') FROM information_schema.tables WHERE table_schema='" + SQLUtils.escape(Core.DatabaseSchema) + "' AND table_name='bsa_users';") > 0)
+            switch(conn.Type)
             {
-                messageOutput.AppendLine("Basic site authentication cannot be uninstalled until you remove the users table (bsa_users) from the database! This is protection against accidental uninstallation of the user data.");
-                return false;
+                case Connector.ConnectorType.MySQL:
+                    if (conn.queryCount("SELECT COUNT('') FROM information_schema.tables WHERE table_schema='" + SQLUtils.escape(Core.DatabaseSchema) + "' AND table_name='bsa_users';") > 0)
+                    {
+                        messageOutput.AppendLine("Basic site authentication cannot be uninstalled until you remove the users table (bsa_users) from the database! This is protection against accidental uninstallation of the user data.");
+                        return false;
+                    }
+                    break;
             }
             // Remove SQL
-            if (!BaseUtils.executeSQL(FullPath + "/sql/uninstall.sql", conn, ref messageOutput))
+            if (!BaseUtils.executeSQL(PathSQL + "/uninstall.sql", conn, ref messageOutput))
                 return false;
             // Remove settings
             Core.Settings.remove(this);
@@ -455,7 +460,7 @@ namespace CMS.BasicSiteAuth
         }
         private void loadSalts()
         {
-            string salts = FullPath + "/salts.xml";
+            string salts = Path + "/salts.xml";
             // Check if existing salts exist, if so...we'll load them
             if (File.Exists(salts))
             {
