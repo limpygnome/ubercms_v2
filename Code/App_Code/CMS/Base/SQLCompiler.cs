@@ -91,7 +91,7 @@ namespace CMS.Base
                 switch (ctype)
                 {
                     case Connector.ConnectorType.MySQL:
-                        buffer.Append("SELECT LAST_INSERT_ID();");
+                        buffer.Append("SELECT LAST_INSERT_ID() AS ").Append(uniqueAttribute).Append(";");
                         break;
                     default:
                         throw new Exception("Unsupported Connector type!");
@@ -178,7 +178,7 @@ namespace CMS.Base
                             switch (conn.Type)
                             {
                                 case Connector.ConnectorType.MySQL:
-                                    k.Append("SELECT LAST_INSERT_ID();");
+                                    k.Append("SELECT LAST_INSERT_ID() AS ").Append(uniqueAttribute).Append(";");
                                     break;
                                 default:
                                     throw new Exception("Unsupported Connector type!");
