@@ -14,8 +14,7 @@
  *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
  *                      http://creativecommons.org/licenses/by-sa/3.0/
  * 
- *      File:           Plugins.cs
- *      Path:           /App_Code/CMS/Plugins/PluginHandlerInfo.cs
+ *      Path:           /App_Code/CMS/Base/PluginHandlerInfo.cs
  * 
  *      Change-Log:
  *                      2013-06-28      Created initial class.

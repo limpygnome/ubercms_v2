@@ -14,8 +14,7 @@
  *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
  *                      http://creativecommons.org/licenses/by-sa/3.0/
  * 
- *      File:           EmailQueue.cs
- *      Path:           /App_Code/CMS/Core/EmailQueue.cs
+ *      Path:           /App_Code/CMS/Base/EmailQueue.cs
  * 
  *      Change-Log:
  *                      2013-06-25      Created initial class.

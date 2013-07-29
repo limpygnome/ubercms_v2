@@ -14,7 +14,6 @@
  *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
  *                      http://creativecommons.org/licenses/by-sa/3.0/
  * 
- *      File:           Basic404Page.cs
  *      Path:           /App_Code/CMS/Plugins/Basic 404 Page/Basic404Page.cs
  * 
  *      Change-Log:

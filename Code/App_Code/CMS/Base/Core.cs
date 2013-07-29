@@ -14,7 +14,7 @@
  *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
  *                      http://creativecommons.org/licenses/by-sa/3.0/
  * 
- *      Path:           /CMS/Base/Core.cs
+ *      Path:           /App_Code/CMS/Base/Core.cs
  * 
  *      Change-Log:
  *                      2013-06-25      Created initial class.

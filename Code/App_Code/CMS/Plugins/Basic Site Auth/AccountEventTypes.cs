@@ -1,4 +1,28 @@
-﻿
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ * 
+ *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/AccountEventTypes.cs
+ * 
+ *      Change-Log:
+ *                      2013-07-29      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * Stores a collection of account event type models.
+ * *********************************************************************************************************************
+ */
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +31,9 @@ using UberLib.Connector;
 
 namespace CMS.BasicSiteAuth
 {
+    /// <summary>
+    /// Stores a collection of account event type models.
+    /// </summary>
     public class AccountEventTypes
     {
         // Fields ******************************************************************************************************

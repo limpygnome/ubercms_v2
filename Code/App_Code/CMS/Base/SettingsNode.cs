@@ -14,8 +14,7 @@
  *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
  *                      http://creativecommons.org/licenses/by-sa/3.0/
  * 
- *      File:           App_code/CMS/Base/Settings.cs
- *      Path:           /Settings.cs
+ *      Path:           /App_Code/CMS/Base/Settings.cs
  * 
  *      Change-Log:
  *                      2013-06-27      Moved this class, as a sub-class, from Settings to its own class.

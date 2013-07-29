@@ -14,7 +14,6 @@
  *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
  *                      http://creativecommons.org/licenses/by-sa/3.0/
  * 
- *      File:           UserGroups.cs
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/UserGroups.cs
  * 
  *      Change-Log:
