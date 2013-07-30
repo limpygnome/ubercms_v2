@@ -93,7 +93,7 @@ namespace CMS.Base
                             sqlUpdated.Append("UPDATE cms_settings SET value='").Append(SQLUtils.escape(k.Value.ToString())).Append("', type='").Append(SQLUtils.escape(((int)k.Value.ValueDataType).ToString())).Append("' WHERE path='").Append(SQLUtils.escape(k.Key)).Append("'; ");
                             break;
                         case SettingsNode.SettingsNodeState.Added:
-                            sqlInserted.Append("('").Append(SQLUtils.escape(k.Key)).Append("', ").Append(k.Value.OwnerUUID.SQLValue).Append(", ").Append((k.Value.Description == null ? "NULL" : "'" + k.Value.Description + "'")).Append(", '").Append(SQLUtils.escape(((int)k.Value.ValueDataType).ToString())).Append("', ").Append((k.Value.Value == null ? "NULL" : "'" + k.Value.Value + "'")).Append("),");
+                            sqlInserted.Append("('").Append(SQLUtils.escape(k.Key)).Append("', ").Append(k.Value.OwnerUUID.NumericHexString).Append(", ").Append((k.Value.Description == null ? "NULL" : "'" + k.Value.Description + "'")).Append(", '").Append(SQLUtils.escape(((int)k.Value.ValueDataType).ToString())).Append("', ").Append((k.Value.Value == null ? "NULL" : "'" + k.Value.Value + "'")).Append("),");
                             break;
                     }
                 }
@@ -307,7 +307,7 @@ namespace CMS.Base
             lock (this)
             {
                 // Delete settings from the database
-                Core.Connector.queryExecute("DELETE FROM cms_settings WHERE uuid=" + uuid.SQLValue + ";");
+                Core.Connector.queryExecute("DELETE FROM cms_settings WHERE uuid=" + uuid.NumericHexString + ";");
                 // Find keys to remove
                 List<string> temp = new List<string>();
                 foreach (KeyValuePair<string, SettingsNode> kv in config)

@@ -118,8 +118,8 @@
     <Content Include="Code\CMS.config">
       <SubType>Designer</SubType>
     </Content>
-    <Content Include="SQL\MySQL\Install.sql" />
-    <Content Include="SQL\MySQL\Uninstall.sql" />
+    <Content Include="SQL\MySQL\install.sql" />
+    <Content Include="SQL\MySQL\uninstall.sql" />
     <Content Include="README" />
     <Content Include="TODO" />
     <Content Include="LICENSE" />

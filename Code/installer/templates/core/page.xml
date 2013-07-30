@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[core/page]]></path><description><![CDATA[The default page template used to wrap content.]]></description><html><![CDATA[<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>&uuml;ber CMS</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<link type="text/css" href="/content/css/layout.css" rel="Stylesheet" />
+	<!--IF:Header-->
+		<!--Header-->
+	<!--ENDIF-->
+</head>
+<body>
+	<div class="AREA_SHADOW"></div>
+	<div class="AREA_WRAPPER">
+		<div class="AREA_BANNER">
+			<div class="AUTH">
+				<a href="/login">
+					<img src="/content/images/layout/login.png" alt="Login" />
+					Login
+				</a>
+				<div class="SEP"></div>
+				<a href="/register">
+					<img src="/content/images/layout/register.png" alt="Login" />
+					Register
+				</a>
+			</div>
+			<h1>&uuml;ber cms</h1>
+		</div>
+		<div class="AREA_NAV">
+			<div class="ITEM">
+				<div class="TOP">
+					<a href="/home">Home</a>
+				</div>
+			</div>
+			<div class="SEP"></div>
+			<div class="ITEM">
+				<a href="/test">Test Menu</a>
+				<div class="SUBITEMS">
+					<a href="/test">Sub-item A</a>
+					<a href="/test">Sub-item B</a>
+					<a href="/test">Sub-item C</a>
+				</div>
+			</div>
+		</div>
+		<div class="AREA_CONTENT">
+			<!--Content-->
+		</div>
+		<div class="clear"></div>
+	</div>
+	<p class="FOOTER">
+		<a href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported</a><br />
+		Generated in <!--BenchMark_ms--> m/s
+	</p>
+</body>
+</html>]]></html></template>

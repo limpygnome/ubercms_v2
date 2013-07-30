@@ -18,6 +18,7 @@
  * 
  *      Change-Log:
  *                      2013-07-21      Created initial class.
+ *                      2013-07-30      Added Bytes property and changed the SQLValue property to NumericHexString.
  * 
  * *********************************************************************************************************************
  * A model for representing a universally unique identifier, following the RFC 4122 standard:
@@ -25,6 +26,7 @@
  * *********************************************************************************************************************
  */
 using System;
+using System.Text;
 
 namespace CMS.Base
 {
@@ -80,11 +82,9 @@ namespace CMS.Base
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>
-        /// The SQL hex value (0x...) string value of the UUID; this is to be used when updating the database; for
-        /// example: `SELECT * FROM acme WHERE uuid=0x...;`. This value must NOT be wrapped in semi-colons, else
-        /// it will be interpreted as a string.
+        /// The string hex value (0x...) of the UUID.
         /// </summary>
-        public string SQLValue
+        public string NumericHexString
         {
             get
             {
@@ -109,6 +109,19 @@ namespace CMS.Base
             get
             {
                 return hex.Substring(0, 8) + "-" + hex.Substring(8, 4) + "-" + hex.Substring(12, 4) + "-" + hex.Substring(16, 4) + "-" + hex.Substring(20, 12);
+            }
+        }
+        /// <summary>
+        /// The bytes of the hex string. Fetching this value will regenerate the bytes each time (expensive).
+        /// </summary>
+        public byte[] Bytes
+        {
+            get
+            {
+                byte[] buffer = new byte[16];
+                for(int i = 0; i < 32; i +=2)
+                    buffer[i / 2] = (byte)int.Parse(hex.Substring(i, 2), System.Globalization.NumberStyles.HexNumber);
+                return buffer;
             }
         }
     }

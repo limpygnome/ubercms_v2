@@ -134,7 +134,7 @@ namespace CMS.BasicSiteAuth
         {
             // Setup handlers
             HandlerInfo.RequestStart = true;
-            HandlerInfo.CmsStart = true;
+            HandlerInfo.PluginStart = true;
             HandlerInfo.CycleInterval = 3600000; // Every hour
             HandlerInfo.save(conn);
             // Install SQL
@@ -303,14 +303,14 @@ namespace CMS.BasicSiteAuth
                 return false;
             return true;
         }
-        public override bool handler_cmsStart(UberLib.Connector.Connector conn)
+        public override bool handler_pluginStart(UberLib.Connector.Connector conn)
         {
             loadSalts();
             groups = UserGroups.load(conn);
             accountEventTypes = AccountEventTypes.load(conn);
             return true;
         }
-        public override void handler_cmsCycle()
+        public override void handler_pluginCycle()
         {
             // Clean old recovery codes
             RecoveryCode.remove(Core.Connector);

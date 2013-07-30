@@ -77,7 +77,7 @@ namespace CMS.BasicSiteAuth
         {
             List<UserBan> bans = new List<UserBan>();
             UserBan ub;
-            foreach (ResultRow row in conn.queryRead("SELECT * FROM bsa_user_bans WHERE userid='" + SQLUtils.escape(user.UserID.ToString()) + "' AND (datetime_end > CURRENT_TIMESTAMP OR datetime_end=NULL);"))
+            foreach (ResultRow row in conn.queryRead("SELECT * FROM bsa_user_bans WHERE userid='" + SQLUtils.escape(user.UserID.ToString()) + "' AND (datetime_end > CURRENT_TIMESTAMP OR datetime_end IS NULL);"))
             {
                 ub = load(row);
                 if (ub != null)
@@ -159,7 +159,7 @@ namespace CMS.BasicSiteAuth
         /// <returns>True if banned, false if not banned.</returns>
         public static bool isBanned(Connector conn, int userID)
         {
-            return conn.queryCount("SELECT COUNT('') FROM bsa_user_bans WHERE userid='" + SQLUtils.escape(userID.ToString()) + "' AND (datetime_end=NULL OR datetime_end > CURRENT_TIMESTAMP)") > 0;
+            return conn.queryCount("SELECT COUNT('') FROM bsa_user_bans WHERE userid='" + SQLUtils.escape(userID.ToString()) + "' AND (datetime_end IS NULL OR datetime_end > CURRENT_TIMESTAMP)") > 0;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>

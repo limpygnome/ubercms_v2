@@ -48,7 +48,7 @@ namespace CMS.Base
     /// </summary>
 	public abstract class Plugin
 	{
-		// Enums ***************************************************************************************************
+		// Enums *******************************************************************************************************
 		public enum PluginState
 		{
 			NotInstalled = 0,
@@ -66,7 +66,7 @@ namespace CMS.Base
             PreEnable,
             PostEnable
         }
-		// Fields **************************************************************************************************
+		// Fields ******************************************************************************************************
         private bool stateChanged;                  // Indicates if the state of the plugin has changed.
         private UUID uuid;                          // The universally unique identifier of the plugin.
 		private PluginState state;                  // The state of the plugin.
@@ -74,7 +74,7 @@ namespace CMS.Base
         private DateTime lastCycled;                // The last time the plugin cycled; DateTime.Min as value means the plugin has yet to cycle.
         private string title;                       // The title of the plugin.
         private string directory;                   // The relative path of the plugin's base directory.
-        // Methods - Constructors **********************************************************************************
+        // Methods - Constructors **************************************************************************************
         public Plugin(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
         {
             this.uuid = uuid;
@@ -84,7 +84,7 @@ namespace CMS.Base
             this.handlerInfo = handlerInfo;
             this.lastCycled = DateTime.MinValue;
         }
-		// Methods - Abstract - State ******************************************************************************
+		// Methods - Abstract - State **********************************************************************************
         /// <summary>
         /// Invoked when the plugin should persist its data to the database.
         /// </summary>
@@ -92,7 +92,7 @@ namespace CMS.Base
         public virtual void save(Connector conn)
         {
             if(stateChanged)
-                conn.queryExecute("UPDATE cms_plugins SET state='" + SQLUtils.escape(((int)state).ToString()) + "' WHERE uuid=" + uuid.SQLValue + "; ");
+                conn.queryExecute("UPDATE cms_plugins SET state='" + SQLUtils.escape(((int)state).ToString()) + "' WHERE uuid=" + uuid.NumericHexString + "; ");
         }
         /// <summary>
         /// Invoked when the plugin is being unloaded; this may not occur only when the CMS ends.
@@ -144,27 +144,27 @@ namespace CMS.Base
             messageOutput.AppendLine("Not implemented.");
 			return false;
 		}
-		// Methods - Abstract - Handlers - CMS *********************************************************************
+		// Methods - Abstract - Handlers - Plugins *********************************************************************
         /// <summary>
-        /// Invoked when the CMS's core has started.
+        /// Invoked when the plugin is loaded.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <returns></returns>
-        public virtual bool handler_cmsStart(Connector conn)
+        public virtual bool handler_pluginStart(Connector conn)
 		{
 			return true;
 		}
         /// <summary>
-        /// Invoked before the CMS's core has stopped.
+        /// Invoked when the plugin is unloaded.
         /// </summary>
         /// <param name="conn">Database connector.</param>
-		public virtual void handler_cmsEnd(Connector conn)
+		public virtual void handler_pluginStop(Connector conn)
 		{
 		}
         /// <summary>
         /// Invoked at intervals, as defined by the cycle-interval in the plugin's handler information.
         /// </summary>
-        public virtual void handler_cmsCycle()
+        public virtual void handler_pluginCycle()
 		{
 		}
         /// <summary>
@@ -173,11 +173,11 @@ namespace CMS.Base
         /// <param name="conn">Database connector.</param>
         /// <param name="action">The action being, or has been, performed.</param>
         /// <returns>If this is a pre-action, you can return false to abort the process. No affect on post actions.</returns>
-        public virtual bool handler_cmsPluginAction(Connector conn, PluginAction action, Plugin plugin)
+        public virtual bool handler_pluginAction(Connector conn, PluginAction action, Plugin plugin)
         {
             return false;
         }
-		// Methods - Abstract - Handlers - Requests ****************************************************************
+		// Methods - Abstract - Handlers - Requests ********************************************************************
         /// <summary>
         /// Invoked at the start of a request.
         /// </summary>
@@ -220,7 +220,7 @@ namespace CMS.Base
 		{
 			return false;
 		}
-		// Methods - Properties ************************************************************************************
+		// Methods - Properties ****************************************************************************************
         /// <summary>
         /// The identifier of the plugin.
         /// </summary>

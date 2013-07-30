@@ -166,14 +166,14 @@ namespace CMS.Base
                     {
                         StringBuilder k = new StringBuilder();
                         StringBuilder v = new StringBuilder();
-                        k.Append("INSERT INTO ").Append(table).Append("(");
+                        k.Append("INSERT INTO ").Append(table).Append(" (");
                         v.Append(") VALUES(");
                         foreach (KeyValuePair<string, object> kv in this.attributes)
                         {
                             k.Append(kv.Key).Append(",");
                             v.Append("?").Append(kv.Key).Append(",");
                         }
-                        k.Remove(k.Length - 1, 1).Append(v.Remove(v.Length - 1, 1).ToString()).Append(";");
+                        k.Remove(k.Length - 1, 1).Append(v.Remove(v.Length - 1, 1).ToString()).Append(");");
                         if (uniqueAttribute != null)
                         {
                             switch (conn.Type)

@@ -22,6 +22,9 @@
  *                      2013-07-01      Properties can now be set.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                                      Changed plugin identifier to support UUID.
+ *                      2013-07-30      Changed handler properties to reflect changes in plugin class (CMS to plguin
+ *                                      handler changes).
+ *                                      General major overhaul of class.
  * 
  * *********************************************************************************************************************
  * Stores information about a plugin's handler's, indicating if they should invoked and any parameters.
@@ -39,17 +42,19 @@ namespace CMS.Base
     /// </summary>
     public class PluginHandlerInfo
     {
-        // Fields **************************************************************************************************
+        // Fields ******************************************************************************************************
         private UUID    uuid;               // The identifier of the plugin; used internally only.
+        private bool    persisted,          // Indicates if the model has been persisted to the database.
+                        modified;           // Indicates if the model has been modified.
         private bool    requestStart,
                         requestEnd,
                         pageError,
                         pageNotFound,
-                        cmsStart,
-                        cmsEnd,
-                        cmsPluginAction;
+                        pluginStart,
+                        pluginStop,
+                        pluginAction;
         int             cycleInterval;
-        // Methods - Constructors **********************************************************************************
+        // Methods - Constructors **************************************************************************************
         public PluginHandlerInfo() { }
         /// <summary>
         /// Creates a new model to represent a plugin's handler information.
@@ -59,29 +64,106 @@ namespace CMS.Base
         /// <param name="requestEnd">Indicates if the request-end handler is invoked.</param>
         /// <param name="pageError">Indicates if the page-error handler is invoked.</param>
         /// <param name="pageNotFound">Indicates if the page-not-found handler is invoked.</param>
-        /// <param name="cmsStart">Indicates if the cms-start handler is invoked.</param>
-        /// <param name="cmsEnd">Indicates if the cms-end handler is invoked.</param>
-        /// <param name="cmsPluginAction">Indicates if the cms-plugin-action handler is invoked.</param>
+        /// <param name="pluginStart">Indicates if the cms-start handler is invoked.</param>
+        /// <param name="pluginStop">Indicates if the cms-end handler is invoked.</param>
+        /// <param name="pluginAction">Indicates if the cms-plugin-action handler is invoked.</param>
         /// <param name="cycleInterval">Indicates if the cycle handler is invoked if greater than zero; the amount greater than zero is the delay in milliseconds between invoking the handler.</param>
-        public PluginHandlerInfo(UUID uuid, bool requestStart, bool requestEnd, bool pageError, bool pageNotFound, bool cmsStart, bool cmsEnd, bool cmsPluginAction, int cycleInterval)
+        public PluginHandlerInfo(UUID uuid, bool requestStart, bool requestEnd, bool pageError, bool pageNotFound, bool pluginStart, bool pluginStop, bool pluginAction, int cycleInterval)
         {
+            this.modified = this.persisted = false;
             this.uuid = uuid;
             this.requestStart = requestStart;
             this.requestEnd = requestEnd;
             this.pageError = pageError;
             this.pageNotFound = pageNotFound;
-            this.cmsStart = cmsStart;
-            this.cmsEnd = cmsEnd;
-            this.cmsPluginAction = cmsPluginAction;
+            this.pluginStart = pluginStart;
+            this.pluginStop = pluginStop;
+            this.pluginAction = pluginAction;
             this.cycleInterval = cycleInterval;
         }
-        // Methods *************************************************************************************************
+        // Methods - Database Persistence ******************************************************************************
+        /// <summary>
+        /// Loads the plugin handler information for a plugin.
+        /// </summary>
+        /// <param name="conn">Database connector./param>
+        /// <param name="uuid">The identifier of the plugin.</param>
+        /// <returns>A model or null.</returns>
+        public static PluginHandlerInfo load(Connector conn, UUID uuid)
+        {
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM cms_plugin_handlers WHERE uuid=?uuid;");
+            ps["uuid"] = uuid.Bytes;
+            Result result = conn.queryRead(ps);
+            if (result.Count == 1)
+                return load(result[0]);
+            else
+                return null;
+        }
+        /// <summary>
+        /// Loads the plugin handler information for a plugin.
+        /// </summary>
+        /// <param name="data">The database tuple/row of data for the plugin handler.</param>
+        /// <returns>A model or null.</returns>
+        public static PluginHandlerInfo load(ResultRow data)
+        {
+            PluginHandlerInfo phi = new PluginHandlerInfo();
+
+            phi.uuid = UUID.createFromHex(data["uuid"]);
+            phi.requestStart = data["request_start"] == "1";
+            phi.requestEnd = data["request_end"] == "1";
+            phi.pageError = data["page_error"] == "1";
+            phi.pageNotFound = data["page_not_found"] == "1";
+            phi.pluginStart = data["plugin_start"] == "1";
+            phi.pluginStop = data["plugin_stop"] == "1";
+            phi.pluginAction = data["plugin_action"] == "1";
+            phi.cycleInterval = int.Parse(data["cycle_interval"]);
+
+            phi.persisted = true;
+            return phi;
+        }
+        /// <summary>
+        /// Persists the model to the database.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
         public void save(Connector conn)
         {
-            lock(this) // Lock this handler information instance until we've updated the database
-                conn.queryExecute("UPDATE cms_plugin_handlers SET request_start='" + (requestStart ? "!" : "0") + "', request_end='" + (requestEnd ? "1" : "0") + "', page_error='" + (pageError ? "1" : "0") + "', page_not_found='" + (pageNotFound ? "1" : "0") + "', cms_start='" + (cmsStart ? "1" : "0") + "', cms_end='" + (cmsEnd ? "1" : "0") + "', cms_plugin_action='" + (cmsPluginAction ? "1" : "0") + "', cycle_interval='" + SQLUtils.escape(cycleInterval.ToString()) + "' WHERE uuid=" + uuid.SQLValue + ";");
+            save(conn, false);
         }
-        // Methods - Properties ************************************************************************************
+        /// <summary>
+        /// Persists the model to the database.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="forcePersist">Indicates if the model should be forcibly persisted, regardless of being modified. </param>
+        public void save(Connector conn, bool forcePersist)
+        {
+            lock (this)
+            {
+                if (!modified && !forcePersist)
+                    return;
+                SQLCompiler sql = new SQLCompiler();
+                sql["request_start"] = requestStart ? "1" : "0";
+                sql["request_end"] = requestEnd ? "1" : "0";
+                sql["page_error"] = pageError ? "1" : "0";
+                sql["page_not_found"] = pageNotFound ? "1" : "0";
+                sql["plugin_start"] = pluginStart ? "1" : "0";
+                sql["plugin_stop"] = pluginStop ? "1" : "0";
+                sql["plugin_action"] = pluginAction ? "1" : "0";
+                sql["cycle_interval"] = cycleInterval;
+                if (persisted)
+                {
+                    sql.UpdateAttribute = "uuid";
+                    sql.UpdateValue = uuid.Bytes;
+                    sql.executeUpdate(conn, "cms_plugin_handlers");
+                }
+                else
+                {
+                    sql["uuid"] = uuid.Bytes;
+                    sql.executeInsert(conn, "cms_plugin_handlers");
+                    persisted = true;
+                }
+                modified = false;
+            }
+        }
+        // Methods - Properties ****************************************************************************************
         /// <summary>
         /// Indicates if the plugin's request-start handler should be invoked for every request.
         /// </summary>
@@ -94,6 +176,7 @@ namespace CMS.Base
             set
             {
                 requestStart = value;
+                modified = true;
             }
         }
         /// <summary>
@@ -108,6 +191,7 @@ namespace CMS.Base
             set
             {
                 requestEnd = value;
+                modified = true;
             }
         }
         /// <summary>
@@ -123,6 +207,7 @@ namespace CMS.Base
             set
             {
                 pageError = value;
+                modified = true;
             }
         }
         /// <summary>
@@ -138,49 +223,53 @@ namespace CMS.Base
             set
             {
                 pageNotFound = value;
+                modified = true;
             }
         }
         /// <summary>
-        /// Indicates if the plugin's cms-start handler should be invoked after the cms's core has started.
+        /// Indicates if the plugin's plugin-start handler should be invoked when the plugin is loaded.
         /// </summary>
-        public bool CmsStart
+        public bool PluginStart
         {
             get
             {
-                return cmsStart;
+                return pluginStart;
             }
             set
             {
-                cmsStart = value;
+                pluginStart = value;
+                modified = true;
             }
         }
         /// <summary>
-        /// Indicates if the plugin's cms-end handler should be invoked before the cms's core is stopped.
+        /// Indicates if the plugin's plugin-stop handler should be invoked when the plugin is unloaded.
         /// </summary>
-        public bool CmsEnd
+        public bool PluginStop
         {
             get
             {
-                return cmsEnd;
+                return pluginStop;
             }
             set
             {
-                cmsEnd = value;
+                pluginStop = value;
+                modified = true;
             }
         }
         /// <summary>
-        /// Indicates if the plugin's cms-action handler should be invoked when any plugin action occurs
+        /// Indicates if the plugin's plugin-action handler should be invoked when any plugin action occurs
         /// (enable/disable/uninstall/install).
         /// </summary>
-        public bool CmsPluginAction
+        public bool PluginAction
         {
             get
             {
-                return cmsPluginAction;
+                return pluginAction;
             }
             set
             {
-                cmsPluginAction = value;
+                pluginAction = value;
+                modified = true;
             }
         }
         /// <summary>
@@ -196,6 +285,27 @@ namespace CMS.Base
             set
             {
                 cycleInterval = value;
+                modified = true;
+            }
+        }
+        /// <summary>
+        /// Indicates if the model has been modified.
+        /// </summary>
+        public bool IsModified
+        {
+            get
+            {
+                return modified;
+            }
+        }
+        /// <summary>
+        /// Indicates if the model has been persisted.
+        /// </summary>
+        public bool IsPersisted
+        {
+            get
+            {
+                return persisted;
             }
         }
     }

@@ -153,7 +153,7 @@ namespace CMS.Base
             try
             {
                 // Retrieve the plugin's data from the database
-                Result result = Core.Connector.queryRead("SELECT * FROM cms_view_plugins_loadinfo WHERE uuid_raw=" + uuid.SQLValue);
+                Result result = Core.Connector.queryRead("SELECT * FROM cms_view_plugins_loadinfo WHERE uuid_raw=" + uuid.NumericHexString + ";");
                 if (result.Count != 1)
                 {
                     if(coreError)
@@ -197,7 +197,7 @@ namespace CMS.Base
                 PluginHandlerInfo phi;
                 try
                 {
-                    phi = new PluginHandlerInfo(uuid, data["request_start"] == "1", data["request_end"] == "1", data["page_error"] == "1", data["page_not_found"] == "1", data["cms_start"] == "1", data["cms_end"] == "1", data["cms_plugin_action"] == "1", int.Parse(data["cycle_interval"]));
+                    phi = PluginHandlerInfo.load(data);
                 }
                 catch (Exception ex)
                 {
@@ -296,7 +296,7 @@ namespace CMS.Base
                     doc.Load(outputDir + "/Plugin.config");
                     directory = Core.BasePath + "/" + doc["plugin"]["directory"].InnerText;
                     UUID uuid = UUID.createFromHex(doc["plugin"]["uuid"].InnerText);
-                    if (plugins.ContainsKey(uuid) || Core.Connector.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.SQLValue + ";") > 0)
+                    if (plugins.ContainsKey(uuid) || Core.Connector.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
                     {
                         success = false;
                         messageOutput.Append("UUID (univerisally unique identifier) '").Append(uuid.HexHyphens).Append("' already exists! It's likely the plugin has already been installed.").AppendLine();
@@ -385,7 +385,7 @@ namespace CMS.Base
                     return false;
                 }
                 // Check the UUID does not exist
-                if (plugins.ContainsKey(uuid) || Core.Connector.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.SQLValue + ";") > 0)
+                if (plugins.ContainsKey(uuid) || Core.Connector.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
                 {
                     messageOutput.Append("UUID (univerisally unique identifier) '").Append(uuid.HexHyphens).Append("' already exists! It's likely the plugin has already been installed.").AppendLine();
                     return false;
@@ -399,7 +399,13 @@ namespace CMS.Base
                 // Update the database
                 try
                 {
-                    Core.Connector.queryExecute("INSERT INTO cms_plugins (uuid, title, directory, classpath, priority) VALUES(" + uuid.SQLValue + ", '" + SQLUtils.escape(title) + "', '" + SQLUtils.escape(directory) + "', '" + SQLUtils.escape(classPath) + "', '" + SQLUtils.escape(priority.ToString()) + "'); INSERT INTO cms_plugin_handlers (uuid) VALUES(" + uuid.SQLValue + ");");
+                    PreparedStatement ps = new PreparedStatement("INSERT INTO cms_plugins (uuid, title, directory, classpath, priority) VALUES(?uuid, ?title, ?directory, ?classpath, ?priority); INSERT INTO cms_plugin_handlers (uuid) VALUES(?uuid);");
+                    ps["uuid"] = uuid.Bytes;
+                    ps["title"] = title;
+                    ps["directory"] = directory;
+                    ps["classpath"] = classPath;
+                    ps["priority"] = ((int)priority).ToString();
+                    Core.Connector.queryExecute(ps);
                 }
                 catch (Exception ex)
                 {
@@ -447,7 +453,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreInstall, plugin))
+                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PreInstall, plugin))
                         {
                             messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -469,8 +475,8 @@ namespace CMS.Base
                     plugin.save(Core.Connector);
                     // Invoke post-action handlers
                     foreach (Plugin p in Fetch)
-                        if (plugin != p && p.HandlerInfo.CmsPluginAction)
-                            p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PostInstall, plugin);
+                        if (plugin != p && p.HandlerInfo.PluginAction)
+                            p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PostInstall, plugin);
                 }
             }
             return true;
@@ -505,7 +511,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreUninstall, plugin))
+                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PreUninstall, plugin))
                         {
                             messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -527,8 +533,8 @@ namespace CMS.Base
                     plugin.save(Core.Connector);
                     // Invoke post-action handlers
                     foreach (Plugin p in Fetch)
-                        if (plugin != p && p.HandlerInfo.CmsPluginAction)
-                            p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PostUninstall, plugin);
+                        if (plugin != p && p.HandlerInfo.PluginAction)
+                            p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PostUninstall, plugin);
                 }
             }
             return true;
@@ -563,7 +569,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreEnable, plugin))
+                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PreEnable, plugin))
                         {
                             messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -585,8 +591,8 @@ namespace CMS.Base
                     plugin.save(Core.Connector);
                     // Invoke post-action handlers
                     foreach (Plugin p in Fetch)
-                        if (plugin != p && p.HandlerInfo.CmsPluginAction)
-                            p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PostEnable, plugin);
+                        if (plugin != p && p.HandlerInfo.PluginAction)
+                            p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PostEnable, plugin);
                 }
             }
             return true;
@@ -621,7 +627,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.CmsPluginAction && !p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PreDisable, plugin))
+                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PreDisable, plugin))
                         {
                             messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -643,8 +649,8 @@ namespace CMS.Base
                     plugin.save(Core.Connector);
                     // Invoke post-action handlers
                     foreach (Plugin p in Fetch)
-                        if (plugin != p && p.HandlerInfo.CmsPluginAction)
-                            p.handler_cmsPluginAction(Core.Connector, Plugin.PluginAction.PostDisable, plugin);
+                        if (plugin != p && p.HandlerInfo.PluginAction)
+                            p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PostDisable, plugin);
                 }
             }
             return true;
@@ -672,7 +678,7 @@ namespace CMS.Base
                     // Remove from the database
                     try
                     {
-                        Core.Connector.queryExecute("DELETE FROM cms_plugins WHERE uuid=" + plugin.UUID.SQLValue + ";");
+                        Core.Connector.queryExecute("DELETE FROM cms_plugins WHERE uuid=" + plugin.UUID.NumericHexString + ";");
                     }
                     catch (Exception ex)
                     {
@@ -741,7 +747,7 @@ namespace CMS.Base
                 {
                     foreach (Plugin p in pluginsCycling)
                         if ((DateTime.Now - p.LastCycled).Milliseconds > p.HandlerInfo.CycleInterval)
-                            p.handler_cmsCycle();
+                            p.handler_pluginCycle();
                 }
                 Thread.Sleep(cyclingInterval);
             }

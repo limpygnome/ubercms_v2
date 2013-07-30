@@ -137,7 +137,7 @@ namespace CMS.Base
                                 currentState = CoreState.Running;
                                 // Invoke plugin handlers
                                 foreach (Plugin p in plugins.Fetch)
-                                    if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.CmsStart && !p.handler_cmsStart(connector))
+                                    if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStart && !p.handler_pluginStart(connector))
                                         plugins.pluginUnload(p);
                             }
                         }
@@ -159,8 +159,8 @@ namespace CMS.Base
                 // Invoke handlers
                 if(plugins != null)
                     foreach (Plugin p in plugins.Fetch)
-                        if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.CmsEnd)
-                            p.handler_cmsEnd(connector);
+                        if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStop)
+                            p.handler_pluginStop(connector);
 				// Dispose
                 basePath = null;
                 dbType = DatabaseType.None;

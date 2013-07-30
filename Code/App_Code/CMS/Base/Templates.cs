@@ -247,7 +247,7 @@ namespace CMS.Base
             // Write the templates to the destination
             XmlWriter w;
             int count = 0;
-            foreach (ResultRow template in Core.Connector.queryRead("SELECT path, description, html FROM cms_templates WHERE " + (path != null ? "path LIKE '" + SQLUtils.escape(path) + "%'" : plugin != null ? "uuid=" + plugin.UUID.SQLValue : "uuid=NULL")))
+            foreach (ResultRow template in Core.Connector.queryRead("SELECT path, description, html FROM cms_templates WHERE " + (path != null ? "path LIKE '" + SQLUtils.escape(path) + "%'" : plugin != null ? "uuid=" + plugin.UUID.NumericHexString : "uuid IS NULL")))
             {
                 // Create dir and file info
                 string dir = pathDestination + "/" + Path.GetDirectoryName(template["path"]);
@@ -304,7 +304,12 @@ namespace CMS.Base
                     {
                         doc = new XmlDocument();
                         doc.LoadXml(File.ReadAllText(file));
-                        conn.queryExecute("INSERT IGNORE INTO cms_templates (path, uuid, description, html) VALUES('" + SQLUtils.escape(doc["template"]["path"].InnerText) + "', " + plugin.UUID.SQLValue + ", '" + SQLUtils.escape(doc["template"]["description"].InnerText) + "', '" + SQLUtils.escape(doc["template"]["html"].InnerText) + "');");
+                        SQLCompiler sql = new SQLCompiler();
+                        sql["path"] = doc["template"]["path"].InnerText;
+                        sql["uuid"] = plugin.UUID.Bytes;
+                        sql["description"] = doc["template"]["description"].InnerText;
+                        sql["html"] = doc["template"]["html"].InnerText;
+                        sql.executeInsert(conn, "cms_templates");
                     }
                     catch (Exception ex)
                     {
@@ -365,7 +370,7 @@ namespace CMS.Base
             }
             try
             {
-                Core.Connector.queryExecute("DELETE FROM cms_templates WHERE uuid=" + plugin.UUID.SQLValue + ";");
+                Core.Connector.queryExecute("DELETE FROM cms_templates WHERE uuid=" + plugin.UUID.NumericHexString + ";");
             }
             catch (Exception ex)
             {

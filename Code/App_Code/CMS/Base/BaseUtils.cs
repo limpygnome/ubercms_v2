@@ -402,7 +402,7 @@ namespace CMS.Base
             {
                 StringBuilder query = new StringBuilder("INSERT INTO cms_urlrewriting (uuid, full_path) VALUES");
                 foreach (string s in paths)
-                    query.Append("(").Append(plugin.UUID.SQLValue).Append(", '").Append(SQLUtils.escape(s)).Append("'),");
+                    query.Append("(").Append(plugin.UUID.NumericHexString).Append(", '").Append(SQLUtils.escape(s)).Append("'),");
                 query.Remove(query.Length - 1, 1).Append(";");
                 Core.Connector.queryExecute(query.ToString());
             }
@@ -440,7 +440,7 @@ namespace CMS.Base
             try
             {
                 if (path == null)
-                    Core.Connector.queryExecute("DELETE FROM cms_urlrewriting WHERE uuid=" + plugin.UUID.SQLValue + ";");
+                    Core.Connector.queryExecute("DELETE FROM cms_urlrewriting WHERE uuid=" + plugin.UUID.NumericHexString + ";");
                 else
                     Core.Connector.queryExecute("DELETE FROM cms_urlrewriting WHERE full_path LIKE '" + SQLUtils.escape(path) + "%';");
             }
