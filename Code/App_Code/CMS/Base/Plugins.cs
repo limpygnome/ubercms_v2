@@ -468,6 +468,7 @@ namespace CMS.Base
                     catch (Exception ex)
                     {
                         messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - exception occured invoking install method: '" + ex.Message + "'!");
+                        messageOutput.AppendLine(ex.StackTrace + ex.GetBaseException().Message);
                         return false;
                     }
                     // Update the database

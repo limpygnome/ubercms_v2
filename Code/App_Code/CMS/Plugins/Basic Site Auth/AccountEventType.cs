@@ -110,7 +110,7 @@ namespace CMS.BasicSiteAuth
             }
             else
             {
-                eventTypeID = c.executeInsert(conn, "bsa_account_event_types")[0].get2<int>("eventtypeid");
+                eventTypeID = (int)c.executeInsert(conn, "bsa_account_event_types", "eventtypeid")[0].get2<long>("eventtypeid");
                 persisted = true;
             }
             modified = false;

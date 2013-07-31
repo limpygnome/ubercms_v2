@@ -230,7 +230,7 @@ namespace CMS.Base
                         else if(updateAttribute != null)
                         {
                             s.Append(" WHERE ?ua_").Append(updateAttribute);
-                            ps["?ua_" + updateAttribute] = updateValue;
+                            ps["ua_" + updateAttribute] = updateValue;
                         }
                         ps.Query = s.Append(";").ToString();
                     }

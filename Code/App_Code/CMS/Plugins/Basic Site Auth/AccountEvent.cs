@@ -164,7 +164,7 @@ namespace CMS.BasicSiteAuth
             }
             else
             {
-                eventid = c.executeInsert(conn, "bsa_account_events", "eventid")[0].get2<int>("eventid");
+                eventid = (int)c.executeInsert(conn, "bsa_account_events", "eventid")[0].get2<long>("eventid");
                 persisted = true;
             }
             modified = false;

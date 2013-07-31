@@ -167,7 +167,7 @@ body
 	color: #333;
 	font-size: small;
 }
-.AREA_CONTENT p a
+.AREA_CONTENT p a, .AREA_CONTENT .TABLE a
 {
 	color: #06C;
 }

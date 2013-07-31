@@ -136,7 +136,7 @@ namespace CMS.BasicSiteAuth
             }
             else
             {
-                banid = sql.executeInsert(conn, "bsa_user_bans", "banid")[0].get2<int>("banid");
+                banid = (int)sql.executeInsert(conn, "bsa_user_bans", "banid")[0].get2<long>("banid");
                 persisted = true;
             }
             modified = false;

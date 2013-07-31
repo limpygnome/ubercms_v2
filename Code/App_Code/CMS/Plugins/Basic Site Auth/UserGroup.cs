@@ -80,7 +80,9 @@ namespace CMS.BasicSiteAuth
         /// <returns>The group object or null if it cannot be found/invalid.</returns>
         public static UserGroup load(Connector conn, int groupID)
         {
-            Result r = conn.queryRead("SELECT * FROM bsa_user_groups WHERE groupid='" + SQLUtils.escape(groupID.ToString()) + "';");
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM bsa_user_groups WHERE groupid=?groupid;");
+            ps["groupid"] = groupID;
+            Result r = conn.queryRead(ps);
             if (r.Count == 1)
                 return load(r[0]);
             else
@@ -95,32 +97,32 @@ namespace CMS.BasicSiteAuth
         {
             UserGroup g = new UserGroup();
             g.persisted = true;
-            g.groupID = int.Parse(data["groupid"]);
-            g.title = data["title"];
-            g.description = data.isNull("description") ? string.Empty : data["description"];
+            g.groupID = data.get2<int>("groupid");
+            g.title = data.get2<string>("title");
+            g.description = data.isNull("description") ? string.Empty : data.get2<string>("description");
 
-            g.pagesCreate = data["pages_create"].Equals("1");
-            g.pagesModify = data["pages_modify"].Equals("1");
-            g.pagesModifyOwn = data["pages_modify_own"].Equals("1");
-            g.pagesDelete = data["pages_delete"].Equals("1");
-            g.pagesDeleteOwn = data["pages_delete_own"].Equals("1");
-            g.pagesPublish = data["pages_publish"].Equals("1");
+            g.pagesCreate = data.get2<string>("pages_create").Equals("1");
+            g.pagesModify = data.get2<string>("pages_modify").Equals("1");
+            g.pagesModifyOwn = data.get2<string>("pages_modify_own").Equals("1");
+            g.pagesDelete = data.get2<string>("pages_delete").Equals("1");
+            g.pagesDeleteOwn = data.get2<string>("pages_delete_own").Equals("1");
+            g.pagesPublish = data.get2<string>("pages_publish").Equals("1");
 
-            g.commentsCreate = data["comments_create"].Equals("1");
-            g.commentsModifyOwn = data["comments_modify_own"].Equals("1");
-            g.commentsDelete = data["comments_delete"].Equals("1");
-            g.commentsDeleteOwn = data["comments_delete_own"].Equals("1");
-            g.commentsPublish = data["comments_publish"].Equals("1");
+            g.commentsCreate = data.get2<string>("comments_create").Equals("1");
+            g.commentsModifyOwn = data.get2<string>("comments_modify_own").Equals("1");
+            g.commentsDelete = data.get2<string>("comments_delete").Equals("1");
+            g.commentsDeleteOwn = data.get2<string>("comments_delete_own").Equals("1");
+            g.commentsPublish = data.get2<string>("comments_publish").Equals("1");
 
-            g.mediaCreate = data["media_create"].Equals("1");
-            g.mediaModify = data["media_modify"].Equals("1");
-            g.mediaModifyOwn = data["media_modify_own"].Equals("1");
-            g.mediaDelete = data["media_delete"].Equals("1");
-            g.mediaDeleteOwn = data["media_delete_own"].Equals("1");
+            g.mediaCreate = data.get2<string>("media_create").Equals("1");
+            g.mediaModify = data.get2<string>("media_modify").Equals("1");
+            g.mediaModifyOwn = data.get2<string>("media_modify_own").Equals("1");
+            g.mediaDelete = data.get2<string>("media_delete").Equals("1");
+            g.mediaDeleteOwn = data.get2<string>("media_delete_own").Equals("1");
 
-            g.moderator = data["moderator"].Equals("1");
-            g.administrator = data["administrator"].Equals("1");
-            g.login = data["login"].Equals("1");
+            g.moderator = data.get2<string>("moderator").Equals("1");
+            g.administrator = data.get2<string>("administrator").Equals("1");
+            g.login = data.get2<string>("login").Equals("1");
             return g;
         }
         /// <summary>
@@ -178,13 +180,13 @@ namespace CMS.BasicSiteAuth
                 }
                 else
                 {
-                    groupID = sql.executeInsert(conn, "bsa_user_groups", "groupid")[0].get2<int>("groupid");
+                    groupID = (int)sql.executeInsert(conn, "bsa_user_groups", "groupid")[0].get2<long>("groupid");
                     persisted = true;
                 }
                 modified = false;
             }
         }
-        // Methods - Properties
+        // Methods - Properties ****************************************************************************************
         /// <summary>
         /// Group identifier.
         /// </summary>

@@ -75,9 +75,9 @@ namespace CMS.Base
         /// <param name="value">The string value of the node</param>
         public SettingsNode(DataType type, string value)
         {
-            this.state = SettingsNodeState.None;
             this.type = type;
-            this.value = parseTypeValue(type, value);
+            this.value = parseTypeValue(this.type, value);
+            this.state = SettingsNodeState.None;
         }
         /// <summary>
         /// Creates a new node with a value and state but no owner.
@@ -87,9 +87,9 @@ namespace CMS.Base
         /// <param name="state">The state of the node.</param>
         public SettingsNode(DataType type, string value, SettingsNodeState state)
         {
-            this.state = state;
             this.type = type;
-            this.value = parseTypeValue(type, value);
+            this.value = parseTypeValue(this.type, value);
+            this.state = state;
         }
         /// <summary>
         /// Creates a new node with an owner, value and description.
@@ -100,10 +100,11 @@ namespace CMS.Base
         /// <param name="uuid">The owner of the node.</param>
         public SettingsNode(DataType type, string value, string description, UUID uuid)
         {
+            this.type = type;
+            this.value = parseTypeValue(this.type, value);
             this.description = description;
             this.uuid = uuid;
-            this.type = type;
-            this.value = parseTypeValue(type, value);
+            this.state = SettingsNodeState.None;
         }
         /// <summary>
         /// Creates a new node with an owner, description, value and state.
@@ -115,13 +116,22 @@ namespace CMS.Base
         /// <param name="state">The state of the node.</param>
         public SettingsNode(DataType type, string value, string description, UUID uuid, SettingsNodeState state)
         {
+            this.type = type;
+            this.value = parseTypeValue(this.type, value);
             this.description = description;
             this.uuid = uuid;
             this.state = state;
-            this.type = type;
-            this.value = parseTypeValue(type, value);
         }
         // Methods *****************************************************************************************************
+        /// <summary>
+        /// Parses the specified string value into the node's internal data-type and sets the value as that type.
+        /// </summary>
+        /// <param name="value">The new value for the node.</param>
+        public void setValue(string value)
+        {
+            this.value = parseTypeValue(this.type, value);
+            state = state == SettingsNodeState.ModifiedDescription ? SettingsNodeState.ModifiedAll : SettingsNodeState.ModifiedValue;
+        }
         public static object parseTypeValue(DataType type, string value)
         {
             switch (type)
@@ -142,13 +152,22 @@ namespace CMS.Base
         }
         // Methods - Static ********************************************************************************************
         /// <summary>
-        /// Parses the string type into the data-type enum.
+        /// Parses the string type into a data-type enum.
         /// </summary>
-        /// <param name="type">String numeric value of type.</param>
+        /// <param name="type">String numeric value of the data-type.</param>
         /// <returns>The parsed data-type as an enum.</returns>
         public static DataType parseType(string type)
         {
             return (DataType)Enum.Parse(typeof(DataType), type);
+        }
+        /// <summary>
+        /// Parses an integer type into a data-type-enum.
+        /// </summary>
+        /// <param name="type">The numeric value of the data-type.</param>
+        /// <returns>The parsed data-type as an enum.</returns>
+        public static DataType parseType(int type)
+        {
+            return (DataType)type;
         }
         // Methods - Accessors *****************************************************************************************
         /// <summary>
@@ -158,7 +177,14 @@ namespace CMS.Base
         /// <returns>The object as the specified type.</returns>
         public T get<T>()
         {
-            return (T)value;
+            try
+            {
+                return (T)value;
+            }
+            catch (InvalidCastException)
+            {
+                throw new InvalidCastException("Invalid cast of data-type '" + typeof(T).ToString() + "' from '" + value.GetType().ToString() + "' (node-tpye: '" + type.ToString() + "') for node '" + description + "'!");
+            }
         }
         public override string ToString()
         {
@@ -187,6 +213,8 @@ namespace CMS.Base
         }
         /// <summary>
         /// The value of this setting.
+        /// 
+        /// Warning: when setting this property, the specified value is not parsed into the internal type!
         /// </summary>
         public object Value
         {

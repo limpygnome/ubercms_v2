@@ -30,6 +30,8 @@
  *                                      Major change: settings now have types for efficiency and easier editing;
  *                                      add and updateOrAdd have been replaced by set methods. Removal of get<...>
  *                                      methods.
+ *                      2013-07-31      Bug-fix (upadting nodes which exist and not parsing the value to the internal
+ *                                      type) and improvements.
  * 
  * *********************************************************************************************************************
  * Handles settings which can be stored on disk or in a database. Thread-safe.
@@ -179,9 +181,9 @@ namespace CMS.Base
 			try
 			{
 				Settings settings = new Settings();
-                Result result = conn.queryRead("SELECT * FROM cms_view_settings_load");
+                Result result = conn.queryRead("SELECT * FROM cms_view_settings_load;");
 				foreach(ResultRow row in result)
-					settings.config.Add(row["path"], new SettingsNode(SettingsNode.parseType(row["type"]), row["value"], row["description"], UUID.createFromHex(row["uuid"])));
+					settings.config.Add(row.get2<string>("path"), new SettingsNode(SettingsNode.parseType(row.get2<string>("type")), row.get2<string>("value"), row.get2<string>("description"), UUID.createFromHex(row.get2<string>("uuid"))));
                 return settings;
 			}
 			catch(Exception ex)
@@ -272,7 +274,7 @@ namespace CMS.Base
             {
                 bool exists = config.ContainsKey(path);
                 // Check if the key is to be added and exists or doesn't exist and to be updated
-                if(action == SetAction.Add && exists || action == SetAction.Update && !exists)
+                if((action == SetAction.Add && exists) || (action == SetAction.Update && !exists))
                     return false;
                 // Either add or update
                 if(exists)
@@ -282,7 +284,7 @@ namespace CMS.Base
                     if(value != null)
                     {
                         this[path].ValueDataType = type;
-                        this[path].Value = value;
+                        this[path].setValue(value);
                     }
                 }
                 else

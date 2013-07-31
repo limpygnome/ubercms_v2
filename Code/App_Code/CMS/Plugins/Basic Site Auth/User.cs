@@ -76,6 +76,10 @@ namespace CMS
                 /// </summary>
                 InvalidEmail_Format = 301,
                 /// <summary>
+                /// E-mail already in-use by another user.
+                /// </summary>
+                InvalidEmail_AlreadyExists = 302,
+                /// <summary>
                 /// Invalid secret question length.
                 /// </summary>
                 InvalidSecretQuestion_Length = 400,
@@ -138,7 +142,7 @@ namespace CMS
                     return null;
                 User usr = new User();
                 usr.persisted = true;
-                usr.userID = int.Parse(data["userid"]);
+                usr.userID = data.get2<int>("userid");
                 usr.username = data["username"];
                 usr.password = data["password"];
                 usr.passwordSalt = data["password_salt"];
@@ -156,49 +160,77 @@ namespace CMS
             /// <returns>The state from attempting to persist the user.</returns>
             public UserCreateSaveStatus save(BasicSiteAuth bsa, Connector conn)
             {
+                return save(bsa, conn, false);
+            }
+            /// <summary>
+            /// Persists the user's data to the database.
+            /// </summary>
+            /// <param name="conn">Database connector.</param>
+            /// <param name="skipValidation">Skip validation of parameters; possibly quite dangerous - use with extreme caution!</param>
+            /// <returns>The state from attempting to persist the user.</returns>
+            public UserCreateSaveStatus save(BasicSiteAuth bsa, Connector conn, bool skipValidation)
+            {
                 lock(this)
                 {
-                    // Validate the data
-                    if (username == null || username.Length < Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MIN].get<int>() || username.Length > Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MAX].get<int>())
-                        return UserCreateSaveStatus.InvalidUsername_Length;
-                    else if (password == null || password.Length < Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() || password.Length > Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>())
-                        return UserCreateSaveStatus.InvalidPassword_Length;
-                    else if (password.ToLower() == "password" || password == "123456" || password == "12345678" ||  password == "abc123" || password == "qwerty")
-                        return UserCreateSaveStatus.InvalidPassword_Security;
-                    else if (email == null || email.Length < Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MIN].get<int>() || email.Length > Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MAX].get<int>())
-                        return UserCreateSaveStatus.InvalidEmail_Length;
-                    else if (secretQuestion == null || secretQuestion.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() || secretQuestion.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MAX].get<int>())
-                        return UserCreateSaveStatus.InvalidSecretQuestion_Length;
-                    else if (secretAnswer == null || secretAnswer.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MIN].get<int>() || secretAnswer.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MAX].get<int>())
-                        return UserCreateSaveStatus.InvalidSecretAnswer_Length;
-                    else if (userGroup == null || !bsa.UserGroups.contains(userGroup))
-                        return UserCreateSaveStatus.InvalidUserGroup;
-                    else if (!BSAUtils.validEmail(email))
-                        return UserCreateSaveStatus.InvalidEmail_Format;
-                    // Persist the data
-                    SQLCompiler sql = new SQLCompiler();
-                    sql["username"] = username;
-                    sql["password"] = password;
-                    sql["password_salt"] = passwordSalt;
-                    sql["email"] = email;
-                    sql["secret_question"] = secretQuestion;
-                    sql["secret_answer"] = secretAnswer;
-                    sql["groupid"] = userGroup.GroupID.ToString();
-                    sql["datetime_register"] = registered.ToString("YYYY-MM-dd HH:mm:ss");
-                    if (persisted)
+                    try
                     {
-                        sql.UpdateAttribute = "userid";
-                        sql.UpdateValue = userID;
-                        sql.executeUpdate(conn, "bsa_users");
+                        // Validate the data
+                        if (!skipValidation)
+                        {
+                            if (username == null || username.Length < Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MIN].get<int>() || username.Length > Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MAX].get<int>())
+                                return UserCreateSaveStatus.InvalidUsername_Length;
+                            else if (password == null || password.Length < Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() || password.Length > Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>())
+                                return UserCreateSaveStatus.InvalidPassword_Length;
+                            else if (password.ToLower() == "password" || password == "123456" || password == "12345678" || password == "abc123" || password == "qwerty")
+                                return UserCreateSaveStatus.InvalidPassword_Security;
+                            else if (email == null || email.Length < Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MIN].get<int>() || email.Length > Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MAX].get<int>())
+                                return UserCreateSaveStatus.InvalidEmail_Length;
+                            else if ((secretQuestion == null && Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() != 0) || (secretQuestion != null && (secretQuestion.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() || secretQuestion.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MAX].get<int>())))
+                                return UserCreateSaveStatus.InvalidSecretQuestion_Length;
+                            else if ((secretAnswer == null && Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MIN].get<int>() != 0) || (secretAnswer != null && (secretAnswer.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MIN].get<int>() || secretAnswer.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MAX].get<int>())))
+                                return UserCreateSaveStatus.InvalidSecretAnswer_Length;
+                            else if (userGroup == null || !bsa.UserGroups.contains(userGroup))
+                                return UserCreateSaveStatus.InvalidUserGroup;
+                            else if (!BSAUtils.validEmail(email))
+                                return UserCreateSaveStatus.InvalidEmail_Format;
+                        }
+                        // Persist the data
+                        SQLCompiler sql = new SQLCompiler();
+                        sql["username"] = username;
+                        sql["password"] = password;
+                        sql["password_salt"] = passwordSalt;
+                        sql["email"] = email;
+                        sql["secret_question"] = secretQuestion;
+                        sql["secret_answer"] = secretAnswer;
+                        sql["groupid"] = userGroup.GroupID.ToString();
+                        sql["datetime_register"] = registered;
+                        if (persisted)
+                        {
+                            sql.UpdateAttribute = "userid";
+                            sql.UpdateValue = userID;
+                            sql.executeUpdate(conn, "bsa_users");
+                        }
+                        else
+                        {
+                            userID = (int)sql.executeInsert(conn, "bsa_users", "userid")[0].get2<long>("userid");
+                            persisted = true;
+                        }
+                        // Success! Reset flags and return status
+                        modified = false;
+                        return UserCreateSaveStatus.Success;
                     }
-                    else
+                    catch (DuplicateEntryException ex)
                     {
-                        userID = sql.executeInsert(conn, "bsa_users", "userid")[0].get2<int>("userid");
-                        persisted = true;
+                        switch (ex.Attribute)
+                        {
+                            case "username":
+                                return UserCreateSaveStatus.InvalidUsername_AlreadyExists;
+                            case "email":
+                                return UserCreateSaveStatus.InvalidEmail_AlreadyExists;
+                            default:
+                                return UserCreateSaveStatus.Error_Regisration;
+                        }
                     }
-                    // Success! Reset flags and return status
-                    modified = false;
-                    return UserCreateSaveStatus.Success;
                 }
             }
             // Methods - Mutators **************************************************************************************

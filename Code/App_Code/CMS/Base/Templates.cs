@@ -27,6 +27,7 @@
  *                                      Fixed major multi-level rendering bug with replacementOccurred variable.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-23      Updated the way settings are handled.
+ *                      2013-07-31      Added the ability for variables to be nully embedded into templates.
  * 
  * *********************************************************************************************************************
  * Used to load, and possibly cache, HTML templates from the database; this class also transforms the custom markup
@@ -167,11 +168,18 @@ namespace CMS.Base
                     text.Replace(m.Value, "Function '" + m.Groups[1].Value + "' undefined!");
             }
 			// Find replacement tags (for replacing sections of text with request variables)
-            foreach (Match m in Regex.Matches(text.ToString(), @"<!--([a-zA-Z0-9_]*)-->"))
+            bool t;
+            foreach (Match m in Regex.Matches(text.ToString(), @"<!--(:)?([a-zA-Z0-9_]*)-->"))
             {
-                if (data.isKeySet(m.Groups[1].Value))
+                t = data.isKeySet(m.Groups[2].Value);
+                if (!t && m.Groups[1].Value == ":")
                 {
-                    text.Replace(m.Value, data[m.Groups[1].Value]);
+                    text.Replace(m.Value, "");
+                    replacementOccurred = true;
+                }
+                else if (t)
+                {
+                    text.Replace(m.Value, data[m.Groups[2].Value]);
                     replacementOccurred = true;
                 }
                 else

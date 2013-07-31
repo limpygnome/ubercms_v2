@@ -21,6 +21,7 @@
  *                      2013-06-29      Finished initial class.
  *                      2013-07-07      Added userid field/property for universal authentication systems.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
+ *                      2013-07-31      Added flag-setting (sets a key with a null value).
  * 
  * *********************************************************************************************************************
  * Used for passing data between the controller and plugins.
@@ -38,7 +39,7 @@ namespace CMS.Base
 {
 	public class Data
 	{
-		// Fields  *************************************************************************************************
+		// Fields  *****************************************************************************************************
         private bool                            outputContent;      // Indicates if the content should be written to the client.
 		private PathInfo 						pathInfo;			// Information about the request path.
 		private HttpRequest 					request;			// ASP.NET request object.
@@ -46,7 +47,7 @@ namespace CMS.Base
 		private Stopwatch						stopwatch;			// Used to measure the current request's process speed.
 		private Dictionary<string, string>		variables;			// Used to store request variables for template rendering.
 		private Connector						connector;			// The database connector.
-		// Methods - Constructors **********************************************************************************
+		// Methods - Constructors **************************************************************************************
 		public Data(HttpRequest request, HttpResponse response, string pathData)
 		{
 			this.pathInfo = new PathInfo(pathData);
@@ -57,7 +58,7 @@ namespace CMS.Base
             this.outputContent = true;
 			connector = Core.createConnector(false);
 		}
-		// Methods *************************************************************************************************
+		// Methods *****************************************************************************************************
         /// <summary>
         /// Starts timing, for recording the total time taken to serve the request.
         /// </summary>
@@ -81,7 +82,18 @@ namespace CMS.Base
 		{
 			connector.disconnect();
 		}
-		// Methods - Accessors *************************************************************************************
+        // Methods - Mutators ******************************************************************************************
+        /// <summary>
+        /// Sets a variable's key to null; if the variable already exists, the value is unchanged. This method is useful
+        /// for setting flags/boolean values for the templating system.
+        /// </summary>
+        /// <param name="key">The key to set.</param>
+        public void setFlag(string key)
+        {
+            if(!variables.ContainsKey(key))
+                variables[key] = null;
+        }
+		// Methods - Accessors *****************************************************************************************
 		/// <summary>
 		/// Indicates if a variable has been defined.
 		/// </summary>
@@ -91,7 +103,7 @@ namespace CMS.Base
 		{
 			return variables.ContainsKey(key);
 		}
-		// Methods - Properties ************************************************************************************
+		// Methods - Properties ****************************************************************************************
         /// <summary>
         /// Set/get a variable.
         /// </summary>

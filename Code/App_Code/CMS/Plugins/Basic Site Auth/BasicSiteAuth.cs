@@ -84,7 +84,7 @@ namespace CMS.BasicSiteAuth
 
         public const string SETTINGS_SECRETANSWER_MIN = "bsa/account/secretanswer_min";
         public const string SETTINGS_SECRETANSWER_MIN__DESCRIPTION = "The minimum characters a secret answer can be.";
-        public const int SETTINGS_SECRETANSWER_MIN__DEFAULT = 64;
+        public const int SETTINGS_SECRETANSWER_MIN__DEFAULT = 0;
 
         public const string SETTINGS_SECRETANSWER_MAX = "bsa/account/secretanswer_max";
         public const string SETTINGS_SECRETANSWER_MAX__DESCRIPTION = "The maximum characters a secret answer can be.";
@@ -135,7 +135,7 @@ namespace CMS.BasicSiteAuth
             // Setup handlers
             HandlerInfo.RequestStart = true;
             HandlerInfo.PluginStart = true;
-            HandlerInfo.CycleInterval = 3600000; // Every hour
+            HandlerInfo.CycleInterval = 900000; // 15 minutes
             HandlerInfo.save(conn);
             // Install SQL
             if (!BaseUtils.executeSQL(PathSQL + "/install.sql", conn, ref messageOutput))
@@ -232,16 +232,21 @@ namespace CMS.BasicSiteAuth
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_USER_GROUPID, SETTINGS_GROUP_USER_GROUPID__DESCRIPTION, ugUser.GroupID);
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_MODERATOR_GROUPID, SETTINGS_GROUP_MODERATOR_GROUPID__DESCRIPTION, ugModerator.GroupID);
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_ADMINISTRATOR_GROUPID, SETTINGS_GROUP_ADMINISTRATOR_GROUPID__DESCRIPTION, ugAdministrator.GroupID);
+            // Save settings
+            Core.Settings.save(Core.Connector);
+            // Load salts for the installation process
+            loadSalts();
             // Create default root account (user = root, pass = password)
             User userRoot = new User();
             userRoot.Username = "root";
-            userRoot.setPassword(this, "password");
+            userRoot.setPassword(this, "helloworld");
             userRoot.Email = "admin@localhost";
             userRoot.SecretQuestion = null;
             userRoot.SecretAnswer = null;
             userRoot.UserGroup = ugAdministrator;
-            if(userRoot.save(this, conn) != User.UserCreateSaveStatus.Success)
-                messageOutput.AppendLine("Warning: failed to create root user!");
+            User.UserCreateSaveStatus urStatus = userRoot.save(this, conn, true); // Skip since user-groups cache is not active
+            if(urStatus != User.UserCreateSaveStatus.Success)
+                messageOutput.AppendLine("Warning: failed to create root user - '").Append(urStatus.ToString()).Append("'!");
             return true;
         }
         public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
@@ -266,6 +271,15 @@ namespace CMS.BasicSiteAuth
         }
         public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
+            // Add directives
+            if (!BaseUtils.preprocessorDirective_Add("BSA", ref messageOutput))
+                return false;
+            // Install templates
+            if (!Core.Templates.install(conn, this, PathTemplates, ref messageOutput))
+                return false;
+            // Install content
+            if (!BaseUtils.contentInstall(PathContent, Core.PathContent, true, ref messageOutput))
+                return false;
             // Reserve URLs
             if (!BaseUtils.urlRewritingInstall(this, new string[]
             {
@@ -276,15 +290,6 @@ namespace CMS.BasicSiteAuth
                 "account_log"
             }, ref messageOutput))
                 return false;
-            // Add directives
-            if (!BaseUtils.preprocessorDirective_Add("bsa", ref messageOutput))
-                return false;
-            // Install templates
-            if (!Core.Templates.install(conn, this, PathTemplates, ref messageOutput))
-                return false;
-            // Install content
-            if (!BaseUtils.contentInstall(PathContent, Core.PathContent, true, ref messageOutput))
-                return false;
             return true;
         }
         public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
@@ -292,14 +297,14 @@ namespace CMS.BasicSiteAuth
             // Unreserve URLs
             if (!BaseUtils.urlRewritingUninstall(this, ref messageOutput))
                 return false;
-            // Remove directives
-            if (!BaseUtils.preprocessorDirective_Remove("bsa", ref messageOutput))
+            // Remove content
+            if (!BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput))
                 return false;
             // Remove templates
             if (!Core.Templates.uninstall(this, ref messageOutput))
                 return false;
-            // Remove content
-            if (!BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput))
+            // Remove directives
+            if (!BaseUtils.preprocessorDirective_Remove("BSA", ref messageOutput))
                 return false;
             return true;
         }
@@ -319,6 +324,9 @@ namespace CMS.BasicSiteAuth
         }
         public override void handler_requestStart(Data data)
         {
+#if !BSA
+            return; // Fail-safe
+#endif
             // Fetch the user for the current request
             User user = getCurrentUser(data);
             // Check if the user is banned/unable to login - invalidate the model
@@ -329,10 +337,17 @@ namespace CMS.BasicSiteAuth
             {
                 // Set elements
                 data["Username"] = user.Username;
+                if (user.UserGroup.Administrator)
+                    data["Administrator"] = null;
+                if (user.UserGroup.Moderator)
+                    data["Moderator"] = null;
             }
         }
         public override bool handler_handleRequest(Data data)
         {
+#if !BSA
+            return false; // Fail-safe
+#endif
             if(HttpContext.Current.User.Identity.IsAuthenticated)
                 switch (data.PathInfo.ModuleHandler)
                 {
@@ -379,7 +394,7 @@ namespace CMS.BasicSiteAuth
         private bool pageRegister(Data data)
         {
             // Setup the page
-#if !CAPTCHA
+#if CAPTCHA
             Captcha.hookPage(data);
 #endif
             // Check for postback
@@ -389,7 +404,7 @@ namespace CMS.BasicSiteAuth
             string email = data.Request.Form["email"];
             string secretQuestion = data.Request.Form["secret_question"];
             string secretAnswer = data.Request.Form["secret_answer"];
-#if !CAPTCHA
+#if CAPTCHA
             string captcha = data.Request.Form["captcha"];
 #endif
             if (username != null && password != null && email != null && secretQuestion != null && secretAnswer != null)
@@ -405,9 +420,7 @@ namespace CMS.BasicSiteAuth
 #endif
                 if (error == null)
                 {
-                    // Validate field data
-                    
-                    // Create the user
+                    // Attempt to create the user
                 }
             }
             // Set form data
@@ -462,21 +475,28 @@ namespace CMS.BasicSiteAuth
         /// <returns>The user model which represents the user of the current request.</returns>
         public static User getCurrentUser(Data data)
         {
+#if BSA
             if (!HttpContext.Current.Items.Contains(HTTPCONTEXTITEMS_BSA_CURRENT_USER))
                 loadCurrentUser(data);
             return (User)HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER];
+#else
+            return null;
+#endif
         }
         public static void invalidCurrentUserSession()
         {
+#if BSA
             // Destroy model
             HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] = null;
             // Destroy authentication
             FormsAuthentication.SignOut();
             // Destroy entire session
             HttpContext.Current.Session.Abandon();
+#endif
         }
         private static void loadCurrentUser(Data data)
         {
+#if BSA
             // Check the user object has not already been loaded
             if (HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] != null)
                 return;
@@ -497,6 +517,7 @@ namespace CMS.BasicSiteAuth
                         HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] = null;
                 }
             }
+#endif
         }
         // Methods *****************************************************************************************************
         private void setPageError(Data data, string error)
@@ -570,7 +591,7 @@ namespace CMS.BasicSiteAuth
                     for (s2 = 0; s2 < rawSalt2.Length; s2++)
                         buffer = rawData[i] + ((salt1.Length + rawData[i]) * (rawSalt1[s1] + salt2.Length) * (rawSalt2[s2] + rawData.Length));
                 // Apply third (unique user) hash
-                buffer |= uniqueSalt[usLenInd % i];
+                buffer |= uniqueSalt[i % usLenInd];
                 // Round it down within numeric range of byte
                 while (buffer > byte.MaxValue)
                     buffer -= byte.MaxValue;

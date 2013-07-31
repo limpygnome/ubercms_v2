@@ -93,7 +93,7 @@ namespace CMS.Plugins
         public override bool enable(UberLib.Connector.Connector conn, ref StringBuilder messageOutput)
         {
             // Reserve URLs
-            BaseUtils.urlRewritingInstall(this, new string[] { "captcha" }, ref messageOutput);
+            BaseUtils.urlRewritingInstall(this, new string[] { "CAPTCHA" }, ref messageOutput);
             // Install directives
             Base.BaseUtils.preprocessorDirective_Add("captcha", ref messageOutput);
             return true;
@@ -103,7 +103,7 @@ namespace CMS.Plugins
             // Unreserve URLs
             BaseUtils.urlRewritingUninstall(this, ref messageOutput);
             // Remove directives
-            BaseUtils.preprocessorDirective_Remove("captcha", ref messageOutput);
+            BaseUtils.preprocessorDirective_Remove("CAPTCHA", ref messageOutput);
             return true;
         }
         // Methods *****************************************************************************************************
