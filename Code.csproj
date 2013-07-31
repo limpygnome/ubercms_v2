@@ -77,6 +77,7 @@
     <Content Include="Code\App_Code\CMS\Plugins\Example\Plugin.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Code\App_Code\CMS\Base\TemplateHandler.cs" />
     <Compile Include="Code\App_Code\CMS\Base\UUID.cs" />
     <Compile Include="Code\App_Code\CMS\Base\SettingsNode.cs" />
     <Compile Include="Code\App_Code\CMS\Base\SQLCompiler.cs" />
@@ -94,6 +95,7 @@
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\UserGroup.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\UserGroups.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Captcha\Captcha.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\CSRF Protection\CSRFProtection.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Package Developer\PackageDeveloper.cs" />
     <Compile Include="Code\App_Code\CMS\Base\PluginHandlerInfo.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Example\Example.cs" />
@@ -144,6 +146,7 @@
   <ItemGroup>
     <None Include="Code\App_Code\CMS\Plugins\Basic 404 Page\files.list" />
     <Content Include="Code\App_Code\CMS\Plugins\Captcha\Plugin.config" />
+    <Content Include="Code\App_Code\CMS\Plugins\CSRF Protection\Plugin.config" />
     <None Include="Code\installer\files.list" />
   </ItemGroup>
 </Project>

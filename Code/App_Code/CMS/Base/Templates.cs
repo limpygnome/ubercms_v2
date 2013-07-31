@@ -52,17 +52,15 @@ namespace CMS.Base
     /// </summary>
 	public class Templates
 	{
-        // Delegates ***************************************************************************************************
-        public delegate string TemplateFunction(Data data, string[] args);
 		// Fields ******************************************************************************************************
 		private bool                                loadFromCache;  // Indicates if to load templates from cache, else templates will be loaded straight from the database.
 		private Dictionary<string,string>           primaryCache;   // Used to cache copies of templates from the database for reduced I/O.
-        private Dictionary<string,TemplateFunction> functions;      // Function name,function delegate; used for template function calls.
-		// Methods - Constructors **********************************************************************************
+        private Dictionary<string,TemplateHandler>  functions;      // Function name,function model; used for template function calls.
+		// Methods - Constructors **************************************************************************************
 		private Templates()
 		{
 			primaryCache = new Dictionary<string, string>();
-            functions = new Dictionary<string, TemplateFunction>();
+            functions = new Dictionary<string, TemplateHandler>();
 		}
 		// Methods *****************************************************************************************************
         /// <summary>
@@ -162,7 +160,7 @@ namespace CMS.Base
             {
                 if (functions.ContainsKey(m.Groups[1].Value))
                 {
-                    text.Replace(m.Value, functions[m.Groups[1].Value](data, m.Groups[2].Value.Split(','))); // Group 1 = function name, group 2 = params i.e. a,b,c,..,n
+                    text.Replace(m.Value, functions[m.Groups[1].Value].FunctionDelegate(data, m.Groups[2].Value.Split(','))); // Group 1 = function name, group 2 = params i.e. a,b,c,..,n
                     replacementOccurred = true;
                 }
                 else
@@ -388,6 +386,107 @@ namespace CMS.Base
             }
             return true;
         }
+        // Methods - Handler Installation Related **********************************************************************
+        /// <summary>
+        /// Adds a new template handler function.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="plugin">The plugin which owns the handler; can be null.</param>
+        /// <param name="path">The path/name of the function when invoked by a template.</param>
+        /// <param name="classPath">The class-path of the actual method.</param>
+        /// <param name="functionName">The name of the actual method.</param>
+        /// <param name="messageOutput">Message output.</param>
+        /// <returns>True if successful, false if failed.</returns>
+        public bool handlerAdd(Connector conn, Plugin plugin, string path, string classPath, string functionName, ref StringBuilder messageOutput)
+        {
+            return handlerAdd(conn, plugin != null ? plugin.UUID : null, path, classPath, functionName, ref messageOutput);
+        }
+        /// <summary>
+        /// Adds a new template handler function.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="uuid">The identifier of the plugin which owns this function; can be null.</param>
+        /// <param name="path">The path/name of the function when invoked by a template.</param>
+        /// <param name="classPath">The class-path of the actual method.</param>
+        /// <param name="functionName">The name of the actual method.</param>
+        /// <param name="messageOutput">Message output.</param>
+        /// <returns>True if successful, false if failed.</returns>
+        public bool handlerAdd(Connector conn, UUID uuid, string path, string classPath, string functionName, ref StringBuilder messageOutput)
+        {
+            lock (functions)
+            {
+                // Check the path is not already in-use
+                if (functions.ContainsKey(path))
+                {
+                    messageOutput.Append("Cannot install template handler function '").Append(path).AppendLine("' - already exists!");
+                    return false;
+                }
+                // Create, persist and add model
+                try
+                {
+                    TemplateHandler th = new TemplateHandler();
+                    th.Path = path;
+                    th.UUID = uuid;
+                    th.ClassPath = classPath;
+                    th.FunctionName = functionName;
+                    th.save(conn);
+                    functions.Add(path, th);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    messageOutput.Append("Failed to add and persist template handler function model '").Append(path).Append("' to the database; exception: '").Append(ex.Message + ex.StackTrace).AppendLine("'!");
+                    return false;
+                }
+            }
+        }
+        /// <summary>
+        /// Removes a template function handler.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="path">The path/name of the function when invoked by a template.</param>
+        /// <param name="messageOutput">Message output.</param>
+        /// <returns>True if successful, false if failed.</returns>
+        public bool handlerRemove(Connector conn, string path, ref StringBuilder messageOutput)
+        {
+            lock (functions)
+            {
+                if (!functions.ContainsKey(path))
+                {
+                    messageOutput.Append("Warning: could not remove template handler function '").Append(path).AppendLine("' - does not exist!");
+                    return true;
+                }
+                try
+                {
+                    TemplateHandler th = functions[path];
+                    functions.Remove(path);
+                    th.remove(conn);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    messageOutput.Append("Could not remove template handler function '").Append(path).Append("' - exception: '").Append(ex.Message).AppendLine("'!");
+                    return false;
+                }
+            }
+        }
+        /// <summary>
+        /// Reloads the template handler functions.
+        /// </summary>
+        public void reloadHandlerFunctions(Connector conn)
+        {
+            lock (functions)
+            {
+                functions.Clear();
+                TemplateHandler th;
+                foreach (ResultRow row in conn.queryRead("SELECT * FROM cms_view_template_handlers;"))
+                {
+                    th = TemplateHandler.load(row);
+                    if (th != null)
+                        functions.Add(th.Path, th);
+                }
+            }
+        }
 		// Methods - Accessors *****************************************************************************************
 		/// <summary>
 		/// Fetches a template; returns an empty-string if the template is not found.
@@ -424,22 +523,7 @@ namespace CMS.Base
 			// Cache templates
             templates.reload(Core.Connector);
             // Load function mappings
-            Assembly ass = Assembly.GetExecutingAssembly();
-            foreach (ResultRow function in Core.Connector.queryRead("SELECT path, classpath, function_name FROM cms_template_handlers"))
-            {
-                Type t = ass.GetType(function["classpath"], false);
-                // Check we found the type - ignore if we haven't, function calls will state it's not defined (informing the developer)
-                if (t != null)
-                {
-                    MethodInfo m = t.GetMethod(function["function_name"]);
-                    if (m != null)
-                    {
-                        // Convert to delegate and add to function mappings
-                        TemplateFunction f = new TemplateFunction(Delegate.CreateDelegate(typeof(TemplateFunction), m) as TemplateFunction);
-                        templates.functions.Add(function["path"], f);
-                    }
-                }
-            }
+            templates.reloadHandlerFunctions(Core.Connector);
 			return templates;
 		}
         // Methods - Static - Default Handers **************************************************************************

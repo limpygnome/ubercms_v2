@@ -378,12 +378,42 @@ namespace CMS.BasicSiteAuth
         }
         private bool pageRegister(Data data)
         {
+            // Setup the page
+#if !CAPTCHA
+            Captcha.hookPage(data);
+#endif
             // Check for postback
+            string error = null;
             string username = data.Request.Form["username"];
             string password = data.Request.Form["password"];
+            string email = data.Request.Form["email"];
+            string secretQuestion = data.Request.Form["secret_question"];
+            string secretAnswer = data.Request.Form["secret_answer"];
+#if !CAPTCHA
+            string captcha = data.Request.Form["captcha"];
+#endif
+            if (username != null && password != null && email != null && secretQuestion != null && secretAnswer != null)
+            {
+                // Validate security
+#if CSRFP
+                if (!CSRFProtection.authenticated(data))
+                    error = "Invalid request, please try again!";
+#endif
+#if CAPTCHA
+                if (!Captcha.isCaptchaCorrect(captcha))
+                    error = "Incorrect captcha verification code!";
+#endif
+                if (error == null)
+                {
+                    // Validate field data
+                    
+                    // Create the user
+                }
+            }
             // Set form data
 
             // Set content
+
             return true;
         }
         private bool pageAccountRecovery(Data data)

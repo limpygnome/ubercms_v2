@@ -66,8 +66,8 @@ CREATE TABLE IF NOT EXISTS cms_template_handlers
 	path VARCHAR(128) PRIMARY KEY,
 	uuid CHAR(16),
 	FOREIGN KEY(`uuid`) REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	classpath TEXT,
-	function_name TEXT
+	classpath VARCHAR(128) NOT NULL,
+	function_name VARCHAR(128) NOT NULL
 );
 CREATE TABLE IF NOT EXISTS cms_email_queue
 (
@@ -83,6 +83,9 @@ CREATE OR REPLACE VIEW cms_view_plugins_loadinfo AS
 
 CREATE OR REPLACE VIEW cms_view_settings_load AS
 	SELECT path, HEX(uuid) AS uuid, type, value, description FROM cms_settings;
+
+CREATE OR REPLACE VIEW cms_view_template_handlers AS
+	SELECT HEX(uuid) AS uuid, path, classpath, function_name FROM cms_template_handlers;
 
 -- Insert core settings
 INSERT INTO cms_settings (path, uuid, type, value, description) VALUES('core/default_handler', NULL, '0', 'home', 'The default module-handler for the home-page/an empty request path.');

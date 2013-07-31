@@ -106,14 +106,14 @@ namespace CMS.Plugins
             BaseUtils.preprocessorDirective_Remove("captcha", ref messageOutput);
             return true;
         }
-        // Methods
+        // Methods *****************************************************************************************************
         /// <summary>
         /// Indicates if the specified string is the captcah text. The captcha, regardless of being correct, is
         /// reset when invoking this method.
         /// </summary>
         /// <param name="text">The text from the user to verify they're human.</param>
         /// <returns>True if the text is valid, false if the text is not valid.</returns>
-        public bool isCaptchaCorrect(string text)
+        public static bool isCaptchaCorrect(string text)
         {
             object temp = System.Web.HttpContext.Current.Session["captcha_text"];
             if (temp != null)
@@ -122,6 +122,18 @@ namespace CMS.Plugins
                 return temp == text;
             }
             return false;
+        }
+        /// <summary>
+        /// Adds any necessary modifications to the page of the current request for the captcha plugin to operate, such
+        /// as any directives, styling and JavaScript.
+        /// </summary>
+        /// <param name="data"></param>
+        public static void hookPage(Data data)
+        {
+            // Setup the captcha variable for template rendering
+            data["Captcha"] = string.Empty;
+            // Add JavaScript
+            BaseUtils.headerAppendJs("/Content/JS/Captcha.js", ref data);
         }
         private readonly string[] captchaFonts = { "Arial", "Verdana", "Times New Roman", "Tahoma", "Helvetica" };
         private bool pageCaptcha(Data data)
