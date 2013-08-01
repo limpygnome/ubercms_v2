@@ -33,6 +33,8 @@ namespace CMS.Plugins
 {
     public class Captcha : Plugin
     {
+        // Constants ***************************************************************************************************
+        public const string CAPTCHA_KEY = "captcha_code";
         // Constants - Settings ****************************************************************************************
         public const string SETTINGS_RANDOM_TEXT_MIN = "captcah_random_text_min";
         public const string SETTINGS_RANDOM_TEXT_MIN__DESCRIPTION = "The minimum number of random characters to generate.";
@@ -40,7 +42,7 @@ namespace CMS.Plugins
 
         public const string SETTINGS_RANDOM_TEXT_MAX = "captcha_random_text_max";
         public const string SETTINGS_RANDOM_TEXT_MAX__DESCRIPTION = "The maximum number of random characters to generate.";
-        public const int SETTINGS_RANDOM_TEXT_MAX__DEFAULT = 10;
+        public const int SETTINGS_RANDOM_TEXT_MAX__DEFAULT = 8;
 
         public const string SETTINGS_WIDTH = "captcha_width";
         public const string SETTINGS_WIDTH__DESCRIPTION = "The width of the captcha image.";
@@ -56,7 +58,7 @@ namespace CMS.Plugins
 
         public const string SETTINGS_FONT_SIZE_MAX = "captcha_font_size_max";
         public const string SETTINGS_FONT_SIZE_MAX__DESCRIPTION = "The maximum font-size of the captcha text.";
-        public const int SETTINGS_FONT_SIZE_MAX__DEFAULT = 24;
+        public const int SETTINGS_FONT_SIZE_MAX__DEFAULT = 22;
         // Methods - Constructors **************************************************************************************
         public Captcha(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
             : base(uuid, title, directory, state, handlerInfo)
@@ -92,18 +94,28 @@ namespace CMS.Plugins
         }
         public override bool enable(UberLib.Connector.Connector conn, ref StringBuilder messageOutput)
         {
-            // Reserve URLs
-            BaseUtils.urlRewritingInstall(this, new string[] { "CAPTCHA" }, ref messageOutput);
+            // Install templates
+            if (!Core.Templates.install(conn, this, PathTemplates, ref messageOutput))
+                return false;
             // Install directives
-            Base.BaseUtils.preprocessorDirective_Add("captcha", ref messageOutput);
+            if (!Base.BaseUtils.preprocessorDirective_Add("captcha", ref messageOutput))
+                return false;
+            // Reserve URLs
+            if (!BaseUtils.urlRewritingInstall(this, new string[] { "CAPTCHA" }, ref messageOutput))
+                return false;
             return true;
         }
         public override bool disable(UberLib.Connector.Connector conn, ref StringBuilder messageOutput)
         {
             // Unreserve URLs
-            BaseUtils.urlRewritingUninstall(this, ref messageOutput);
+            if (!BaseUtils.urlRewritingUninstall(this, ref messageOutput))
+                return false;
             // Remove directives
-            BaseUtils.preprocessorDirective_Remove("CAPTCHA", ref messageOutput);
+            if (!BaseUtils.preprocessorDirective_Remove("CAPTCHA", ref messageOutput))
+                return false;
+            // Remove templates
+            if (!Core.Templates.uninstall(this, ref messageOutput))
+                return false;
             return true;
         }
         // Methods *****************************************************************************************************
@@ -113,13 +125,16 @@ namespace CMS.Plugins
         /// </summary>
         /// <param name="text">The text from the user to verify they're human.</param>
         /// <returns>True if the text is valid, false if the text is not valid.</returns>
-        public static bool isCaptchaCorrect(string text)
+        public static bool isCaptchaCorrect(Data data)
         {
-            object temp = System.Web.HttpContext.Current.Session["captcha_text"];
+            string code = data.Request.Form["captcha"];
+            if (code == null || code.Length == 0)
+                return false;
+            object temp = System.Web.HttpContext.Current.Session[CAPTCHA_KEY];
             if (temp != null)
             {
-                System.Web.HttpContext.Current.Session["captcha_text"] = null;
-                return temp == text;
+                System.Web.HttpContext.Current.Session[CAPTCHA_KEY] = null;
+                return (string)temp == code;
             }
             return false;
         }
@@ -131,9 +146,9 @@ namespace CMS.Plugins
         public static void hookPage(Data data)
         {
             // Setup the captcha variable for template rendering
-            data["Captcha"] = string.Empty;
+            data.setFlag("Captcha");
             // Add JavaScript
-            BaseUtils.headerAppendJs("/Content/JS/Captcha.js", ref data);
+            BaseUtils.headerAppendJs("/content/js/captcha.js", ref data);
         }
         private readonly string[] captchaFonts = { "Arial", "Verdana", "Times New Roman", "Tahoma", "Helvetica" };
         private bool pageCaptcha(Data data)
@@ -181,6 +196,10 @@ namespace CMS.Plugins
             int h4 = height / 4;
             for (int i = 0; i < 5; i++)
                 gi.FillRectangle(new SolidBrush(Color.FromArgb(rand.Next(10, 40), rand.Next(0, 255), rand.Next(0, 255), rand.Next(0, 255))), rand.Next(w8, w2), rand.Next(h8, h2), rand.Next(w4, width), rand.Next(h4, height));
+#if DEBUG
+            gi.FillRectangle(new SolidBrush(Color.FromArgb(90, 255, 255, 255)), 0, 0, width, height);
+            gi.DrawString("Debug mode:\n" + text, new Font("Verdana", 15.0f, FontStyle.Bold), new SolidBrush(Color.Black), 0.0f, 0.0f);
+#endif
             gi.Dispose();
             // Write image to stream
             using (System.IO.MemoryStream stream = new System.IO.MemoryStream())
@@ -190,7 +209,7 @@ namespace CMS.Plugins
             }
             temp.Dispose();
             // Set session variable
-            System.Web.HttpContext.Current.Session["captcha_text"] = text;
+            System.Web.HttpContext.Current.Session[CAPTCHA_KEY] = text;
             // Setup the response parameters
             data.OutputContent = false;
             data.Response.ContentType = "image/png";

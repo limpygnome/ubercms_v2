@@ -30,6 +30,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using System.Web.Security;
 using System.Xml;
 using System.Web.Security;
 using CMS.Base;
@@ -44,7 +45,10 @@ namespace CMS.BasicSiteAuth
     public class BasicSiteAuth : Plugin
     {
         // Constants ***************************************************************************************************
-        public const string BSA_UUID = "943c3f9d-dfcb-483d-bf34-48ad5231a15f";
+        /// <summary>
+        /// UUID of this plugin with no hypthens in upper-case.
+        /// </summary>
+        public const string BSA_UUID_NHUC = "943C3F9DDFCB483DBF3448AD5231A15F";
         public const int BSA_UNIQUE_USER_HASH_MIN = 10;
         public const int BSA_UNIQUE_USER_HASH_MAX = 16;
         private const string HTTPCONTEXTITEMS_BSA_CURRENT_USER = "bsa_current_user";
@@ -117,6 +121,43 @@ namespace CMS.BasicSiteAuth
         public const string SETTINGS_RECOVERYCODES_EXPIRE = "bsa/recoverycodes/expire";
         public const string SETTINGS_RECOVERYCODES_EXPIRE__DESCRIPTION = "The life-span of a recovery code in milliseconds.";
         public const int SETTINGS_RECOVERYCODES_EXPIRE__DEFAULT = 3600000;
+        // Constants - Account Event Types *****************************************************************************
+        // -- Incorrect authentication
+        public const string ACCOUNT_EVENT__INCORRECT_AUTH__UUID = "B98F1FC842D04A3D914F5653D098DB50";
+        public const string ACCOUNT_EVENT__INCORRECT_AUTH__TITLE = "Incorrect Authentication";
+        public const string ACCOUNT_EVENT__INCORRECT_AUTH__DESC = "An incorrect authentication attempt was made on the account.";
+        public const string ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_FUNCTION = "incorrectAuth";
+        // -- Authentication
+        public const string ACCOUNT_EVENT__AUTH__UUID = "0FF9AA9A77A64499BB6C12FC7BF04594";
+        public const string ACCOUNT_EVENT__AUTH__TITLE = "Authenticated";
+        public const string ACCOUNT_EVENT__AUTH__DESC = "Account was successfully authenticated.";
+        public const string ACCOUNT_EVENT__AUTH__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string ACCOUNT_EVENT__AUTH__RENDER_FUNCTION = "authed";
+        // -- Changed account settings
+        public const string ACCOUNT_EVENT__CHANGEDSETTINGS__UUID = "6D1B51E00B4D4459A67F8C6B67E2A37B";
+        public const string ACCOUNT_EVENT__CHANGEDSETTINGS__TITLE = "Account Settings Changed";
+        public const string ACCOUNT_EVENT__CHANGEDSETTINGS__DESC = "The settings of the account were changed.";
+        public const string ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_FUNCTION = "changedSettings";
+        // -- Logged-out
+        public const string ACCOUNT_EVENT__LOGGEDOUT__UUID = "C21622AD82624E57843900DDB9A27CAF";
+        public const string ACCOUNT_EVENT__LOGGEDOUT__TITLE = "Logged Out";
+        public const string ACCOUNT_EVENT__LOGGEDOUT__DESC = "The account was logged-out.";
+        public const string ACCOUNT_EVENT__LOGGEDOUT__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string ACCOUNT_EVENT__LOGGEDOUT__RENDER_FUNCTION = "loggedOut";
+        // -- Recovery secret question/answer attempted
+        public const string ACCOUNT_EVENT__SECRETQA_ATTEMPT__UUID = "D63560D8DC8F491BAE1693D5EFA9839A";
+        public const string ACCOUNT_EVENT__SECRETQA_ATTEMPT__TITLE = "Secret Question/Answer Recovery Attempt";
+        public const string ACCOUNT_EVENT__SECRETQA_ATTEMPT__DESC = "An attempt to recover the account using a secret question/answer was made.";
+        public const string ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_FUNCTION = "secretQaAttempt";
+        // -- Recovery code sent
+        public const string ACCOUNT_EVENT__RECOVERYCODE_SENT__UUID = "02D9335BAA6A4741BB29E6E7F00D901C";
+        public const string ACCOUNT_EVENT__RECOVERYCODE_SENT__TITLE = "Recovery Code Sent";
+        public const string ACCOUNT_EVENT__RECOVERYCODE_SENT__DESC = "A recovery code was sent to the account's e-mail.";
+        public const string ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_FUNCTION = "recoveryCodeSent";
         // Fields ******************************************************************************************************
         private string                          salt1,                  // The first salt, used for generating a secure SHA-512 hash.
                                                 salt2;                  // The second salt, used for generating a secure SHA-512 hash.
@@ -133,7 +174,7 @@ namespace CMS.BasicSiteAuth
         public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Setup handlers
-            HandlerInfo.RequestStart = true;
+            HandlerInfo.RequestEnd = true;
             HandlerInfo.PluginStart = true;
             HandlerInfo.CycleInterval = 900000; // 15 minutes
             HandlerInfo.save(conn);
@@ -234,6 +275,25 @@ namespace CMS.BasicSiteAuth
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_ADMINISTRATOR_GROUPID, SETTINGS_GROUP_ADMINISTRATOR_GROUPID__DESCRIPTION, ugAdministrator.GroupID);
             // Save settings
             Core.Settings.save(Core.Connector);
+            // Create default account event types
+            // -- Incorrect authentication
+            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__INCORRECT_AUTH__UUID), ACCOUNT_EVENT__INCORRECT_AUTH__TITLE, ACCOUNT_EVENT__INCORRECT_AUTH__DESC, ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_CLASSPATH, ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_FUNCTION, ref messageOutput) == null)
+                return false;
+            // -- Authenticated
+            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__AUTH__UUID), ACCOUNT_EVENT__AUTH__TITLE, ACCOUNT_EVENT__AUTH__DESC, ACCOUNT_EVENT__AUTH__RENDER_CLASSPATH, ACCOUNT_EVENT__AUTH__RENDER_FUNCTION, ref messageOutput) == null)
+                return false;
+            // -- Changed account settings
+            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__CHANGEDSETTINGS__UUID), ACCOUNT_EVENT__CHANGEDSETTINGS__TITLE, ACCOUNT_EVENT__CHANGEDSETTINGS__DESC, ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_CLASSPATH, ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_FUNCTION, ref messageOutput) == null)
+                return false;
+            // -- Logged-out
+            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__LOGGEDOUT__UUID), ACCOUNT_EVENT__LOGGEDOUT__TITLE, ACCOUNT_EVENT__LOGGEDOUT__DESC, ACCOUNT_EVENT__LOGGEDOUT__RENDER_CLASSPATH, ACCOUNT_EVENT__LOGGEDOUT__RENDER_FUNCTION, ref messageOutput) == null)
+                return false;
+            // -- Recovery secret question/answer attempted
+            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__SECRETQA_ATTEMPT__UUID), ACCOUNT_EVENT__SECRETQA_ATTEMPT__TITLE, ACCOUNT_EVENT__SECRETQA_ATTEMPT__DESC, ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_CLASSPATH, ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_FUNCTION, ref messageOutput) == null)
+                return false;
+            // -- Recovery code sent
+            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__RECOVERYCODE_SENT__UUID), ACCOUNT_EVENT__RECOVERYCODE_SENT__TITLE, ACCOUNT_EVENT__RECOVERYCODE_SENT__DESC, ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_CLASSPATH, ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_FUNCTION, ref messageOutput) == null)
+                return false;
             // Load salts for the installation process
             loadSalts();
             // Create default root account (user = root, pass = password)
@@ -244,14 +304,16 @@ namespace CMS.BasicSiteAuth
             userRoot.SecretQuestion = null;
             userRoot.SecretAnswer = null;
             userRoot.UserGroup = ugAdministrator;
+            userRoot.Registered = DateTime.Now;
             User.UserCreateSaveStatus urStatus = userRoot.save(this, conn, true); // Skip since user-groups cache is not active
-            if(urStatus != User.UserCreateSaveStatus.Success)
+            if (urStatus != User.UserCreateSaveStatus.Success)
                 messageOutput.AppendLine("Warning: failed to create root user - '").Append(urStatus.ToString()).Append("'!");
             return true;
         }
         public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Check if the user table exists; if so, abort and inform the user to manually remove it
+#if !DEBUG
             switch(conn.Type)
             {
                 case Connector.ConnectorType.MySQL:
@@ -262,6 +324,7 @@ namespace CMS.BasicSiteAuth
                     }
                     break;
             }
+#endif
             // Remove SQL
             if (!BaseUtils.executeSQL(PathSQL + "/uninstall.sql", conn, ref messageOutput))
                 return false;
@@ -311,8 +374,10 @@ namespace CMS.BasicSiteAuth
         public override bool handler_pluginStart(UberLib.Connector.Connector conn)
         {
             loadSalts();
-            groups = UserGroups.load(conn);
-            accountEventTypes = AccountEventTypes.load(conn);
+            // Load user-groups
+            this.groups = UserGroups.load(conn);
+            // Load account event types
+            this.accountEventTypes = AccountEventTypes.load(conn);
             return true;
         }
         public override void handler_pluginCycle()
@@ -322,7 +387,7 @@ namespace CMS.BasicSiteAuth
             // Delete old failed authentication attempts
             AuthFailedAttempt.remove(Core.Connector);
         }
-        public override void handler_requestStart(Data data)
+        public override void  handler_requestEnd(Data data)
         {
 #if !BSA
             return; // Fail-safe
@@ -330,12 +395,12 @@ namespace CMS.BasicSiteAuth
             // Fetch the user for the current request
             User user = getCurrentUser(data);
             // Check if the user is banned/unable to login - invalidate the model
-            if (UserBan.isBanned(data.Connector, user))
+            if (user != null && UserBan.getLatestBan(data.Connector, user) != null)
                 user = null;
             // Set the user's information
             else if (user != null)
             {
-                // Set elements
+                // Set elements - note: disposed by method invalidCurrentUserSession
                 data["Username"] = user.Username;
                 if (user.UserGroup.Administrator)
                     data["Administrator"] = null;
@@ -355,8 +420,8 @@ namespace CMS.BasicSiteAuth
                         return pageMyAccount(data);
                     case "account_log":
                         return pageAccountLog(data);
-                    case "members":
-                        return pageMembers(data);
+                    case "logout":
+                        return pageLogout(data);
                     default:
                         return false;
                 }
@@ -369,8 +434,6 @@ namespace CMS.BasicSiteAuth
                         return pageRegister(data);
                     case "account_recovery":
                         return pageAccountRecovery(data);
-                    case "members":
-                        return pageMembers(data);
                     default:
                         return false;
                 }
@@ -378,14 +441,46 @@ namespace CMS.BasicSiteAuth
         // Methods - Pages *********************************************************************************************
         private bool pageLogin(Data data)
         {
+            // Setup the page
+#if CAPTCHA
+            Captcha.hookPage(data);
+#endif
             // Check for postback
+            string error = null;
             string username = data.Request.Form["username"];
             string password = data.Request.Form["password"];
-            string captcha = data.Request.Form["captcha"];
             bool keepLoggedIn = data.Request.Form["session_persist"] != null;
-
+            if (username != null && password != null)
+            {
+                // Validate security
+#if CAPTCHA
+                if (!Captcha.isCaptchaCorrect(data))
+                    error = "Invalid captcha verification code!";
+#endif
+#if CSRFP
+                if (error == null && !CSRFProtection.authenticated(data))
+                    error = "Invalid request; please try again!";
+#endif
+                // Attempt to authenticate
+                if (error == null)
+                {
+                    User u = User.load(this, data.Connector, username);
+                    if (u == null)
+                        error = "Invalid username/password!";
+                    else if (u.authenticate(this, password, data, ref error))
+                    {
+                        // Success!
+                        FormsAuthentication.SetAuthCookie(username, keepLoggedIn);
+                        BaseUtils.redirect(data, data.Request.UrlReferrer != null && data.Request.UrlReferrer.AbsolutePath != "/login" ? data.Request.UrlReferrer.AbsoluteUri : BaseUtils.getAbsoluteURL(data, "/" + Core.DefaultHandler));
+                    }
+                }
+            }
             // Set form data
-            data["bsa_form_username"] = username;
+            data["bsa_login_username"] = HttpUtility.HtmlEncode(username);
+            if (keepLoggedIn)
+                data.setFlag("bsa_login_persist");
+            if (error != null)
+                data["bsa_login_error"] = HttpUtility.HtmlEncode(error);
             // Set content
             data["Title"] = "Login";
             data["Content"] = Core.Templates.get(data.Connector, "bsa/login");
@@ -404,9 +499,6 @@ namespace CMS.BasicSiteAuth
             string email = data.Request.Form["email"];
             string secretQuestion = data.Request.Form["secret_question"];
             string secretAnswer = data.Request.Form["secret_answer"];
-#if CAPTCHA
-            string captcha = data.Request.Form["captcha"];
-#endif
             if (username != null && password != null && email != null && secretQuestion != null && secretAnswer != null)
             {
                 // Validate security
@@ -415,7 +507,7 @@ namespace CMS.BasicSiteAuth
                     error = "Invalid request, please try again!";
 #endif
 #if CAPTCHA
-                if (!Captcha.isCaptchaCorrect(captcha))
+                if (!Captcha.isCaptchaCorrect(data))
                     error = "Incorrect captcha verification code!";
 #endif
                 if (error == null)
@@ -463,8 +555,18 @@ namespace CMS.BasicSiteAuth
         {
             return true;
         }
-        private bool pageMembers(Data data)
+        private bool pageLogout(Data data)
         {
+            User usr = getCurrentUser(data);
+            if (usr == null)
+                return false;
+            // Dispose the session
+            invalidCurrentUserSession();
+            // Log the event
+            AccountEvent.create(data.Connector, this, BasicSiteAuth.ACCOUNT_EVENT__LOGGEDOUT__UUID, DateTime.Now, usr.UserID, data.Request.UserHostAddress, SettingsNode.DataType.String, data.Request.UserAgent, SettingsNode.DataType.String);
+            // Set content
+            data["Title"] = "Logout";
+            data["Content"] = Core.Templates.get(data.Connector, "bsa/logout");
             return true;
         }
         // Methods - Static ********************************************************************************************
@@ -485,18 +587,21 @@ namespace CMS.BasicSiteAuth
         }
         public static void invalidCurrentUserSession()
         {
-#if BSA
+#if !BSA
+            return;
+#endif
             // Destroy model
             HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] = null;
             // Destroy authentication
             FormsAuthentication.SignOut();
             // Destroy entire session
             HttpContext.Current.Session.Abandon();
-#endif
         }
         private static void loadCurrentUser(Data data)
         {
-#if BSA
+#if !BSA
+            return; // Fail-safe
+#endif
             // Check the user object has not already been loaded
             if (HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] != null)
                 return;
@@ -506,24 +611,19 @@ namespace CMS.BasicSiteAuth
             else
             {
                 // Fetch the BSA plugin
-                BasicSiteAuth bsa = (BasicSiteAuth)Core.Plugins.getPlugin(UUID.createFromHexHyphens(BasicSiteAuth.BSA_UUID));
+                BasicSiteAuth bsa = (BasicSiteAuth)Core.Plugins[BSA_UUID_NHUC];
                 if (bsa != null)
                 {
                     // Load and set user object
-                    User usr = User.load(bsa, data.Connector, int.Parse(HttpContext.Current.User.Identity.Name));
+                    User usr = User.load(bsa, data.Connector, HttpContext.Current.User.Identity.Name);
                     if (usr != null && usr.UserGroup.Login)
                         HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] = usr;
                     else
                         HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] = null;
                 }
             }
-#endif
         }
         // Methods *****************************************************************************************************
-        private void setPageError(Data data, string error)
-        {
-            data["BsaError"] = error;
-        }
         private void loadSalts()
         {
             string salts = Path + "/salts.xml";
@@ -614,7 +714,7 @@ namespace CMS.BasicSiteAuth
         {
             get
             {
-                return groups;
+                return this.groups;
             }
         }
         /// <summary>
@@ -624,7 +724,7 @@ namespace CMS.BasicSiteAuth
         {
             get
             {
-                return accountEventTypes;
+                return this.accountEventTypes;
             }
         }
     }

@@ -40,14 +40,12 @@ body
 .AREA_WRAPPER
 {
 	position: relative;
-	top: 0.5em;
     font: normal 12px Arial,Verdana;
     width: 70em;
     border-bottom-left-radius: 0.5em;
     border-bottom-right-radius: 0.5em;
 	margin: auto;
 	box-shadow: 0em 0em 1.0em #000;
-	border-radius: 0.5em;
 	overflow: hidden;
 }
 .AREA_BANNER, .AREA_NAV, .AREA_CONTENT
@@ -61,15 +59,32 @@ body
 {
 	height: 5em;
 	line-height: 4em;
-	background: url('../images/layout/background.png') no-repeat;
-	-webkit-background-size: cover;
-	-moz-background-size: cover;
-	-o-background-size: cover;
-	background-size: cover;
+	background: #45484d; /* Old browsers */
+	background: -moz-linear-gradient(top,  #45484d 0%, #000000 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#45484d), color-stop(100%,#000000)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #45484d 0%,#000000 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #45484d 0%,#000000 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #45484d 0%,#000000 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #45484d 0%,#000000 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#45484d', endColorstr='#000000',GradientType=0 ); /* IE6-9 */
+}
+.AREA_BANNER .C1
+{
+	color: #06C;
+}
+.AREA_BANNER .C2
+{
+	color: #CCC;
+}
+.AREA_BANNER .C3
+{
+	color: white;
 }
 .AREA_BANNER h1
 {
-	visibility: hidden;
+	color: #FFF;
+	font-weight: normal;
+	margin: 0.5em;
 }
 .AREA_BANNER img
 {
@@ -89,11 +104,15 @@ body
 	box-shadow: 0em 0em 0.5em rgba(0, 0, 0, 0.5);
 	border: solid 0.1em rgba(0, 0, 0, 0.1);
 }
-.AREA_BANNER .AUTH a
+.AREA_BANNER .AUTH a, .AREA_BANNER .AUTH span
 {
 	float: left;
 	color: #FFF;
 	text-decoration: none;
+}
+.AREA_BANNER .AUTH span
+{
+	color: #CCC;
 }
 .AREA_BANNER .AUTH a:hover, .AREA_BANNER .AUTH a:focus
 {
@@ -230,7 +249,7 @@ body
 }
 .AREA_CONTENT table th
 {
-	background: #06C;
+	background: #000;
 	color: #FFF;
 }
 /* Table - Layout */
@@ -274,38 +293,145 @@ body
 {
 	font-size: small;
 }
-.TABLE input[type=text], .TABLE input[type=password], .TABLE input[type=submit], .BUTTON, .TEXTBOX
+.TABLE input[type=submit], .BUTTON
 {
 	padding: 0.25em 0.5em;
 	border-radius: 0.25em;
 }
 .TABLE input[type=text], .TABLE input[type=password], .TEXTBOX
 {
-	border: solid 0.1em #333;
-	background: #CCC;
-	box-shadow: inset 0em 0em 0.5em #666, 0em 0em 0.5em #CCC;
+	border: solid 0.1em #CCC;
+	background: #FFF;
+	box-shadow: 0em 0em 0.5em #CCC;
 	padding: 0.25em 0.5em;
 }
 .TABLE input[type=text]:hover, .TABLE input[type=text]:focus, .TABLE input[type=password]:hover, .TABLE input[type=password]:focus, .TEXTBOX:hover, .TEXTBOX:focus
 {
-	background: #999;
+	background: #EEE;
+	box-shadow: inset 0em 0em 0.5em #CCC, 0em 0em 0.5em #CCC;
+}
+.TABLE ::-webkit-input-placeholder
+{
+	color: #888;
+}
+.TABLE ::-moz-placeholder
+{
+	color: #888;
+}
+.TABLE :-ms-input-placeholder
+{
+	color: #888;
 }
 .TABLE input[type=submit], .BUTTON
 {
 	display: inline-block;
-	background: #333;
 	border: none;
 	color: #FFF !important;
 	box-shadow: 0em 0em 0.3em #333;
 	text-decoration: none;
-	margin-bottom: 0.25em;
+	margin: 0em 0.5em 0.25em 0em;
 	font: inherit;
+	
+	background: #333; /* Old browsers */
+	background: -moz-linear-gradient(top,  #666666 0%, #333333 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(100%,#333333)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #666666 0%,#333333 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #666666 0%,#333333 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #666666 0%,#333333 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #666666 0%,#333333 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#333333',GradientType=0 ); /* IE6-9 */
 }
 .TABLE input[type=submit]:hover, .TABLE input[type=submit]:focus, .BUTTON:hover, .BUTTON:focus
 {
-	background: #CCC;
 	color: #333 !important;
 	cursor: pointer;
+	
+	background: #CCC; /* Old browsers */
+	background: -moz-linear-gradient(top,  #e5e5e5 0%, #cccccc 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#e5e5e5), color-stop(100%,#cccccc)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #e5e5e5 0%,#cccccc 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #e5e5e5 0%,#cccccc 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #e5e5e5 0%,#cccccc 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #e5e5e5 0%,#cccccc 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e5e5e5', endColorstr='#cccccc',GradientType=0 ); /* IE6-9 */
+}
+/* Checkbox Control */
+.TABLE .checkbox
+{
+	position: relative;
+	display: inline-block;
+	width: 16em;
+	height: 2em;
+	line-height: 2em;
+	border: solid 0.1em #CCC;
+	border-radius: 0.5em;
+	box-shadow: 0em 0em 0.5em #CCC;
+	cursor: pointer;
+}
+.TABLE .checkbox:before, .TABLE .checkbox label, .TABLE .checkbox:after
+{
+	position: absolute;
+	text-align: center;
+}
+.TABLE .checkbox:before, .TABLE .checkbox:after
+{
+	z-index: 0;
+	width: 8em;
+}
+.TABLE .checkbox:before
+{
+	content: 'Off';
+	color: #900;
+	background: #FCC; /* Old browsers */
+	background: -moz-linear-gradient(top,  #ff8c8c 0%, #ffcccc 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ff8c8c), color-stop(100%,#ffcccc)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #ff8c8c 0%,#ffcccc 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #ff8c8c 0%,#ffcccc 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #ff8c8c 0%,#ffcccc 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #ff8c8c 0%,#ffcccc 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ff8c8c', endColorstr='#ffcccc',GradientType=0 ); /* IE6-9 */
+}
+.TABLE .checkbox:after
+{
+	left: 8em;
+	content: 'On';
+	color: #060;
+	background: #9F9; /* Old browsers */
+	background: -moz-linear-gradient(top,  #56ff56 0%, #c1ffc1 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#56ff56), color-stop(100%,#c1ffc1)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #56ff56 0%,#c1ffc1 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #56ff56 0%,#c1ffc1 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #56ff56 0%,#c1ffc1 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #56ff56 0%,#c1ffc1 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#56ff56', endColorstr='#c1ffc1',GradientType=0 ); /* IE6-9 */
+}
+.TABLE .checkbox label
+{
+	display: block;
+	position: absolute;
+	width: 10em;
+	z-index: 1;
+	-webkit-transition:	all .4s ease;
+	-moz-transition: 	all .4s ease;
+	-o-transition:		all .4s ease;
+	-ms-transition:		all .4s ease;
+	transition:			all .4s ease;
+	cursor: pointer;
+	background: #FFF;
+	margin-left: 5.5em;
+	border: solid 0.1em #CCC;
+	border-top: none;
+	border-bottom: none;
+}
+.TABLE .checkbox input[type=checkbox]
+{
+	border: solid 0.1em #CCC;
+	border-radius: 0.5em;
+	display: none;
+}
+.TABLE .checkbox input[type=checkbox]:checked ~ label
+{
+	margin-left: 0.5em;
 }
 /* Error Box */
 .ERROR, .SUCCESS
@@ -314,13 +440,13 @@ body
 }
 .ERROR
 {
-	font-weight: bold;
-	background: pink;
-	border: solid 0.2em red;
+	background: #FCC;
+	border: solid 0.2em #F00;
+	color: #F00 !important;
 }
 .SUCCESS
 {
-	background: lightgreen;
-	border: solid 0.2em darkgreen;
-	color: darkgreen;
+	background: #9F9;
+	border: solid 0.2em #060;
+	color: #060 !important;
 }

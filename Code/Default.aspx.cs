@@ -20,16 +20,18 @@
  *      Change-Log:
  *                      2013-06-25      Created initial class.
  *                      2013-06-30      Finished initial class.
+ *                      2013-08-01      ThreadAbortException ignored due to being thrown by Response.Redirect.
  * 
- * *****************************************************************************
+ * *********************************************************************************************************************
  * The entry-point for clients to be served by the main CMS.
- * *****************************************************************************
+ * *********************************************************************************************************************
  */
 using System;
 using System.Collections.Generic;
 using System.Web;
 using System.Text;
 using System.Diagnostics;
+using System.Threading;
 
 using UberLib.Connector;
 using UberLib.Connector.Connectors;
@@ -108,6 +110,8 @@ public partial class _Default : System.Web.UI.Page
                     if (p.State == Plugin.PluginState.Enabled)
                         p.handler_requestEnd(data);
             }
+            catch (ThreadAbortException)
+            { return; }
             catch (Exception ex)
             {
                 if (Core.Plugins != null)

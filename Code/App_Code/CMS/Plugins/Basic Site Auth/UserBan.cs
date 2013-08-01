@@ -141,25 +141,28 @@ namespace CMS.BasicSiteAuth
             }
             modified = false;
         }
-        /// <summary>
-        /// Indicates if a user is banned.
+        // <summary>
+        /// Fetches the last ban applied to the user.
         /// </summary>
         /// <param name="conn">Database connector.</param>
-        /// <param name="user">The user model to check.</param>
-        /// <returns>True if banned, false if not banned.</returns>
-        public static bool isBanned(Connector conn, User user)
+        /// <param name="user">The model of the user.</param>
+        /// <returns>Either the model or null.</returns>
+        public static UserBan getLatestBan(Connector conn, User user)
         {
-            return isBanned(conn, user.UserID);
+            return user == null ? null : getLatestBan(conn, user.UserID);
         }
         /// <summary>
-        /// Indicates if a user is banned.
+        /// Fetches the last ban applied to the user.
         /// </summary>
         /// <param name="conn">Database connector.</param>
-        /// <param name="userID">The identifier of the user.</param>
-        /// <returns>True if banned, false if not banned.</returns>
-        public static bool isBanned(Connector conn, int userID)
+        /// <param name="userid">The user's identifier.</param>
+        /// <returns>Either the model or null.</returns>
+        public static UserBan getLatestBan(Connector conn, int userid)
         {
-            return conn.queryCount("SELECT COUNT('') FROM bsa_user_bans WHERE userid='" + SQLUtils.escape(userID.ToString()) + "' AND (datetime_end IS NULL OR datetime_end > CURRENT_TIMESTAMP)") > 0;
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM bsa_user_bans WHERE userid=?userid AND (datetime_end > CURRENT_TIMESTAMP OR datetime_end IS NULL) ORDER BY datetime_start DESC LIMIT 1;");
+            ps["userid"] = userid;
+            Result res = conn.queryRead(ps);
+            return res.Count > 0 ? load(res[0]) : null;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>

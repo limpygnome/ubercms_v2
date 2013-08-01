@@ -1,0 +1,2 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[captcha/embed]]></path><description><![CDATA[The captcha verification box.]]></description><html><![CDATA[<img id="captcha" src="/captcha" alt="Captcha Verification Image" onmousedown="return captchaRefresh();" /><br />
+<input type="text" name="captcha" placeholder="Enter the code above..." autocomplete="off" /> <div class="BUTTON" onmousedown="return captchaRefresh();">Refresh</div>]]></html></template>

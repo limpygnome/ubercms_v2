@@ -27,6 +27,7 @@
  * *********************************************************************************************************************
  */
 using System;
+using System.Text;
 using CMS.BasicSiteAuth;
 using CMS.Base;
 using UberLib.Connector;
@@ -113,31 +114,105 @@ namespace CMS
             {
                 modified = persisted = false;
             }
+            // Methods *************************************************************************************************
+            /// <summary>
+            /// Attempts to authenticate a request.
+            /// 
+            /// Note: this method does not set any ASP.NET authentication, this should be handled by the calling method.
+            /// This is because this method could be used by APIs which may use session keys or some alternate system
+            /// to ASP.NET's authentication.
+            /// </summary>
+            /// <param name="bsa">BSA plugin.</param>
+            /// <param name="password">The plain-text password to be tested against this user.</param>
+            /// <param name="requestData">The data for the current request.</param>
+            /// <param name="errorMessage">An error-message output; set to null if no error occurs.</param>
+            /// <returns>True if authenticated, false if authentication failed.</returns>
+            public bool authenticate(BasicSiteAuth bsa, string password, Data requestData, ref string errorMessage)
+            {
+                // Check the user has not exceeded the maximum amount of authentication attempts
+                if (AuthFailedAttempt.isIpBanned(requestData.Connector, requestData.Request.UserHostAddress))
+                {
+                    errorMessage = "Your IP has been temporarily banned for too many incorrect attempts, please try again later!";
+                    return false;
+                }
+                // Check the password is correct
+                else if (!validPassword(bsa, password))
+                {
+                    // Log the failed attempt
+                    AccountEvent.create(requestData.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__INCORRECT_AUTH__UUID, DateTime.Now, userID, requestData.Request.UserHostAddress, SettingsNode.DataType.String, requestData.Request.UserAgent, SettingsNode.DataType.String);
+                    AuthFailedAttempt.create(requestData.Connector, requestData.Request.UserHostAddress, DateTime.Now, AuthFailedAttempt.AuthType.Login);
+                    errorMessage = "Incorrect username/password!";
+                    return false;
+                }
+                // Test the user is not banned
+                UserBan ub = UserBan.getLatestBan(requestData.Connector, this);
+                if (ub != null)
+                {
+                    StringBuilder b = new StringBuilder();
+                    b.Append("Your account has been banned for the following reason: '");
+                    b.Append(ub.Reason);
+                    b.Append("'; this ban will expire at: ");
+                    b.Append(ub.DateTimeEnd != DateTime.MaxValue ? ub.DateTimeEnd.ToString("YYYY-MM-dd HH:mm:ss") : "never");
+                    b.Append(".");
+                    errorMessage = b.ToString();
+                    return false;
+                }
+                else
+                {
+                    // Log the success
+                    AccountEvent.create(requestData.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__AUTH__UUID, DateTime.Now, userID, requestData.Request.UserHostAddress, SettingsNode.DataType.String, requestData.Request.UserAgent, SettingsNode.DataType.String);
+                    errorMessage = null;
+                    return true;
+                }
+            }
+            /// <summary>
+            /// Tests if a plain-text password is the same as the user's password, for authentication purposes.
+            /// </summary>
+            /// <param name="bsa">BSA plugin.</param>
+            /// <param name="password">The plain-text password to be tested against this user.</param>
+            /// <returns></returns>
+            public bool validPassword(BasicSiteAuth bsa, string password)
+            {
+                if (password == null || password.Length == 0)
+                    return false;
+                return bsa.generateHash(password, passwordSalt) == this.password;
+            }
             // Mehods - Database ***************************************************************************************
             /// <summary>
             /// Loads a user from the database.
             /// </summary>
             /// <param name="bsa">BSA plugin.</param>
             /// <param name="conn">Database connector.</param>
+            /// <param name="username">The username of the user.</param>
+            /// <returns>Either the model or null.</returns>
+            public static User load(BasicSiteAuth bsa, Connector conn, string username)
+            {
+                PreparedStatement ps = new PreparedStatement("SELECT * FROM bsa_users WHERE username=?username;");
+                ps["username"] = username;
+                Result result = conn.queryRead(ps);
+                return result.Count == 1 ? load(bsa, result[0]) : null;
+            }
+            /// <summary>
+            /// Loads a user from the database.
+            /// </summary>
+            /// <param name="bsa">BSA plugin.</param>
+            /// <param name="conn">Database connector.</param>
             /// <param name="userID">The identifier of the user.</param>
-            /// <returns>The user if found/valid, else null.</returns>
+            /// <returns>Either the model or null.</returns>
             public static User load(BasicSiteAuth bsa, Connector conn, int userID)
             {
                 Result result = conn.queryRead("SELECT * FROM bsa_users WHERE userid='" + SQLUtils.escape(userID.ToString()) + "';");
-                if (result.Count == 1)
-                    return load(bsa, result[0]);
-                else
-                    return null;
+                return result.Count == 1 ? load(bsa, result[0]) : null;
             }
             /// <summary>
             /// Loads a user from database data.
             /// </summary>
             /// <param name="bsa">BSA plugin.</param>
             /// <param name="data">Database data.</param>
-            /// <returns>The user if found/valid, else null.</returns>
+            /// <returns>Either the model or null.</returns>
             public static User load(BasicSiteAuth bsa, ResultRow data)
             {
-                UserGroup ug = bsa.UserGroups[int.Parse(data["groupid"])];
+                UserGroup ug = bsa.UserGroups[data.get2<int>("groupid")];
                 if (ug == null)
                     return null;
                 User usr = new User();
@@ -349,6 +424,21 @@ namespace CMS
                 {
                     modified = true;
                     userGroup = value;
+                }
+            }
+            /// <summary>
+            /// The date and time of when the user registered.
+            /// </summary>
+            public DateTime Registered
+            {
+                get
+                {
+                    return registered;
+                }
+                set
+                {
+                    registered = value;
+                    modified = true;
                 }
             }
             /// <summary>

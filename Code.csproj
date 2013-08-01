@@ -131,6 +131,7 @@
     <Folder Include="Code\App_Code\CMS\Plugins\Articles\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\content\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\templates\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Captcha\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Downloads\" />
     <Folder Include="Code\Content\CSS\" />
   </ItemGroup>

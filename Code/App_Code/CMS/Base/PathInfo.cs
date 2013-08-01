@@ -56,7 +56,7 @@ namespace CMS.Base
             // Check against null reference
             if (pathData == null)
             {
-                moduleHandler = Core.SettingsDisk["settings/core/default_handler"].get<string>();
+                moduleHandler = Core.DefaultHandler;
                 subDirs = new string[0];
             }
             else

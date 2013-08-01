@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS bsa_users
 	FOREIGN KEY(`groupid`) REFERENCES `bsa_user_groups`(`groupid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	datetime_register TIMESTAMP
 );
+CREATE INDEX bsa_index_username ON bsa_users(username);
 CREATE TABLE IF NOT EXISTS bsa_user_bans
 (
 	banid INT PRIMARY KEY AUTO_INCREMENT,
@@ -54,7 +55,7 @@ CREATE TABLE IF NOT EXISTS bsa_user_bans
 );
 CREATE TABLE IF NOT EXISTS bsa_account_event_types
 (
-	eventtypeid INT PRIMARY KEY AUTO_INCREMENT,
+	type_uuid CHAR(16) PRIMARY KEY,
 	title VARCHAR(128),
 	description TEXT,
 	render_classpath VARCHAR(128) NOT NULL,
@@ -65,13 +66,13 @@ CREATE TABLE IF NOT EXISTS bsa_account_events
 	eventid INT PRIMARY KEY AUTO_INCREMENT,
 	userid INT NOT NULL,
 	FOREIGN KEY(`userid`) REFERENCES `bsa_users`(`userid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	eventtypeid INT NOT NULL,
-	FOREIGN KEY(`eventtypeid`) REFERENCES `bsa_account_event_types`(`eventtypeid`) ON UPDATE CASCADE,
+	type_uuid CHAR(16) NOT NULL,
+	FOREIGN KEY(`type_uuid`) REFERENCES `bsa_account_event_types`(`type_uuid`) ON UPDATE CASCADE,
 	datetime TIMESTAMP NOT NULL,
 	param1 TEXT,
-	param1_datatype VARCHAR(1),
+	param1_datatype VARCHAR(1) NOT NULL,
 	param2 TEXT,
-	param2_datatype VARCHAR(1)
+	param2_datatype VARCHAR(1) NOT NULL
 );
 CREATE TABLE IF NOT EXISTS bsa_recovery_codes
 (
@@ -88,3 +89,12 @@ CREATE TABLE IF NOT EXISTS bsa_authentication_failed_attempts
 	type VARCHAR(1) NOT NULL
 );
 CREATE INDEX bsa_index_authentication_failed_attempts ON bsa_authentication_failed_attempts(ip);
+
+-- Create views
+-- -- Account event types, with type UUID attribute as hex string
+CREATE OR REPLACE VIEW bsa_view_aet AS
+	SELECT HEX(type_uuid) AS type_uuid, title, description, render_classpath, render_function FROM bsa_account_event_types;
+
+-- -- Account events, with type UUID attribute as hex string
+CREATE OR REPLACE VIEW bsa_view_account_events AS
+	SELECT eventid, userid, HEX(type_uuid) AS type_uuid, datetime, param1, param1_datatype, param2, param2_datatype FROM bsa_account_events;

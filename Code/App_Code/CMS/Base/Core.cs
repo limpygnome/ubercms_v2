@@ -28,6 +28,7 @@
  *                                      Added install paths properties.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-23      Updated the way settings are handled.
+ *                      2013-08-01      Added DefaultHandler property.
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -451,5 +452,15 @@ namespace CMS.Base
 				return templates;
 			}
 		}
+        /// <summary>
+        /// The default handler when no URL has been provided.
+        /// </summary>
+        public static string DefaultHandler
+        {
+            get
+            {
+                return Core.SettingsDisk["settings/core/default_handler"].get<string>();
+            }
+        }
 	}
 }

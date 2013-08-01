@@ -3,3 +3,5 @@
 obj
 bin
 *.suo
+cloc.exe
+Line Count.bat

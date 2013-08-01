@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/logout]]></path><description><![CDATA[The logout page template.]]></description><html><![CDATA[<h2>Logout</h2>
+<p>
+	Your session has been terminated.
+</p>]]></html></template>

@@ -18,12 +18,14 @@
  * 
  *      Change-Log:
  *                      2013-07-24      Created initial class.
+ *                      2013-08-01      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A model for account event types.
  * *********************************************************************************************************************
  */
 using System;
+using System.Text;
 using System.Reflection;
 using CMS.Base;
 using UberLib.Connector;
@@ -38,7 +40,7 @@ namespace CMS.BasicSiteAuth
         // Fields ******************************************************************************************************
         bool        persisted,              // Indicates if the model has been persisted to the database.
                     modified;               // Indicates if the model has been modified.
-        int         eventTypeID;            // The identifier of the event-type in the database.
+        UUID        typeUUID;               // The identifier of the event-type in the database.
         string      title,                  // The title of the event-type.
                     description,            // A description of the event-type.
                     renderClasspath,        // The class-path of the function for rendering an event of this type.
@@ -51,18 +53,53 @@ namespace CMS.BasicSiteAuth
         }
         // Methods - Database Persistence ******************************************************************************
         /// <summary>
+        /// Creates and persists a new account event type model.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="bsa">BSA plugin.</param>
+        /// <param name="typeUUID">The identifier for the account event type.</param>
+        /// <param name="title">Title.</param>
+        /// <param name="description">Description.</param>
+        /// <param name="renderClassPath">The class-path to the function for rendering the type of event.</param>
+        /// <param name="renderFunction">The function at the class-path for rendering the type of event.</param>
+        /// <param name="messageOutput">Message output.</param>
+        /// <returns>Either the new model or null if an error occurred (check messageOutput for information).</returns>
+        public static AccountEventType create(Connector conn, BasicSiteAuth bsa, UUID typeUUID, string title, string description, string renderClassPath, string renderFunction, ref StringBuilder messageOutput)
+        {
+            try
+            {
+                AccountEventType at = new AccountEventType();
+                at.TypeUUID = typeUUID;
+                at.Title = title;
+                at.Description = description;
+                at.RenderClassPath = renderClassPath;
+                at.RenderFunction = renderFunction;
+                if (at.save(bsa, conn))
+                    return at;
+                else
+                {
+                    messageOutput.Append("Failed to persist account event type model '").Append(title).Append("' (UUID: ").Append(typeUUID.HexHyphens).AppendLine(")!");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                messageOutput.Append("Failed to create account event type model due to exception: '").Append(ex.Message).AppendLine("'!");
+                return null;
+            }
+        }
+        /// <summary>
         /// Loads an instance of an account event type using its identifier.
         /// </summary>
         /// <param name="conn">Database connector.</param>
-        /// <param name="eventTypeID">Account event type identifier.</param>
+        /// <param name="typeUUID">Account event type identifier.</param>
         /// <returns>Either an instance or null.</returns>
-        public static AccountEventType load(Connector conn, int eventTypeID)
+        public static AccountEventType load(Connector conn, UUID typeUUID)
         {
-            Result result = conn.queryRead("SELECT * FROM bsa_account_event_types WHERE eventtypeid='" + SQLUtils.escape(eventTypeID.ToString()) + "';");
-            if (result.Count == 1)
-                return load(result[0]);
-            else
-                return null;
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM bsa_view_aet WHERE type_uuid=?typeid;");
+            ps["typeid"] = typeUUID.Bytes;
+            Result result = conn.queryRead(ps);
+            return result.Count == 1 ? load(result[0]) : null;
         }
         /// <summary>
         /// Loads an instance of an account event type using a database result-row/tuple.
@@ -73,7 +110,7 @@ namespace CMS.BasicSiteAuth
         {
             AccountEventType a = new AccountEventType();
             a.persisted = true;
-            a.eventTypeID = data.get2<int>("eventtypeid");
+            a.typeUUID = UUID.createFromHex(data.get2<string>("type_uuid"));
             a.title = data.get2<string>("title");
             a.description = data.get2<string>("description");
             a.renderClasspath = data.get2<string>("render_classpath");
@@ -93,10 +130,12 @@ namespace CMS.BasicSiteAuth
         /// </summary>
         /// <param name="bsa">Basic site authentication plugin.</param>
         /// <param name="conn">Database connector.</param>
-        public void save(BasicSiteAuth bsa, Connector conn)
+        /// <returns>True if persisted, false if failed.</returns>
+        public bool save(BasicSiteAuth bsa, Connector conn)
         {
             if (!modified)
-                return;
+                return false;
+            // Persist the data
             SQLCompiler c = new SQLCompiler();
             c["title"] = title;
             c["description"] = description;
@@ -104,26 +143,36 @@ namespace CMS.BasicSiteAuth
             c["render_function"] = renderFunction;
             if (persisted)
             {
-                c.UpdateAttribute = "eventtypeid";
-                c.UpdateValue = eventTypeID;
+                c.UpdateAttribute = "type_uuid";
+                c.UpdateValue = typeUUID.Bytes;
                 c.executeUpdate(conn, "bsa_account_event_types");
             }
             else
             {
-                eventTypeID = (int)c.executeInsert(conn, "bsa_account_event_types", "eventtypeid")[0].get2<long>("eventtypeid");
+                c["type_uuid"] = typeUUID.Bytes;
+                c.executeInsert(conn, "bsa_account_event_types");
                 persisted = true;
             }
             modified = false;
+            return true;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>
         /// The identifier of the event-type in the database.
+        /// 
+        /// If the model has already been persisted, setting this property will have no effect.
         /// </summary>
-        public int EventTypeID
+        public UUID TypeUUID
         {
             get
             {
-                return eventTypeID;
+                return typeUUID;
+            }
+            set
+            {
+                if (persisted)
+                    return;
+                this.typeUUID = value;
             }
         }
         /// <summary>
@@ -174,7 +223,7 @@ namespace CMS.BasicSiteAuth
         /// <summary>
         /// The function name of the function for rendering an event of this type.
         /// </summary>
-        public string RenderClassFunction
+        public string RenderFunction
         {
             get
             {

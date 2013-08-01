@@ -59,7 +59,8 @@ namespace CMS.Base
             Integer = 1,
             Float = 2,
             Double = 3,
-            Bool = 4
+            Bool = 4,
+            Null = 16
         }
         // Fields ******************************************************************************************************
         private UUID uuid;                      // The owner (plugin) of the setting.
@@ -132,6 +133,12 @@ namespace CMS.Base
             this.value = parseTypeValue(this.type, value);
             state = state == SettingsNodeState.ModifiedDescription ? SettingsNodeState.ModifiedAll : SettingsNodeState.ModifiedValue;
         }
+        /// <summary>
+        /// Parses a setting's value into the specified data-type.
+        /// </summary>
+        /// <param name="type">The data-type the value is to be parsed into.</param>
+        /// <param name="value">The value to be parsed.</param>
+        /// <returns>The parsed value.</returns>
         public static object parseTypeValue(DataType type, string value)
         {
             switch (type)
@@ -146,6 +153,8 @@ namespace CMS.Base
                     return double.Parse(value);
                 case DataType.Bool:
                     return value == "1";
+                case DataType.Null:
+                    return null;
                 default:
                     throw new InvalidOperationException("Unknown data-type specified for value '" + value + "'; type: '" + (int)type + "'!");
             }

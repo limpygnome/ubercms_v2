@@ -465,5 +465,24 @@ namespace CMS.Base
                 buffer.Append(chars[rand.Next(chars.Length - 1)]);
             return buffer.ToString();
         }
+        /// <summary>
+        /// Gets the absolute URL.
+        /// </summary>
+        /// <param name="data">Current request data.</param>
+        /// <param name="url">The absolute URL.</param>
+        /// <returns>The URL to the absolute URL.</returns>
+        public static string getAbsoluteURL(Data data, string url)
+        {
+            return new System.Uri(data.Request.Url, url).AbsoluteUri;
+        }
+        /// <summary>
+        /// Redirects to a URL.
+        /// </summary>
+        /// <param name="data">Current request data.</param>
+        /// <param name="url">The destination URL.</param>
+        public static void redirect(Data data, string url)
+        {
+            data.Response.Redirect(url, true);
+        }
     }
 }

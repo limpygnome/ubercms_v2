@@ -1,26 +1,51 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<title>&uuml;ber CMS</title>
+	<title>&uuml;ber CMS - <!--:Title--></title>
 	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
 	<link type="text/css" href="./content/css/layout.css" rel="Stylesheet" />
+	<!--:Header-->
 </head>
 <body>
 	<div class="AREA_SHADOW"></div>
 	<div class="AREA_WRAPPER">
 		<div class="AREA_BANNER">
 			<div class="AUTH">
-				<a href="/login">
-					<img src="./content/images/layout/login.png" alt="Login" />
-					Login
-				</a>
-				<div class="SEP"></div>
-				<a href="/register">
-					<img src="./content/images/layout/register.png" alt="Login" />
-					Register
-				</a>
+				<!--IF:Username-->
+					<span>
+						<!--Username-->
+					</span>
+					<div class="SEP"></div>
+					<a href="/my_account">
+						<img src="/content/images/layout/my_account.png" alt="My Account" />
+						My Account
+					</a>
+					<div class="SEP"></div>
+					<!--IF:Administrator-->
+					<a href="/my_account">
+						<img src="/content/images/layout/admin.png" alt="Admin" />
+						Admin
+					</a>
+					<div class="SEP"></div>
+					<!--ENDIF:Administrator-->
+					<a href="/logout">
+						<img src="/content/images/layout/logout.png" alt="Logout" />
+						Logout
+					</a>
+				<!--ELSE-->
+					<a href="/login">
+						<img src="/content/images/layout/login.png" alt="Login" />
+						Login
+					</a>
+					<div class="SEP"></div>
+					<a href="/register">
+						<img src="/content/images/layout/register.png" alt="Login" />
+						Register
+					</a>
+				<!--ENDIF:Username-->
+				<div class="clear"></div>
 			</div>
-			<h1>&uuml;ber cms</h1>
+			<h1>&uuml;ber <span class="C1">C</span><span class="C2">M</span><span class="C3">S</span></h1>
 		</div>
 		<div class="AREA_NAV">
 			<div class="ITEM">
@@ -83,12 +108,39 @@
 				</div>
 				<div class="ROW">
 					<div class="CELL2">row 5 col 1</div>
-					<div class="CELL2"><input type="text" value="row 5 col 2" /></div>
+					<div class="CELL2"><input type="text" placeholder="row 5 col 2" /></div>
 					<div class="clear"></div>
 				</div>
 				<div class="ROW">
-					<div class="CELL2">row 6 col 1</div>
+					<div class="CELL2">row 6 col 1 - mix</div>
 					<div class="CELL2"><input type="submit" value="row 6 col 2" /><input type="submit" value="row 6 col 2" /><a href="/test" class="BUTTON">row 6 col 2</a></div>
+					<div class="clear"></div>
+				</div>
+				<div class="ROW">
+					<div class="CELL2">row 6 col 1 - all hyperlinks</div>
+					<div class="CELL2"><a href="/test" class="BUTTON">row 6 col 2</a><a href="/test" class="BUTTON">row 6 col 2</a><a href="/test" class="BUTTON">row 6 col 2</a></div>
+					<div class="clear"></div>
+				</div>
+				<div class="ROW">
+					<div class="CELL2">row 7 col 1 - all form</div>
+					<div class="CELL2"><input type="submit" value="row 6 col 2" /><input type="submit" value="row 6 col 2" /><input type="submit" value="row 6 col 2" /></div>
+					<div class="clear"></div>
+				</div>
+				<div class="ROW">
+					<div class="CELL2">row 8 col 1 - checkbox</div>
+					<div class="CELL2">
+						<span class="checkbox">
+							<input type="checkbox" id="test2" />
+							<label for="test2">Unchecked</label>
+						</span>
+						
+						<br />
+						
+						<span class="checkbox">
+							<input type="checkbox" id="test1" checked="checked"/>
+							<label for="test1">Checked</label>
+						</span>
+					</div>
 					<div class="clear"></div>
 				</div>
 			</div>
@@ -118,7 +170,7 @@
 	</div>
 	<p class="FOOTER">
 		<a href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported</a><br />
-		Generated in <!--BENCHMARK_MS--> m/s
+		Generated in <!--BenchMark_ms--> m/s
 	</p>
 </body>
 </html>

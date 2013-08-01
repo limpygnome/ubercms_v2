@@ -40,6 +40,7 @@ namespace CMS.BasicSiteAuth
         public enum AuthType
         {
             Login = 10,
+            LoginThirdParty = 11,
             Recovery = 20,
             API = 30,
             Other = 0
@@ -59,6 +60,22 @@ namespace CMS.BasicSiteAuth
             this.loaded = this.modified = false;
         }
         // Methods - Database Persistence ******************************************************************************
+        /// <summary>
+        /// Creates and persists a model.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="ip">IP address of the host.</param>
+        /// <param name="datetime">Date and time of the occurrence.</param>
+        /// <param name="type">The type of authentication failure.</param>
+        /// <returns>Either the model if persisted or null.</returns>
+        public static AuthFailedAttempt create(Connector conn, string ip, DateTime datetime, AuthType type)
+        {
+            AuthFailedAttempt a = new AuthFailedAttempt();
+            a.IP = ip;
+            a.DateTime = datetime;
+            a.Type = type;
+            return a.save(conn) ? a : null;
+        }
         /// <summary>
         /// Loads multiple models filtered by an IP.
         /// </summary>
@@ -155,19 +172,21 @@ namespace CMS.BasicSiteAuth
         /// Persists a model to the database. Once a model has been persisted, it cannot be modified - thus you cannot
         /// load a model and then call this method.
         /// </summary>
-        /// <param name="conn"></param>
-        public void save(Connector conn)
+        /// <param name="conn">Database connector.</param>
+        /// <returns>True if persisted, false if not persisted.</returns>
+        public bool save(Connector conn)
         {
             if (!modified || loaded)
-                return;
+                return false;
             // Compile query
             SQLCompiler sql = new SQLCompiler();
             sql["ip"] = ip;
-            sql["datetime"] = datetime.ToString("YYYY-MM-dd HH:mm:ss");
+            sql["datetime"] = datetime;
             sql["type"] = getAuthTypeStr(type);
             // Execute
             sql.executeInsert(conn, "bsa_authentication_failed_attempts");
             modified = false;
+            return true;
         }
         // Methods - Static ********************************************************************************************
         /// <summary>

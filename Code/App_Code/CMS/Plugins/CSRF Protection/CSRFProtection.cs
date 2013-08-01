@@ -86,17 +86,22 @@ namespace CMS.Plugins
         /// <returns></returns>
         public static string getCSRFToken(Data data)
         {
-#if !CSRFP
+#if CSRFP
             HttpCookie cresp = data.Response.Cookies[CSRF_KEY];
             HttpCookie creq = data.Request.Cookies[CSRF_KEY];
-            if (cresp != null && cresp.Value != null && cresp.Value.Length == CSRF_TOKEN_LENGTH)
-                return cresp.Value;
-            else if (creq != null && creq.Value != null && creq.Value.Length == CSRF_TOKEN_LENGTH)
+            if (creq != null && creq.Value != null && creq.Value.Length == CSRF_TOKEN_LENGTH)
+            {
+                data.Response.Cookies.Add(creq);
                 return creq.Value;
+            }
+            else if (cresp != null && cresp.Value != null && cresp.Value.Length == CSRF_TOKEN_LENGTH)
+                return cresp.Value;
             else
             {
                 string token = BaseUtils.generateRandomString(CSRF_TOKEN_LENGTH);
-                data.Response.Cookies.Add(new HttpCookie(CSRF_KEY, token));
+                HttpCookie c = new HttpCookie(CSRF_KEY, token);
+                c.Expires = DateTime.MaxValue;
+                data.Response.Cookies.Add(c);
                 return token;
             }
 #else

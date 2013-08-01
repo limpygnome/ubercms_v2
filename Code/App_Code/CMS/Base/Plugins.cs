@@ -31,6 +31,7 @@
  *                                      Added changes to support pluginid to UUID changes.
  *                      2013-07-22      Added and modified plugin loading/unloading; loading plugins can now be done
  *                                      during runtime.
+ *                      2013-08-01      UUIDs are now stored as non-hyphen strings for better performance.
  * 
  * *********************************************************************************************************************
  * A data-collection for managing and interacting with plugin models.
@@ -54,22 +55,22 @@ namespace CMS.Base
     /// </summary>
 	public class Plugins
 	{
-		// Fields **************************************************************************************************
-		private Dictionary<UUID,Plugin> plugins;			// Map of UUID to plugin.
+		// Fields ******************************************************************************************************
+		private Dictionary<string,Plugin> plugins;			// Map of UUID (string, no hyphen's, upper-case) to plugin.
         private Thread cycler;                              // The thread used for running cycles of plugins.
-        // Fields - Handler List Caching ***************************************************************************
+        // Fields - Handler List Caching *******************************************************************************
         private Plugin[] cacheRequestStart;                 // Cache of plugins capable of handling the start of a request.
         private Plugin[] cacheRequestEnd;                   // Cache of plugins capable of handling the end of a request.
         private Plugin[] cachePageError;				    // Cache of plugins capable of handling a page error.
         private Plugin[] cachePageNotFound;			        // Cache of plugins capable of handling a page not found.
-		// Methods - Constructors **********************************************************************************
+		// Methods - Constructors **************************************************************************************
 		private Plugins()
 		{
-			this.plugins = new Dictionary<UUID, Plugin>();
+			this.plugins = new Dictionary<string, Plugin>();
             cycler = null;
             cacheRequestStart = cacheRequestEnd = cachePageError = cachePageNotFound = new Plugin[0];
 		}
-		// Methods *************************************************************************************************
+		// Methods *****************************************************************************************************
 		/// <summary>
 		/// Finds the available plugins to serve a request. Returns an empty array if a consistency issue has occurred
 		/// (a plugin cannot be found).
@@ -84,7 +85,7 @@ namespace CMS.Base
 			Plugin p;
 			foreach(ResultRow plugin in r)
 			{
-                p = this[UUID.createFromHex(plugin["uuid"])];
+                p = this[plugin["uuid"]];
                 if(p != null)
                     result.Add(p);
 			}
@@ -184,7 +185,7 @@ namespace CMS.Base
                     return false;
                 }
                 // Check the plugin is not already loaded
-                if (plugins.ContainsKey(uuid))
+                if (plugins.ContainsKey(uuid.HexHyphens))
                 {
                     if(coreError)
                         Core.fail("Plugin '" + uuid.HexHyphens + "' is already loaded in the runtime! Critical consistency failure!");
@@ -217,7 +218,7 @@ namespace CMS.Base
                 {
                     Plugin plugin = (Plugin)ass.CreateInstance(data["classpath"], false, BindingFlags.CreateInstance, null, new object[] { uuid, data["title"], data["directory"], state, phi }, null, null);
                     if (plugin != null)
-                        plugins.Add(uuid, plugin);
+                        plugins.Add(uuid.Hex.ToUpper(), plugin);
                     else
                     {
                         if (coreError)
@@ -256,7 +257,7 @@ namespace CMS.Base
         {
             lock (this)
             {
-                plugins.Remove(plugin.UUID);
+                plugins.Remove(plugin.UUID.NumericHexString);
             }
         }
         /// <summary>
@@ -296,7 +297,7 @@ namespace CMS.Base
                     doc.Load(outputDir + "/Plugin.config");
                     directory = Core.BasePath + "/" + doc["plugin"]["directory"].InnerText;
                     UUID uuid = UUID.createFromHex(doc["plugin"]["uuid"].InnerText);
-                    if (plugins.ContainsKey(uuid) || Core.Connector.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
+                    if (plugins.ContainsKey(uuid.HexHyphens) || Core.Connector.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
                     {
                         success = false;
                         messageOutput.Append("UUID (univerisally unique identifier) '").Append(uuid.HexHyphens).Append("' already exists! It's likely the plugin has already been installed.").AppendLine();
@@ -385,7 +386,7 @@ namespace CMS.Base
                     return false;
                 }
                 // Check the UUID does not exist
-                if (plugins.ContainsKey(uuid) || Core.Connector.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
+                if (plugins.ContainsKey(uuid.HexHyphens) || Core.Connector.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
                 {
                     messageOutput.Append("UUID (univerisally unique identifier) '").Append(uuid.HexHyphens).Append("' already exists! It's likely the plugin has already been installed.").AppendLine();
                     return false;
@@ -702,7 +703,7 @@ namespace CMS.Base
             }
             return true;
         }
-        // Methods - Cycles ****************************************************************************************
+        // Methods - Cycles ********************************************************************************************
         /// <summary>
         /// Starts the internal thread for invoking the cycle handler of plugins periodically.
         /// </summary>
@@ -753,7 +754,7 @@ namespace CMS.Base
                 Thread.Sleep(cyclingInterval);
             }
         }
-        // Methods - Reloading *************************************************************************************
+        // Methods - Reloading *****************************************************************************************
         /// <summary>
         /// Reloads the collection of plugins from the database; dispose will be invoked on the plugin.
         /// </summary>
@@ -817,7 +818,7 @@ namespace CMS.Base
             }
             return true;
         }
-		// Methods - Static ****************************************************************************************
+		// Methods - Static ********************************************************************************************
         /// <summary>
         /// Creates a new instance of the Plugins manager, with all the plugins loaded and configured.
         /// </summary>
@@ -828,7 +829,7 @@ namespace CMS.Base
             plugins.reload(true);
             return plugins;
 		}
-        // Methods - Accessors *************************************************************************************
+        // Methods - Accessors *****************************************************************************************
         /// <summary>
         /// Gets a plugin by its identifier.
         /// </summary>
@@ -837,15 +838,15 @@ namespace CMS.Base
         public Plugin getPlugin(UUID uuid)
         {
             lock(this)
-                return uuid != null && plugins.ContainsKey(uuid) ? plugins[uuid] : null;
+                return uuid != null && plugins.ContainsKey(uuid.Hex) ? plugins[uuid.Hex] : null;
         }
-        // Methods - Properties ************************************************************************************
+        // Methods - Properties ****************************************************************************************
         /// <summary>
         /// Returns a plugin by its UUID, else null if a plugin with the specified ID cannot be found.
         /// </summary>
-        /// <param name="uuid">The plugin's identifier.</param>
+        /// <param name="uuid">The plugin's identifier, as a string with no hyphen's and upper-case.</param>
         /// <returns>The plugin associated with the identifier, else null if not found.</returns>
-        public Plugin this[UUID uuid]
+        public Plugin this[string uuid]
         {
             get
             {

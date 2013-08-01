@@ -18,9 +18,12 @@
  * 
  *      Change-Log:
  *                      2013-07-29      Finished initial class.
+ *                      2013-08-01      Moved to UUID for type identifiers.
  * 
  * *********************************************************************************************************************
  * Stores a collection of account event type models.
+ * 
+ * Thread-safe.
  * *********************************************************************************************************************
  */
 using System;
@@ -33,14 +36,18 @@ namespace CMS.BasicSiteAuth
 {
     /// <summary>
     /// Stores a collection of account event type models.
+    /// 
+    /// Thread-safe.
     /// </summary>
     public class AccountEventTypes
     {
         // Fields ******************************************************************************************************
-        private Dictionary<int, AccountEventType> types;    // Cached list of account event types.
+        private Dictionary<string,AccountEventType> types;    // Cached list of account event types - UUID string with no hyphens,model.
         // Methods - Constructors **************************************************************************************
         private AccountEventTypes()
-        { }
+        {
+            this.types = new Dictionary<string,AccountEventType>();
+        }
         // Methods *****************************************************************************************************
         /// <summary>
         /// Adds a persisted account event type to the collection.
@@ -53,9 +60,9 @@ namespace CMS.BasicSiteAuth
             {
                 if (!type.IsPersisted)
                     return false;
-                else if (types.ContainsKey(type.EventTypeID))
+                else if (types.ContainsKey(type.TypeUUID.Hex))
                     return false;
-                types.Add(type.EventTypeID, type);
+                types.Add(type.TypeUUID.Hex, type);
                 return true;
             }
         }
@@ -67,19 +74,21 @@ namespace CMS.BasicSiteAuth
         {
             lock (this)
             {
-                Core.Connector.queryExecute("DELETE FROM bsa_account_event_types WHERE eventtypeid='" + SQLUtils.escape(type.EventTypeID.ToString()) + "';");
-                if (types.ContainsKey(type.EventTypeID))
-                    types.Remove(type.EventTypeID);
+                PreparedStatement ps = new PreparedStatement("DELETE FROM bsa_account_event_types WHERE type_uuid=?typeid;");
+                ps["typeid"] = type.TypeUUID.Bytes;
+                Core.Connector.queryExecute(ps);
+                if (types.ContainsKey(type.TypeUUID.Hex))
+                    types.Remove(type.TypeUUID.Hex);
             }
         }
         /// <summary>
-        /// Indicates if an account even type exists in the collection. This is based on the eventTypeID.
+        /// Indicates if an account even type exists in the collection. This is based on the type UUID.
         /// </summary>
         /// <param name="type">The account event type to be tested.</param>
         /// <returns>True = exists, false = does not exist.</returns>
         public bool contains(AccountEventType type)
         {
-            return types.ContainsKey(type.EventTypeID);
+            return types.ContainsKey(type.TypeUUID.Hex);
         }
         /// <summary>
         /// Reloads the collection of persisted models from the database; this does not save any changes made to any
@@ -92,11 +101,11 @@ namespace CMS.BasicSiteAuth
             {
                 types.Clear();
                 AccountEventType t;
-                foreach (ResultRow row in conn.queryRead("SELECT * FROM bsa_acount_event_types;"))
+                foreach (ResultRow row in conn.queryRead("SELECT * FROM bsa_view_aet;"))
                 {
                     t = AccountEventType.load(row);
                     if (t != null)
-                        types.Add(t.EventTypeID, t);
+                        types.Add(t.TypeUUID.Hex.ToUpper(), t);
                 }
             }
         }
@@ -115,17 +124,17 @@ namespace CMS.BasicSiteAuth
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>
-        /// Retrieves an account event type based on the eventTypeID; returns null if a model with the identifier cannot
+        /// Retrieves an account event type based on the typeUUID; returns null if a model with the identifier cannot
         /// be found.
         /// </summary>
-        /// <param name="eventTypeID">The identifier of the account event type to return.</param>
+        /// <param name="typeUUID">The identifier of the account event type to return, as a string with no hyphen's.</param>
         /// <returns>The account event type or null.</returns>
-        public AccountEventType this[int eventTypeID]
+        public AccountEventType this[string typeUUID]
         {
             get
             {
                 lock (this)
-                    return types.ContainsKey(eventTypeID) ? types[eventTypeID] : null;
+                    return types.ContainsKey(typeUUID) ? types[typeUUID] : null;
             }
         }
     }

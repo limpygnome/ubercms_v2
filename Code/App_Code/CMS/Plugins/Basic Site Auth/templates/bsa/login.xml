@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/login]]></path><description><![CDATA[The login page template.]]></description><html><![CDATA[<h2>Login</h2>
+<form method="post" action="/login">
+	<div class="TABLE">
+		<div class="ROW">
+			<div class="CELL2">
+				Username:
+			</div>
+			<div class="CELL2">
+				<input type="text" name="username" value="<!--:bsa_login_username-->" placeholder="Username..." />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Password:
+			</div>
+			<div class="CELL2">
+				<input type="password" name="password" placeholder="Password..." />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<!--IF:Captcha-->
+		<div class="ROW">
+			<div class="CELL2">
+				Captcha:
+			</div>
+			<div class="CELL2">
+				<!--include(captcha/embed)-->
+			</div>
+			<div class="clear"></div>
+		</div>
+		<!--ENDIF:Captcha-->
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<span class="checkbox">
+					<input type="checkbox" id="bsaloginpersist" name="session_persist" <!--IF:bsa_login_persist-->checked="checked"<!--ENDIF:bsa_login_persist-->/>
+					<label for="bsaloginpersist">Keep Me Logged In</label>
+				</span>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" value="Login" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--IF:bsa_login_error-->
+	<div class="ERROR"><!--bsa_login_error--></div>
+	<!--ENDIF-->
+	<!--csrf()-->
+</form>
+<h3>Options</h3>
+<p>
+	<a class="BUTTON" href="/register">Register</a>
+	<a class="BUTTON" href="/account_recovery">Account Recovery</a>
+</p>]]></html></template>

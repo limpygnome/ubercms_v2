@@ -61,15 +61,47 @@ namespace CMS.BasicSiteAuth
         }
         // Methods - Database Persistence ******************************************************************************
         /// <summary>
+        /// Creates and persists a new account event.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="bsa">The BSA plugin.</param>
+        /// <param name="typeUUID">The account event type UUID as a string with no hyphen's in upper-case.</param>
+        /// <param name="datetime">The date and time of the event.</param>
+        /// <param name="userID">The identifier of the user affected.</param>
+        /// <param name="param1">Parameter 1, can be null.</param>
+        /// <param name="param1DT">The data-type of parameter 1.</param>
+        /// <param name="param2">Parameter 2, can be null.</param>
+        /// <param name="param2DT">The data-type of parameter 2.</param>
+        /// <returns>Either the model or null if it failed to persist.</returns>
+        public static AccountEvent create(Connector conn, BasicSiteAuth bsa, string typeUUID, DateTime datetime, int userID, object param1, SettingsNode.DataType param1DT, object param2, SettingsNode.DataType param2DT)
+        {
+            try
+            {
+                AccountEvent at = new AccountEvent();
+                at.Type = bsa.AccountEventTypes[typeUUID];
+                at.DateTime = datetime;
+                at.UserID = userID;
+                at.Param1 = param1;
+                at.Param1DataType = param1DT;
+                at.Param2 = param2;
+                at.Param2DataType = param2DT;
+                return at.save(conn) ? at : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+        /// <summary>
         /// Loads an event model based on its identifier.
         /// </summary>
         /// <param name="bsa">Basic site authentication plugin.</param>
         /// <param name="conn">Database connector.</param>
         /// <param name="eventid">Identifier of persisted model.</param>
         /// <returns>An instance or null.</returns>
-        public AccountEvent load(BasicSiteAuth bsa, Connector conn, int eventid)
+        public static AccountEvent load(BasicSiteAuth bsa, Connector conn, int eventid)
         {
-            Result result = conn.queryRead("SELECT * FROM bsa_account_events WHERE eventid='" + SQLUtils.escape(eventid.ToString()) + "'");
+            Result result = conn.queryRead("SELECT * FROM bsa_view_account_events WHERE eventid='" + SQLUtils.escape(eventid.ToString()) + "'");
             if (result.Count == 1)
                 return load(bsa, result[0]);
             else
@@ -85,9 +117,9 @@ namespace CMS.BasicSiteAuth
         /// <param name="offset">The offset in pages.</param>
         /// <param name="sorting">The sorting of events.</param>
         /// <returns>Array of models; may be empty - never null.</returns>
-        public AccountEvent[] loadByUser(BasicSiteAuth bsa, Connector conn, User usr, int amount, int offset, Sorting sorting)
+        public static AccountEvent[] loadByUser(BasicSiteAuth bsa, Connector conn, User usr, int amount, int offset, Sorting sorting)
         {
-            Result result = conn.queryRead("SELECT * FROM bsa_account_events WHERE userid='" + SQLUtils.escape(usr.UserID.ToString()) + "' LIMIT " + amount + " OFFSET " + ((offset * amount) - amount) + " ORDER BY " + buildSorting(sorting));
+            Result result = conn.queryRead("SELECT * FROM bsa_view_account_events WHERE userid='" + SQLUtils.escape(usr.UserID.ToString()) + "' LIMIT " + amount + " OFFSET " + ((offset * amount) - amount) + " ORDER BY " + buildSorting(sorting));
             return load(bsa, result);
         }
         /// <summary>
@@ -102,9 +134,9 @@ namespace CMS.BasicSiteAuth
         /// <param name="periodStart">The inclusive starting date of events.</param>
         /// <param name="periodEnd">The inclusive ending date of events.</param>
         /// <returns>Array of models; may be empty - never null.</returns>
-        public AccountEvent[] loadByUser(BasicSiteAuth bsa, Connector conn, User usr, int amount, int offset, Sorting sorting, DateTime periodStart, DateTime periodEnd)
+        public static AccountEvent[] loadByUser(BasicSiteAuth bsa, Connector conn, User usr, int amount, int offset, Sorting sorting, DateTime periodStart, DateTime periodEnd)
         {
-            Result result = conn.queryRead("SELECT * FROM bsa_account_events WHERE userid='" + SQLUtils.escape(usr.UserID.ToString()) + "' AND datetime >= '" + SQLUtils.escape(periodStart.ToString("YYYY-MM-dd HH:mm:ss")) + "' AND datetime <= '" + SQLUtils.escape(periodEnd.ToString("YYYY-MM-dd HH:mm:ss")) + "' LIMIT " + amount + " OFFSET " + ((offset * amount) - amount) + " ORDER BY " + buildSorting(sorting));
+            Result result = conn.queryRead("SELECT * FROM bsa_view_account_events WHERE userid='" + SQLUtils.escape(usr.UserID.ToString()) + "' AND datetime >= '" + SQLUtils.escape(periodStart.ToString("YYYY-MM-dd HH:mm:ss")) + "' AND datetime <= '" + SQLUtils.escape(periodEnd.ToString("YYYY-MM-dd HH:mm:ss")) + "' LIMIT " + amount + " OFFSET " + ((offset * amount) - amount) + " ORDER BY " + buildSorting(sorting));
             return load(bsa, result);
         }
         /// <summary>
@@ -113,7 +145,7 @@ namespace CMS.BasicSiteAuth
         /// <param name="bsa">Basic site authentication plugin.</param>
         /// <param name="result">Series of tuples/result-data.</param>
         /// <returns>An array of account events.</returns>
-        private AccountEvent[] load(BasicSiteAuth bsa, Result result)
+        private static AccountEvent[] load(BasicSiteAuth bsa, Result result)
         {
             List<AccountEvent> events = new List<AccountEvent>();
             AccountEvent t;
@@ -131,12 +163,12 @@ namespace CMS.BasicSiteAuth
         /// <param name="bsa">Basic site authentication.</param>
         /// <param name="data">Result-row/tuple of data.</param>
         /// <returns>Either an instance or null.</returns>
-        private AccountEvent load(BasicSiteAuth bsa, ResultRow data)
+        private static AccountEvent load(BasicSiteAuth bsa, ResultRow data)
         {
             AccountEvent a = new AccountEvent();
             a.eventid = data.get2<int>("eventid");
             a.userid = data.get2<int>("userid");
-            a.eventType = bsa.AccountEventTypes[data.get2<int>("eventtypeid")];
+            a.eventType = bsa.AccountEventTypes[data.get2<string>("type_uuid")];
             a.param1 = SettingsNode.parseType(data.get2<string>("param1"));
             return a;
         }
@@ -144,14 +176,15 @@ namespace CMS.BasicSiteAuth
         /// Persists the model to the database.
         /// </summary>
         /// <param name="conn">Database connector.</param>
-        public void save(Connector conn)
+        /// <returns>True if persisted, false if failed.</returns>
+        public bool save(Connector conn)
         {
             if (!modified)
-                return;
+                return false;
             SQLCompiler c = new SQLCompiler();
             c["userid"] = userid.ToString();
-            c["eventtypeid"] = eventType.EventTypeID.ToString();
-            c["datetime"] = datetime.ToString("YYYY-MM-dd HH:mm:ss");
+            c["type_uuid"] = eventType.TypeUUID.Bytes;
+            c["datetime"] = datetime;
             c["param1"] = param1 == null ? null : param1.ToString();
             c["param2"] = param2 == null ? null : param2.ToString();
             c["param1_datatype"] = ((int)param1DataType).ToString();
@@ -168,9 +201,10 @@ namespace CMS.BasicSiteAuth
                 persisted = true;
             }
             modified = false;
+            return true;
         }
         // Methods *****************************************************************************************************
-        private string buildSorting(Sorting sorting)
+        private static string buildSorting(Sorting sorting)
         {
             switch (sorting)
             {

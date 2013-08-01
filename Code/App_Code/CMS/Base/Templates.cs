@@ -157,7 +157,7 @@ namespace CMS.Base
 				}
 			}
             // Find fucntion callbacks
-            foreach (Match m in Regex.Matches(text.ToString(), @"<!--([a-zA-Z0-9_]*)\(([a-zA-Z0-9_,]*)\)-->"))
+            foreach (Match m in Regex.Matches(text.ToString(), @"<!--([a-zA-Z0-9_]*)\(([a-zA-Z0-9_,\\\/]*)\)-->"))
             {
                 if (functions.ContainsKey(m.Groups[1].Value))
                 {
@@ -183,7 +183,7 @@ namespace CMS.Base
                     replacementOccurred = true;
                 }
                 else
-                    text.Replace(m.Value, "Element '" + m.Groups[1].Value + "' undefined!");
+                    text.Replace(m.Value, "Element '" + m.Groups[2].Value + "' undefined!");
             }
 			// Check if to iterate again - check we haven't surpassed max tree-level and we found a match i.e. data changed
 			currTree++;
