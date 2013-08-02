@@ -1,28 +1,17 @@
->	Update Connector to throw exceptions properly; EmailQueue needs to catch failed query executions to avoid sending the same e-mails (could potentially spam a destination).
------> If an exception occurs with the DB, shutdown the entire email queue service to be safe.
->	test e-mail queue service.
-> plugin.refresh -> either conn or resultrow
-> change plugins.cs findhandlers to be view
+> test e-mail queue service.
+> plugin.refresh -> either conn or resultrow - do we really need this?
+> change plugins.cs findhandlers to be view ?????!!!!!
 
-> Core CMS needs intensive testing properly.
--> BaseUtils
--> Core
--> Data
--> EmailQueue (critical)
--> PathInfo
--> Plugins
--> Settings
--> SettingsNode
--> Templates
--> 
+
 
 > Consider replacing Regex usage in Templates by scanning through the string. This would eradicate the need to only
 replace elements x times. We could scan, replace and start at the position of the replacement (if a replacement occurs).
 Thus only n characters would be scanned, as opposed to e.g. 3n as well as the patterns being compiled. This should, in
 theory, be far more efficient and faster.
+--> We could just scan for <!--....--> manually and apply regex to the ... part.
 
-> Go over install/uninstall/disable/enable and check for booling returns and return appropriate error messages.
---> Currently not added for speed creation of plugins.
+> add create method to models for short factory construction (with bool or custom return).
+
 
 Official Plugins
 ----------------------------------------------------------------------------------------------------------------------->
@@ -35,5 +24,4 @@ Basic Site Authentication
 > Add SSO (single session sign-on) support using a token system, with IP ban protection against brute-force attempts.
 > add protection against removing unverified/verified/banned groups!
 > add ability to change username - possibly a separate mod
-
 

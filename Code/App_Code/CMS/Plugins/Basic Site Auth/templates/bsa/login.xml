@@ -54,7 +54,7 @@
 		<div class="clear"></div>
 	</div>
 	<!--IF:bsa_login_error-->
-	<div class="ERROR"><!--bsa_login_error--></div>
+	<p class="ERROR"><!--bsa_login_error--></p>
 	<!--ENDIF-->
 	<!--csrf()-->
 </form>

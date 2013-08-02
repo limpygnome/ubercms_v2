@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/register]]></path><description><![CDATA[The register page template.]]></description><html><![CDATA[<h2>Register</h2>
+<form method="post" action="/register">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				Account
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Username:
+			</div>
+			<div class="CELL2">
+				<input type="text" name="username" value="<!--:bsa_register_username-->" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Password:
+			</div>
+			<div class="CELL2">
+				<input type="password" name="password" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Retype Password:
+			</div>
+			<div class="CELL2">
+				<input type="password" name="password_confirm" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				E-mail:
+			</div>
+			<div class="CELL2">
+				<input type="text" name="email" value="<!--:bsa_register_email-->" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				Recovery
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Secret Question:
+			</div>
+			<div class="CELL2">
+				<input type="text" name="secret_question" value="<!--:bsa_register_secret_question-->" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Secret Answer:
+			</div>
+			<div class="CELL2">
+				<input type="text" name="secret_answer" value="<!--:bsa_register_secret_answer-->" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				Security
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Captcha:
+			</div>
+			<div class="CELL2">
+				<!--include(captcha/embed)-->
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" value="Register" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+	<!--IF:bsa_register_error-->
+		<p class="ERROR">
+			<!--bsa_register_error-->
+		</p>
+	<!--ENDIF:bsa_register_error-->
+</form>]]></html></template>

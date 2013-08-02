@@ -75,7 +75,9 @@ CREATE TABLE IF NOT EXISTS cms_email_queue
 	email TEXT,
 	subject TEXT,
 	body TEXT,
-	html VARCHAR(1) DEFAULT 1
+	html VARCHAR(1) DEFAULT 1,
+	errors INT DEFAULT 0,
+	last_sent TIMESTAMP
 );
 -- Create views
 CREATE OR REPLACE VIEW cms_view_plugins_loadinfo AS
@@ -87,8 +89,14 @@ CREATE OR REPLACE VIEW cms_view_settings_load AS
 CREATE OR REPLACE VIEW cms_view_template_handlers AS
 	SELECT HEX(uuid) AS uuid, path, classpath, function_name FROM cms_template_handlers;
 
+CREATE OR REPLACE VIEW cms_view_email_queue AS
+	SELECT emailid, email, subject, body, html FROM cms_email_queue WHERE (errors=0 OR (last_sent IS NULL OR last_sent < (CURRENT_TIMESTAMP - INTERVAL 15 minute))) ORDER BY errors ASC, emailid ASC;
+
 -- Insert core settings
-INSERT INTO cms_settings (path, uuid, type, value, description) VALUES('core/default_handler', NULL, '0', 'home', 'The default module-handler for the home-page/an empty request path.');
+INSERT INTO cms_settings (path, uuid, type, value, description) VALUES
+('core/default_handler', NULL, '0', 'home', 'The default module-handler for the home-page/an empty request path.'),
+('core/title', NULL, '0', 'Untitled CMS', 'A label/title for this CMS/website/community; this may be used by plugins for e.g. e-mails.')
+;
 
 -- Insert default template handlers
 INSERT INTO cms_template_handlers (path, uuid, classpath, function_name) VALUES('include', NULL, 'CMS.Base.Templates', 'handler_include');

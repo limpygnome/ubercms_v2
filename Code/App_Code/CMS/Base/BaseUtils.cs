@@ -484,5 +484,14 @@ namespace CMS.Base
         {
             data.Response.Redirect(url, true);
         }
+        /// <summary>
+        /// Redirects to an absolute URL.
+        /// </summary>
+        /// <param name="data">Current request data.</param>
+        /// <param name="url">The destination absolute URL.</param>
+        public static void redirectAbs(Data data, string url)
+        {
+            redirect(data, getAbsoluteURL(data, url));
+        }
     }
 }

@@ -21,6 +21,11 @@
  *                      2013-06-29      Finished initial class.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-23      Updated retrieval of settings.
+ *                      2013-08-02      Fixed the possibility of infinite postponement with a message never being
+ *                                      sent. If a message cannot be sent, it's put at the bottom of the queue.
+ *                                      Additionally e-mails with errors will not be reattempted for 15 minutes.
+ *                                      E-mails failing more than 3000 times (nearly 32 days) are automatically
+ *                                      deleted from the queue (by default).
  * 
  * *********************************************************************************************************************
  * An email-queue service for mass-sending e-mails in a seperate thread. This system also saves the buffer of e-mails,
@@ -82,53 +87,70 @@ namespace CMS.Base
 			// Prepare the query for polling the database
 			int messageThroughPut = Core.SettingsDisk["settings/mail/message_throughput"].get<int>();
 			int messagePollDelay = Core.SettingsDisk["settings/mail/message_poll_delay"].get<int>();
+            int messageErrorThreshold = Core.SettingsDisk["settings/mail/message_error_threshold"].get<int>();
+            if (messageErrorThreshold < 1)
+            {
+                Core.fail("Invalid message error threshold of '" + messageErrorThreshold + "' - this would delete every single e-mail before being sent!");
+                return;
+            }
             if (messagePollDelay < 0 || messageThroughPut < 1)
             {
-                stop();
+                Core.fail("Invalid e-mail queue settings with either message poll delay or message through-put - aborting!");
                 // Protection in-case aborting the thread failed
                 cyclerThread = null;
                 return;
             }
-			string queryPollMessages = "SELECT email, subject, body, html FROM cms_email_queue ORDER BY emailid ASC LIMIT " + messageThroughPut;
+            string queryPollMessages = "DELETE FROM cms_email_queue WHERE errors > '" + messageErrorThreshold.ToString() + "'; SELECT * FROM cms_view_email_queue LIMIT " + messageThroughPut + ";";
 			// Poll for messages
+            bool success;
 			Result msgs;
 			MailMessage compiledMessage;
 			StringBuilder queryUpdate;
 			while(true)
 			{
-				try
-				{
-					// Fetch the next message
-					msgs = Core.Connector.queryRead(queryPollMessages);
-					// Send each message
-					queryUpdate = new StringBuilder();
-					foreach(ResultRow msg in msgs)
-					{
-						try
-						{
-							compiledMessage = new MailMessage();
-							compiledMessage.To.Add(msg["email"]);
-							compiledMessage.From = new MailAddress(mailAddress);
-							compiledMessage.Subject = msg["subject"];
-							compiledMessage.Headers.Add("CMS", "Uber CMS");
-							compiledMessage.Body = msg["body"];
-							compiledMessage.IsBodyHtml = msg["html"].Equals("1");
-							client.Send(compiledMessage);
-							// Append query to update the database
-							queryUpdate.Append("DELETE FROM cms_email_queue WHERE emailid='" + SQLUtils.escape(msg["emailid"]) + "';");
-						}
-						catch(SmtpException)
-						{
-							if(errors < int.MaxValue - 1)
-								errors++;
-							else
-								errors = 1;
-						}
-					}
-					// Update the database
-					Core.Connector.queryExecute(queryUpdate.ToString());
-				}
-				catch {}
+                try
+                {
+                    // Fetch the next message
+                    msgs = Core.Connector.queryRead(queryPollMessages);
+                    // Send each message
+                    queryUpdate = new StringBuilder();
+                    foreach (ResultRow msg in msgs)
+                    {
+                        success = false;
+                        try
+                        {
+                            compiledMessage = new MailMessage();
+                            compiledMessage.To.Add(new MailAddress(msg["email"]));
+                            compiledMessage.From = new MailAddress(mailAddress);
+                            compiledMessage.Subject = msg["subject"];
+                            compiledMessage.Headers.Add("CMS", "Uber CMS");
+                            compiledMessage.Body = msg["body"];
+                            compiledMessage.IsBodyHtml = msg["html"].Equals("1");
+                            client.Send(compiledMessage);
+                            // Append query to update the database
+                            queryUpdate.Append("DELETE FROM cms_email_queue WHERE emailid='" + SQLUtils.escape(msg["emailid"]) + "';");
+                            success = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            if (errors < int.MaxValue - 1)
+                                errors++;
+                            else
+                                errors = 1;
+                        }
+                        // Increment the error-count for the e-mail by one
+                        if (!success)
+                            queryUpdate.Append("UPDATE cms_email_queue SET errors = errors + 1, last_sent=CURRENT_TIMESTAMP WHERE emailid='" + SQLUtils.escape(msg["emailid"]) + "';");
+                    }
+                    // Update the database
+                    if(queryUpdate.Length > 0)
+                        Core.Connector.queryExecute(queryUpdate.ToString());
+                }
+                catch (Exception ex)
+                {
+                    Core.fail("E-mail queue exception: '" + ex.GetBaseException().Message + "' - '" + ex.StackTrace + "'!");
+                    return;
+                }
 				// Sleep to avoid excessive CPU usage
 				Thread.Sleep(messagePollDelay);
 			}
@@ -140,7 +162,7 @@ namespace CMS.Base
 		{
 			lock(this)
 			{
-				if(cyclerThread != null || !enabled)
+				if(cyclerThread != null || enabled)
 					return;
 				cyclerThread = new Thread(
 					delegate()
@@ -148,6 +170,8 @@ namespace CMS.Base
 						cycler();
 					}
 				);
+                cyclerThread.Start();
+                enabled = true;
 			}
 		}
 		/// <summary>
@@ -157,10 +181,11 @@ namespace CMS.Base
 		{
 			lock(this)
 			{
-			if(cyclerThread == null)
-					return;
+			    if(cyclerThread == null)
+					    return;
 				cyclerThread.Abort();
 				cyclerThread = null;
+                enabled = false;
 			}
 		}
 		// Methods - Static ********************************************************************************************
@@ -176,13 +201,7 @@ namespace CMS.Base
 			queue.mailUsername = Core.SettingsDisk["settings/mail/user"].get<string>();
 			queue.mailPassword = Core.SettingsDisk["settings/mail/pass"].get<string>();
 			queue.mailAddress = Core.SettingsDisk["settings/mail/email"].get<string>();
-			if(queue.mailHost.Length != 0 && queue.mailUsername.Length != 0 && queue.mailAddress.Length != 0)
-			{
-				queue.enabled = true;
-				// Start cycler
-				queue.start();
-			}
-			return queue;
+            return queue;
 		}
 	}
 }

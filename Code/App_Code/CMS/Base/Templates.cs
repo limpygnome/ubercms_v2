@@ -66,6 +66,8 @@ namespace CMS.Base
 		// Methods *****************************************************************************************************
         /// <summary>
         /// Renders the specified text according to the rules of the custom markup syntax.
+        /// 
+        /// Note: this may be used for any text, not just web-pages!
         /// </summary>
         /// <param name="text">The text to be rendered/formatted.</param>
         /// <param name="data">The data for the current request.</param>

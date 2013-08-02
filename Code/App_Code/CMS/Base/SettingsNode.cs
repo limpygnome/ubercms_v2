@@ -152,7 +152,7 @@ namespace CMS.Base
                 case DataType.Double:
                     return double.Parse(value);
                 case DataType.Bool:
-                    return value == "1";
+                    return value == "1" || value.ToLower() == "true";
                 case DataType.Null:
                     return null;
                 default:

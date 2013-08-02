@@ -88,6 +88,7 @@
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AccountEventTypes.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AuthFailedAttempt.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BasicSiteAuth.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BSAEmails.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BSAUtils.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\RecoveryCode.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\User.cs" />
@@ -128,7 +129,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Code\App_Code\CMS\Plugins\Admin Panel\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\Articles\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Articles\content\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Articles\sql\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Articles\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\content\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Captcha\templates\" />

@@ -22,9 +22,12 @@
  *                      2013-07-07      Added userid field/property for universal authentication systems.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-31      Added flag-setting (sets a key with a null value).
+ *                      2013-08-02      Connector is now optional, allowing the class to be used for general exchange
+ *                                      of data between plugins.
  * 
  * *********************************************************************************************************************
- * Used for passing data between the controller and plugins.
+ * Used for passing data between the controller and plugins; this may also be used for non-request exchange of
+ * infomration.
  * *********************************************************************************************************************
  */
 using System;
@@ -37,6 +40,10 @@ using UberLib.Connector;
 
 namespace CMS.Base
 {
+    /// <summary>
+    /// Used for passing data between the controller and plugins; this may also be used for non-request exchange of
+    /// infomration.
+    /// </summary>
 	public class Data
 	{
 		// Fields  *****************************************************************************************************
@@ -48,15 +55,26 @@ namespace CMS.Base
 		private Dictionary<string, string>		variables;			// Used to store request variables for template rendering.
 		private Connector						connector;			// The database connector.
 		// Methods - Constructors **************************************************************************************
+        /// <summary>
+        /// Creates a new Data model. This will create a new connector if both the request and response parameters are
+        /// not null, same for the underlying measurement of the request speed. Path data will not be parsed if also
+        /// null.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="response"></param>
+        /// <param name="pathData"></param>
 		public Data(HttpRequest request, HttpResponse response, string pathData)
 		{
-			this.pathInfo = new PathInfo(pathData);
+			this.pathInfo = pathData == null ? null : new PathInfo(pathData);
 			this.request = request;
 			this.response = response;
-			stopwatch = new Stopwatch();
 			this.variables = new Dictionary<string, string>();
             this.outputContent = true;
-			connector = Core.createConnector(false);
+            if (request != null && response != null)
+            {
+                this.connector = Core.createConnector(false);
+                this.stopwatch = new Stopwatch();
+            }
 		}
 		// Methods *****************************************************************************************************
         /// <summary>
@@ -186,6 +204,10 @@ namespace CMS.Base
 			{
 				return connector;
 			}
+            set
+            {
+                connector = value;
+            }
 		}
 	}
 }

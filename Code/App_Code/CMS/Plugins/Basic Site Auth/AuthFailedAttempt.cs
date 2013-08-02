@@ -166,7 +166,8 @@ namespace CMS.BasicSiteAuth
         /// <returns>True = exceeded, false = has not exceeded.</returns>
         public static bool isIpBanned(Connector conn, string ip)
         {
-            return conn.queryCount("SELECT COUNT('') FROM bsa_authentication_failed_attempts WHERE ip='" + SQLUtils.escape(ip) + "';") > Core.Settings[BasicSiteAuth.SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD].get<int>();
+            string dt = DateTime.Now.AddMilliseconds(-(double)Core.Settings[BasicSiteAuth.SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD].get<int>()).ToString("YYYY-MM-dd HH:mm:ss");
+            return conn.queryCount("SELECT COUNT('') FROM bsa_authentication_failed_attempts WHERE ip='" + SQLUtils.escape(ip) + "' AND datetime >= '" + SQLUtils.escape(dt) + "';") > Core.Settings[BasicSiteAuth.SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD].get<int>();
         }
         /// <summary>
         /// Persists a model to the database. Once a model has been persisted, it cannot be modified - thus you cannot

@@ -431,7 +431,7 @@ namespace CMS.BasicSiteAuth
                     case "login":
                         return pageLogin(data);
                     case "register":
-                        return pageRegister(data);
+                        return data.PathInfo[1] == null ? pageRegister(data) : data.PathInfo[1] == "success" ? pageRegisterSuccess(data) : false;
                     case "account_recovery":
                         return pageAccountRecovery(data);
                     default:
@@ -486,6 +486,10 @@ namespace CMS.BasicSiteAuth
             data["Content"] = Core.Templates.get(data.Connector, "bsa/login");
             return true;
         }
+        private bool pageRegisterSuccess(Data data)
+        {
+            return true;
+        }
         private bool pageRegister(Data data)
         {
             // Setup the page
@@ -496,10 +500,11 @@ namespace CMS.BasicSiteAuth
             string error = null;
             string username = data.Request.Form["username"];
             string password = data.Request.Form["password"];
+            string passwordConfirm = data.Request.Form["password_confirm"];
             string email = data.Request.Form["email"];
             string secretQuestion = data.Request.Form["secret_question"];
             string secretAnswer = data.Request.Form["secret_answer"];
-            if (username != null && password != null && email != null && secretQuestion != null && secretAnswer != null)
+            if (username != null && password != null && passwordConfirm != null && email != null && secretQuestion != null && secretAnswer != null)
             {
                 // Validate security
 #if CSRFP
@@ -507,18 +512,65 @@ namespace CMS.BasicSiteAuth
                     error = "Invalid request, please try again!";
 #endif
 #if CAPTCHA
-                if (!Captcha.isCaptchaCorrect(data))
+                if (error != null && !Captcha.isCaptchaCorrect(data))
                     error = "Incorrect captcha verification code!";
 #endif
+                if (error != null && password != passwordConfirm)
+                    error = "Passwords do not match!";
                 if (error == null)
                 {
-                    // Attempt to create the user
+                    // Create the user model
+                    User u = null;
+                    User.UserCreateSaveStatus s = User.create(this, data, username, password, email, secretQuestion, secretAnswer, ref u);
+                    // Check the status of the creation attempt
+                    switch (s)
+                    {
+                        case User.UserCreateSaveStatus.Success:
+                            BaseUtils.redirectAbs(data, "/register/success");
+                            break;
+                        case User.UserCreateSaveStatus.InvalidEmail_AlreadyExists:
+                            error = "E-mail already in-use!";
+                            break;
+                        case User.UserCreateSaveStatus.InvalidEmail_Format:
+                        case User.UserCreateSaveStatus.InvalidEmail_Length:
+                            error = "Invalid e-mail address!";
+                            break;
+                        case User.UserCreateSaveStatus.InvalidPassword_Length:
+                            error = "Your password must be " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>() + " characters in length!";
+                            break;
+                        case User.UserCreateSaveStatus.InvalidPassword_Security:
+                            error = "Your password is too simple, pick another!";
+                            break;
+                        case User.UserCreateSaveStatus.InvalidSecretAnswer_Length:
+                            error = "Your secret answer must be " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MAX].get<int>() + " characters in length!";
+                            break;
+                        case User.UserCreateSaveStatus.InvalidSecretQuestion_Length:
+                            error = "Your secret question must be " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MAX].get<int>() + " characters in length!";
+                            break;
+                        case User.UserCreateSaveStatus.InvalidUsername_AlreadyExists:
+                            error = "The desired username is already in-use!";
+                            break;
+                        case User.UserCreateSaveStatus.InvalidUsername_Length:
+                            error = "Your username must be " + Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MAX].get<int>() + " characters in length!";
+                            break;
+                        case User.UserCreateSaveStatus.InvalidUserGroup:
+                        case User.UserCreateSaveStatus.Error_Regisration:
+                        default:
+                            error = "An unknown error occurred; please try again!" + s.ToString();
+                            break;
+                    }
                 }
             }
             // Set form data
-
+            data["bsa_register_username"] = HttpUtility.HtmlEncode(username);
+            data["bsa_register_email"] = HttpUtility.HtmlEncode(email);
+            data["bsa_register_secret_question"] = HttpUtility.HtmlEncode(secretQuestion);
+            data["bsa_register_secret_answer"] = HttpUtility.HtmlEncode(secretAnswer);
+            if (error != null)
+                data["bsa_register_error"] = HttpUtility.HtmlEncode(error);
             // Set content
-
+            data["Title"] = "Register";
+            data["Content"] = Core.Templates.get(data.Connector, "bsa/register");
             return true;
         }
         private bool pageAccountRecovery(Data data)

@@ -29,6 +29,7 @@
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-23      Updated the way settings are handled.
  *                      2013-08-01      Added DefaultHandler property.
+ *                      2013-08-02      Improved error handling.
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -121,7 +122,10 @@ namespace CMS.Base
                         }
                         connector = createConnector(true);
                         if (connector == null)
+                        {
                             fail("Failed to create connector to database server (connection issue)!");
+                            return;
+                        }
                         else
                         {
                             // Setup services/data
@@ -136,6 +140,8 @@ namespace CMS.Base
                             else
                             {
                                 currentState = CoreState.Running;
+                                // Start any services
+                                emailQueue.start();
                                 // Invoke plugin handlers
                                 foreach (Plugin p in plugins.Fetch)
                                     if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStart && !p.handler_pluginStart(connector))
@@ -153,23 +159,28 @@ namespace CMS.Base
         /// <summary>
         /// Stops the core.
         /// </summary>
-		public static void stop()
+        public static void stop()
+        {
+            stop(false);
+        }
+		private static void stop(bool failed)
 		{
 			lock(typeof(Core))
 			{
                 // Invoke handlers
-                if(plugins != null)
+                if (plugins != null)
+                {
                     foreach (Plugin p in plugins.Fetch)
                         if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStop)
                             p.handler_pluginStop(connector);
+                    plugins = null;
+                }
 				// Dispose
                 basePath = null;
                 dbType = DatabaseType.None;
-                errorMessage = null;
                 if(connector != null)
 					connector.disconnect();
 				connector = null;
-				plugins = null;
 				if(emailQueue != null)
 					emailQueue.stop();
 				emailQueue = null;
@@ -183,7 +194,11 @@ namespace CMS.Base
                 }
                 catch { }
 				// Update state
-				currentState = CoreState.Stopped;
+                if (!failed)
+                {
+                    currentState = CoreState.Stopped;
+                    errorMessage = null;
+                }
 			}
 		}
         /// <summary>
@@ -193,9 +208,12 @@ namespace CMS.Base
         /// <param name="reason">The error-message/reason for failing/stopping the core.</param>
 		public static void fail(string reason)
 		{
-			stop();
-			errorMessage = reason;
-			currentState = CoreState.Failed;
+            lock (typeof(Core))
+            {
+                errorMessage = errorMessage != null ? errorMessage + "\n" + reason : reason;
+                currentState = CoreState.Failed;
+                stop(true);
+            }
 		}
 		// Methods - Database ******************************************************************************************
         /// <summary>
@@ -216,9 +234,7 @@ namespace CMS.Base
                 m.SettingsDatabase = DatabaseSchema;
                 m.SettingsConnectionString += DatabaseConnectionString;
                 if (persist)
-                {
                     m.SettingsTimeoutConnection = 864000; // 10 days
-                }
                 m.connect();
                 return m;
 			default:
@@ -460,6 +476,16 @@ namespace CMS.Base
             get
             {
                 return Core.SettingsDisk["settings/core/default_handler"].get<string>();
+            }
+        }
+        /// <summary>
+        /// The title of the CMS/website/community.
+        /// </summary>
+        public static string Title
+        {
+            get
+            {
+                return Core.Settings["core/title"].get<string>();
             }
         }
 	}

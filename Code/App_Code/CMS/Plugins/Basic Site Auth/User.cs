@@ -144,7 +144,7 @@ namespace CMS
                     errorMessage = "Incorrect username/password!";
                     return false;
                 }
-                // Test the user is not banned
+                // Check the user is not banned
                 UserBan ub = UserBan.getLatestBan(requestData.Connector, this);
                 if (ub != null)
                 {
@@ -155,6 +155,12 @@ namespace CMS
                     b.Append(ub.DateTimeEnd != DateTime.MaxValue ? ub.DateTimeEnd.ToString("YYYY-MM-dd HH:mm:ss") : "never");
                     b.Append(".");
                     errorMessage = b.ToString();
+                    return false;
+                }
+                // Check the user-group does not disable the user from logging-in
+                else if (!userGroup.Login)
+                {
+                    errorMessage = "Your account is disabled from logging-in (user-group).";
                     return false;
                 }
                 else
@@ -178,6 +184,54 @@ namespace CMS
                 return bsa.generateHash(password, passwordSalt) == this.password;
             }
             // Mehods - Database ***************************************************************************************
+            /// <summary>
+            /// Creates a new user.
+            /// </summary>
+            /// <param name="bsa">BSA plugin.</param>
+            /// <param name="data">The data for the current request; this must have an open and usable connector.</param>
+            /// <param name="username">The username for the new user.</param>
+            /// <param name="password">The plain-text password for the new user.</param>
+            /// <param name="email">The e-mail of the new user.</param>
+            /// <param name="secretQuestion">The secret question (account recovery) for the new user.</param>
+            /// <param name="secretAnswer">The secret answer (account recovery) for the new user.</param>
+            /// <param name="outputUser">The new user will be outputted to this reference if successfully created, else it will be set to null.</param>
+            /// <returns>The creation status.</returns>
+            public static UserCreateSaveStatus create(BasicSiteAuth bsa, Data data, string username, string password, string email, string secretQuestion, string secretAnswer, ref User outputUser)
+            {
+                try
+                {
+                    bool emailVerification = Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_VERIFICATION].get<bool>();
+                    User u = new User();
+                    u.Username = username;
+                    UserCreateSaveStatus t = u.setPassword(bsa, password);
+                    if (t != UserCreateSaveStatus.Success)
+                        return t;
+                    u.Email = email;
+                    u.SecretQuestion = secretQuestion;
+                    u.SecretAnswer = secretAnswer;
+                    u.Registered = DateTime.Now;
+                    // Set the default group
+                    u.UserGroup = bsa.UserGroups[emailVerification ? Core.Settings[BasicSiteAuth.SETTINGS_GROUP_UNVERIFIED_GROUPID].get<int>() : Core.Settings[BasicSiteAuth.SETTINGS_GROUP_USER_GROUPID].get<int>()];
+                    // Attempt to persist
+                    t = u.save(bsa, data.Connector);
+                    if (t == UserCreateSaveStatus.Success)
+                    {
+                        outputUser = u;
+                        // Deploy either a welcome or verification e-mail
+                        if (emailVerification)
+                            BSAEmails.sendVerify(data, u);
+                        else
+                            BSAEmails.sendWelcome(data, u);
+                    }
+                    else
+                        outputUser = null;
+                    return t;
+                }
+                catch
+                {
+                    return UserCreateSaveStatus.Error_Regisration;
+                }
+            }
             /// <summary>
             /// Loads a user from the database.
             /// </summary>
@@ -239,6 +293,9 @@ namespace CMS
             }
             /// <summary>
             /// Persists the user's data to the database.
+            /// 
+            /// Warning: this method is solely used (in some cases) for validating data and may accept dirty-data. Thus
+            /// if you extend this method, ensure you validate any input data properly!
             /// </summary>
             /// <param name="conn">Database connector.</param>
             /// <param name="skipValidation">Skip validation of parameters; possibly quite dangerous - use with extreme caution!</param>
@@ -256,8 +313,6 @@ namespace CMS
                                 return UserCreateSaveStatus.InvalidUsername_Length;
                             else if (password == null || password.Length < Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() || password.Length > Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>())
                                 return UserCreateSaveStatus.InvalidPassword_Length;
-                            else if (password.ToLower() == "password" || password == "123456" || password == "12345678" || password == "abc123" || password == "qwerty")
-                                return UserCreateSaveStatus.InvalidPassword_Security;
                             else if (email == null || email.Length < Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MIN].get<int>() || email.Length > Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_MAX].get<int>())
                                 return UserCreateSaveStatus.InvalidEmail_Length;
                             else if ((secretQuestion == null && Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() != 0) || (secretQuestion != null && (secretQuestion.Length < Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() || secretQuestion.Length > Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MAX].get<int>())))
@@ -314,11 +369,15 @@ namespace CMS
             /// the specified new password.
             /// </summary>
             /// <param name="newPassword">The plain-text new password, to be hashed.</param>
-            public void setPassword(BasicSiteAuth bsa, string newPassword)
+            /// <returns>The status of changing the password.</returns>
+            public UserCreateSaveStatus setPassword(BasicSiteAuth bsa, string newPassword)
             {
+                if (newPassword.ToLower() == "password" || newPassword == "123456" || newPassword == "12345678" || newPassword == "abc123" || newPassword == "qwerty")
+                    return UserCreateSaveStatus.InvalidPassword_Security;
                 Random rand = new Random((int)DateTime.Now.Ticks);
                 this.passwordSalt = BaseUtils.generateRandomString(rand.Next(BasicSiteAuth.BSA_UNIQUE_USER_HASH_MIN, BasicSiteAuth.BSA_UNIQUE_USER_HASH_MAX));
                 this.password = bsa.generateHash(newPassword, this.passwordSalt);
+                return UserCreateSaveStatus.Success;
             }
             // Methods - Properties ************************************************************************************
             /// <summary>
