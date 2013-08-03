@@ -38,12 +38,13 @@ namespace CMS.BasicSiteAuth
         /// </summary>
         /// <param name="conn"></param>
         /// <param name="user"></param>
-        public static void sendVerify(Data data, User user)
+        public static void sendVerify(Data data, User user, string verifyCode)
         {
             // Render the template
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "bsa/emails/verify"));
             Data render = new Data(null, null, null);
-            setRenderBaseParams(user, ref render);
+            setRenderBaseParams(user, ref render, data);
+            render["verify_code"] = HttpUtility.HtmlEncode(verifyCode);
             Core.Templates.render(ref buffer, ref render);
             // Add to queue
             Core.EmailQueue.addMessage(data.Connector, user.Email, Core.Title + " - Verify Account", buffer.ToString(), true);
@@ -58,7 +59,7 @@ namespace CMS.BasicSiteAuth
             // Render the template
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "bsa/emails/welcome"));
             Data render = new Data(null, null, null);
-            setRenderBaseParams(user, ref render);
+            setRenderBaseParams(user, ref render, data);
             Core.Templates.render(ref buffer, ref render);
             // Add to queue
             Core.EmailQueue.addMessage(data.Connector, user.Email, Core.Title + " - Welcome!", buffer.ToString(), true);
@@ -73,14 +74,20 @@ namespace CMS.BasicSiteAuth
             // Render the template
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "bsa/emails/recovery_code"));
             Data render = new Data(null, null, null);
-            setRenderBaseParams(user, ref render);
+            setRenderBaseParams(user, ref render, data);
             render["recovery_code"] = HttpUtility.HtmlEncode(recoveryCode);
             Core.Templates.render(ref buffer, ref render);
             // Add to queue
             Core.EmailQueue.addMessage(data.Connector, user.Email, Core.Title + " - Account Recovery - Code", buffer.ToString(), true);
         }
-        private static void setRenderBaseParams(User user, ref Data render)
+        private static void setRenderBaseParams(User user, ref Data render, Data request)
         {
+            // Site related
+            render["site_title"] = HttpUtility.HtmlEncode(Core.Title);
+            render["site_url"] = BaseUtils.getWebsiteUrl(request);
+            // Host related
+            render["host_ip"] = HttpUtility.HtmlEncode(request.Request.UserHostAddress);
+            render["host_useragent"] = HttpUtility.HtmlEncode(request.Request.UserAgent);
             // User related
             render["userid"] = user.UserID.ToString();
             render["username"] = HttpUtility.HtmlEncode(user.Username);

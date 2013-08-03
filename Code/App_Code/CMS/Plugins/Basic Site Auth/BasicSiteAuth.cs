@@ -383,7 +383,7 @@ namespace CMS.BasicSiteAuth
         public override void handler_pluginCycle()
         {
             // Clean old recovery codes
-            RecoveryCode.remove(Core.Connector);
+            RecoveryCode.removeExpired(Core.Connector);
             // Delete old failed authentication attempts
             AuthFailedAttempt.remove(Core.Connector);
         }
@@ -431,9 +431,35 @@ namespace CMS.BasicSiteAuth
                     case "login":
                         return pageLogin(data);
                     case "register":
-                        return data.PathInfo[1] == null ? pageRegister(data) : data.PathInfo[1] == "success" ? pageRegisterSuccess(data) : false;
+                        switch (data.PathInfo[1])
+                        {
+                            case null:
+                                return pageRegister(data);
+                            case "verify":
+                                return pageRegisterVerify(data);
+                            case "success":
+                                return pageRegisterSuccess(data);
+                            default:
+                                return false;
+                        }
                     case "account_recovery":
-                        return pageAccountRecovery(data);
+                        switch (data.PathInfo[1])
+                        {
+                            case null:
+                                return pageAccountRecovery(data);
+                            case "code":
+                                switch (data.PathInfo[2])
+                                {
+                                    case null:
+                                        return pageAccountRecovery_Email(data);
+                                    default:
+                                        return pageAccountRecovery_EmailVerify(data);
+                                }
+                            case "sqa":
+                                return pageAccountRecovery_SQA(data);
+                            default:
+                                return false;
+                        }
                     default:
                         return false;
                 }
@@ -486,8 +512,32 @@ namespace CMS.BasicSiteAuth
             data["Content"] = Core.Templates.get(data.Connector, "bsa/login");
             return true;
         }
+        private bool pageRegisterVerify(Data data)
+        {
+            // Fetch data
+            string code = data.PathInfo[3];
+            string email = data.PathInfo[4];
+            if (code == null || email == null)
+                return false;
+            // Attempt to verify
+            if (!RecoveryCode.usage_accountVerify(data, this, code, email))
+                return false;
+            // Set content
+            data["Content"] = Core.Templates.get(data.Connector, "bsa/register/verify_success");
+            data["Title"] = "Register - Verify Account";
+            return true;
+        }
         private bool pageRegisterSuccess(Data data)
         {
+            // Fetch data
+            string rawEmail = data.PathInfo[3];
+            int ind;
+            if (rawEmail == null || rawEmail.Length == 0 || (ind = rawEmail.IndexOf('@')) == -1 || ind >= rawEmail.Length || !BSAUtils.validEmail(rawEmail))
+                return false;
+            // Set content
+            data["bsa_register_success_email"] = "http://www." + rawEmail.Substring(ind + 1);
+            data["Content"] = Core.Templates.get(data.Connector, "bsa/register/success_verify");
+            data["Title"] = "Register - Success!";
             return true;
         }
         private bool pageRegister(Data data)
@@ -526,7 +576,16 @@ namespace CMS.BasicSiteAuth
                     switch (s)
                     {
                         case User.UserCreateSaveStatus.Success:
-                            BaseUtils.redirectAbs(data, "/register/success");
+                            // Attempt to authenticate the user
+                            if(u.authenticate(this, password, data, ref error))
+                                // Redirect to the main page
+                                BaseUtils.redirectAbs(data, "/" + Core.DefaultHandler);
+                            else
+                                // Redirect to login page
+                                BaseUtils.redirectAbs(data, "/login");
+                            break;
+                        case User.UserCreateSaveStatus.SuccessVerify:
+                            BaseUtils.redirectAbs(data, "/register/success/" + u.Email);
                             break;
                         case User.UserCreateSaveStatus.InvalidEmail_AlreadyExists:
                             error = "E-mail already in-use!";
@@ -575,28 +634,29 @@ namespace CMS.BasicSiteAuth
         }
         private bool pageAccountRecovery(Data data)
         {
-            switch(data.PathInfo[2])
-            {
-                case null:
-                    return pageAccountRecovery_Home(data);
-                case "sqa":
-                    return pageAccountRecovery_SQA(data);
-                case "email":
-                    return pageAccountRecovery_Email(data);
-                default:
-                    return false;
-            }
-        }
-        private bool pageAccountRecovery_Home(Data data)
-        {
+            // Set content
+            data["Title"] = "Account Recovery";
             return true;
         }
         private bool pageAccountRecovery_SQA(Data data)
         {
+            string error = null;
+            // Set content
+            data["Title"] = "Account Recovery - Secret Question";
             return true;
         }
         private bool pageAccountRecovery_Email(Data data)
         {
+            string error = null;
+            // Set content
+            data["Title"] = "Account Recovery - E-mail";
+            return true;
+        }
+        private bool pageAccountRecovery_EmailVerify(Data data)
+        {
+            string error = null;
+            // Set content
+            data["Title"] = "Account Recovery - New Password";
             return true;
         }
         private bool pageMyAccount(Data data)

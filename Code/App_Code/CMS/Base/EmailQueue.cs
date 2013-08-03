@@ -131,7 +131,7 @@ namespace CMS.Base
                             queryUpdate.Append("DELETE FROM cms_email_queue WHERE emailid='" + SQLUtils.escape(msg["emailid"]) + "';");
                             success = true;
                         }
-                        catch (Exception ex)
+                        catch (SmtpException)
                         {
                             if (errors < int.MaxValue - 1)
                                 errors++;

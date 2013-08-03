@@ -41,7 +41,7 @@ namespace CMS.BasicSiteAuth
         {
             Login = 10,
             LoginThirdParty = 11,
-            Recovery = 20,
+            RecoveryCode = 20,
             API = 30,
             Other = 0
         }

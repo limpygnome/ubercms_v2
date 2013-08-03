@@ -493,5 +493,14 @@ namespace CMS.Base
         {
             redirect(data, getAbsoluteURL(data, url));
         }
+        /// <summary>
+        /// Returns the scheme, host and port as a URL for the current request.
+        /// </summary>
+        /// <param name="data">Current request data.</param>
+        /// <returns>The URL to the current site.</returns>
+        public static string getWebsiteUrl(Data data)
+        {
+            return data.Request.Url.GetLeftPart(UriPartial.Authority);
+        }
     }
 }

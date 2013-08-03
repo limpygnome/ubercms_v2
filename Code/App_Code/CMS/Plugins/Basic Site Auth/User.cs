@@ -53,6 +53,10 @@ namespace CMS
                 /// </summary>
                 Success = 0,
                 /// <summary>
+                /// The user has been successfully created but needs to verify their account by e-mail.
+                /// </summary>
+                SuccessVerify = 1,
+                /// <summary>
                 /// Invalid username length.
                 /// </summary>
                 InvalidUsername_Length = 100,
@@ -183,7 +187,7 @@ namespace CMS
                     return false;
                 return bsa.generateHash(password, passwordSalt) == this.password;
             }
-            // Mehods - Database ***************************************************************************************
+            // Mehods - Database Persistence ***************************************************************************
             /// <summary>
             /// Creates a new user.
             /// </summary>
@@ -216,16 +220,51 @@ namespace CMS
                     t = u.save(bsa, data.Connector);
                     if (t == UserCreateSaveStatus.Success)
                     {
-                        outputUser = u;
                         // Deploy either a welcome or verification e-mail
                         if (emailVerification)
-                            BSAEmails.sendVerify(data, u);
+                        {
+                            RecoveryCode code = RecoveryCode.create(data.Connector, BaseUtils.generateRandomString(18), RecoveryCode.CodeType.AccountVerification, u.userID, DateTime.Now);
+                            if (code == null)
+                            {
+                                // Fall-back to a verified account
+                                u.UserGroup = bsa.UserGroups[Core.Settings[BasicSiteAuth.SETTINGS_GROUP_USER_GROUPID].get<int>()];
+                                // Check the verified user-group persisted
+                                if (u.save(bsa, data.Connector) != UserCreateSaveStatus.Success)
+                                { // Critical failure: abort  the registration process!
+                                    outputUser = null;
+                                    u.remove(data.Connector);
+                                    return UserCreateSaveStatus.Error_Regisration;
+                                }
+                                else
+                                {
+                                    // Partial success (set from unverified to verified as fallback) - user is verified and setup!
+                                    BSAEmails.sendWelcome(data, u);
+                                    outputUser = u;
+                                    return UserCreateSaveStatus.Success;
+                                }
+                            }
+                            else
+                            {
+                                // Success - user requires verification!
+                                BSAEmails.sendVerify(data, u, code.Code);
+                                outputUser = u;
+                                return UserCreateSaveStatus.SuccessVerify;
+                            }
+                        }
                         else
+                        {
+                            // Success - user is verified!
                             BSAEmails.sendWelcome(data, u);
+                            outputUser = u;
+                            return UserCreateSaveStatus.Success;
+                        }
                     }
                     else
+                    {
+                        // Failure occurred...
                         outputUser = null;
-                    return t;
+                        return t;
+                    }
                 }
                 catch
                 {
@@ -362,6 +401,18 @@ namespace CMS
                         }
                     }
                 }
+            }
+            /// <summary>
+            /// Unpersists the data from the database.
+            /// </summary>
+            /// <param name="conn">Database connector.</param>
+            public void remove(Connector conn)
+            {
+                PreparedStatement ps = new PreparedStatement("DELETE FROM bsa_users WHERE userid=?userid;");
+                ps["userid"] = userID;
+                conn.queryExecute(ps);
+                persisted = false;
+                modified = true;
             }
             // Methods - Mutators **************************************************************************************
             /// <summary>
