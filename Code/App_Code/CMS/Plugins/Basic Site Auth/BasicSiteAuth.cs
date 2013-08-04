@@ -447,13 +447,13 @@ namespace CMS.BasicSiteAuth
                         {
                             case null:
                                 return pageAccountRecovery(data);
-                            case "code":
+                            case "email":
                                 switch (data.PathInfo[2])
                                 {
                                     case null:
                                         return pageAccountRecovery_Email(data);
                                     default:
-                                        return pageAccountRecovery_EmailVerify(data);
+                                        return pageAccountRecovery_EmailNewPassword(data);
                                 }
                             case "sqa":
                                 return pageAccountRecovery_SQA(data);
@@ -520,7 +520,7 @@ namespace CMS.BasicSiteAuth
             if (code == null || email == null)
                 return false;
             // Attempt to verify
-            if (!RecoveryCode.usage_accountVerify(data, this, code, email))
+            if (!AccountActions.accountVerify(data, this, code, email))
                 return false;
             // Set content
             data["Content"] = Core.Templates.get(data.Connector, "bsa/register/verify_success");
@@ -554,7 +554,8 @@ namespace CMS.BasicSiteAuth
             string email = data.Request.Form["email"];
             string secretQuestion = data.Request.Form["secret_question"];
             string secretAnswer = data.Request.Form["secret_answer"];
-            if (username != null && password != null && passwordConfirm != null && email != null && secretQuestion != null && secretAnswer != null)
+            string secretAnswerConfirm = data.Request.Form["secret_answer_confirm"];
+            if (username != null && password != null && passwordConfirm != null && email != null && secretQuestion != null && secretAnswer != null && secretAnswerConfirm != null)
             {
                 // Validate security
 #if CSRFP
@@ -565,58 +566,63 @@ namespace CMS.BasicSiteAuth
                 if (error != null && !Captcha.isCaptchaCorrect(data))
                     error = "Incorrect captcha verification code!";
 #endif
-                if (error != null && password != passwordConfirm)
-                    error = "Passwords do not match!";
-                if (error == null)
+                if (error != null)
                 {
-                    // Create the user model
-                    User u = null;
-                    User.UserCreateSaveStatus s = User.create(this, data, username, password, email, secretQuestion, secretAnswer, ref u);
-                    // Check the status of the creation attempt
-                    switch (s)
+                    if (password != passwordConfirm)
+                        error = "Passwords do not match!";
+                    else if (secretAnswer.Length > 0 && secretAnswer != secretAnswerConfirm)
+                        error = "Secret answers do not match!";
+                    else
                     {
-                        case User.UserCreateSaveStatus.Success:
-                            // Attempt to authenticate the user
-                            if(u.authenticate(this, password, data, ref error))
-                                // Redirect to the main page
-                                BaseUtils.redirectAbs(data, "/" + Core.DefaultHandler);
-                            else
-                                // Redirect to login page
-                                BaseUtils.redirectAbs(data, "/login");
-                            break;
-                        case User.UserCreateSaveStatus.SuccessVerify:
-                            BaseUtils.redirectAbs(data, "/register/success/" + u.Email);
-                            break;
-                        case User.UserCreateSaveStatus.InvalidEmail_AlreadyExists:
-                            error = "E-mail already in-use!";
-                            break;
-                        case User.UserCreateSaveStatus.InvalidEmail_Format:
-                        case User.UserCreateSaveStatus.InvalidEmail_Length:
-                            error = "Invalid e-mail address!";
-                            break;
-                        case User.UserCreateSaveStatus.InvalidPassword_Length:
-                            error = "Your password must be " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>() + " characters in length!";
-                            break;
-                        case User.UserCreateSaveStatus.InvalidPassword_Security:
-                            error = "Your password is too simple, pick another!";
-                            break;
-                        case User.UserCreateSaveStatus.InvalidSecretAnswer_Length:
-                            error = "Your secret answer must be " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MAX].get<int>() + " characters in length!";
-                            break;
-                        case User.UserCreateSaveStatus.InvalidSecretQuestion_Length:
-                            error = "Your secret question must be " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MAX].get<int>() + " characters in length!";
-                            break;
-                        case User.UserCreateSaveStatus.InvalidUsername_AlreadyExists:
-                            error = "The desired username is already in-use!";
-                            break;
-                        case User.UserCreateSaveStatus.InvalidUsername_Length:
-                            error = "Your username must be " + Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MAX].get<int>() + " characters in length!";
-                            break;
-                        case User.UserCreateSaveStatus.InvalidUserGroup:
-                        case User.UserCreateSaveStatus.Error_Regisration:
-                        default:
-                            error = "An unknown error occurred; please try again!" + s.ToString();
-                            break;
+                        // Create the user model
+                        User u = null;
+                        User.UserCreateSaveStatus s = User.create(this, data, username, password, email, secretQuestion, secretAnswer, ref u);
+                        // Check the status of the creation attempt
+                        switch (s)
+                        {
+                            case User.UserCreateSaveStatus.Success:
+                                // Attempt to authenticate the user
+                                if (u.authenticate(this, password, data, ref error))
+                                    // Redirect to the main page
+                                    BaseUtils.redirectAbs(data, "/" + Core.DefaultHandler);
+                                else
+                                    // Redirect to login page
+                                    BaseUtils.redirectAbs(data, "/login");
+                                break;
+                            case User.UserCreateSaveStatus.SuccessVerify:
+                                BaseUtils.redirectAbs(data, "/register/success/" + u.Email);
+                                break;
+                            case User.UserCreateSaveStatus.InvalidEmail_AlreadyExists:
+                                error = "E-mail already in-use!";
+                                break;
+                            case User.UserCreateSaveStatus.InvalidEmail_Format:
+                            case User.UserCreateSaveStatus.InvalidEmail_Length:
+                                error = "Invalid e-mail address!";
+                                break;
+                            case User.UserCreateSaveStatus.InvalidPassword_Length:
+                                error = "Your password must be " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>() + " characters in length!";
+                                break;
+                            case User.UserCreateSaveStatus.InvalidPassword_Security:
+                                error = "Your password is too simple, pick another!";
+                                break;
+                            case User.UserCreateSaveStatus.InvalidSecretAnswer_Length:
+                                error = "Your secret answer must be " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETANSWER_MAX].get<int>() + " characters in length!";
+                                break;
+                            case User.UserCreateSaveStatus.InvalidSecretQuestion_Length:
+                                error = "Your secret question must be " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_SECRETQUESTION_MAX].get<int>() + " characters in length!";
+                                break;
+                            case User.UserCreateSaveStatus.InvalidUsername_AlreadyExists:
+                                error = "The desired username is already in-use!";
+                                break;
+                            case User.UserCreateSaveStatus.InvalidUsername_Length:
+                                error = "Your username must be " + Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MIN].get<int>() + " to " + Core.Settings[BasicSiteAuth.SETTINGS_USERNAME_MAX].get<int>() + " characters in length!";
+                                break;
+                            case User.UserCreateSaveStatus.InvalidUserGroup:
+                            case User.UserCreateSaveStatus.Error_Regisration:
+                            default:
+                                error = "An unknown error occurred; please try again!" + s.ToString();
+                                break;
+                        }
                     }
                 }
             }
@@ -636,31 +642,190 @@ namespace CMS.BasicSiteAuth
         {
             // Set content
             data["Title"] = "Account Recovery";
+            data["Content"] = Core.Templates.get(data.Connector, "bsa/recovery/home");
             return true;
         }
         private bool pageAccountRecovery_SQA(Data data)
         {
+            // Setup the page
+#if CAPTCHA
+            Captcha.hookPage(data);
+#endif
             string error = null;
+            bool displayget = true;
+            // Fetch possible form data
+            string username = data.Request.Form["username"];
+            string secretAnswer = data.Request.Form["secret_answer"];
+            string secretQuestion = null;
+            string newPassword = data.Request.Form["password"];
+            string newPasswordConfirm = data.Request.Form["password_confirm"];
+            User.UserCreateSaveStatus s = User.UserCreateSaveStatus.Error_Regisration;
+            if (username != null)
+            {
+#if CSRFP
+                if (!CSRFProtection.authenticated(data))
+                    error = "Invalid request; please try again!";
+#endif
+#if CAPTCHA
+                if (error == null && !Captcha.isCaptchaCorrect(data))
+                    error = "Invalid captcha verification code!";
+#endif
+                if (error == null)
+                {
+                    if (newPassword != null && (newPasswordConfirm == null || newPassword != newPasswordConfirm))
+                    {
+                        error = "Passwords do not match!";
+                        displayget = false;
+                    }
+                    AccountActions.RecoverySQA sqa = AccountActions.recoverySQA(data, this, username, secretAnswer, error != null ? null : newPassword, ref secretQuestion, ref s);
+                    switch (sqa)
+                    {
+                        case AccountActions.RecoverySQA.FailedBanned:
+                            error = "Too many incorrect attempts have been made, try again later!"; break;
+                        case AccountActions.RecoverySQA.FailedDisabled:
+                            error = "Secret question/answer recovery is disabled for this account!"; break;
+                        case AccountActions.RecoverySQA.FailedPersist:
+                            displayget = false;
+                            switch (s)
+                            {
+                                case User.UserCreateSaveStatus.InvalidPassword_Length:
+                                    error = "Your password must be between " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN] + " to " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX] + " characters in length!"; break;
+                                case User.UserCreateSaveStatus.InvalidPassword_Security:
+                                    error = "Your password is too insecure, try another!"; break;
+                            }
+                            break;
+                        case AccountActions.RecoverySQA.FailedAnswer:
+                            displayget = false;
+                            error = "Incorrect answer!"; break;
+                        case AccountActions.RecoverySQA.Exists:
+                            displayget = false; break;
+                        case AccountActions.RecoverySQA.Failed:
+                            error = "An unknown error occurred, please try again later!"; break;
+                        case AccountActions.RecoverySQA.Success:
+                            // The user's password has been successfully changed!
+                            data["Content"] = Core.Templates.get(data.Connector, "bsa/recovery/sqa_success");
+                            data["Title"] = "Account Recovery - Secret Question - Success";
+                            return true;
+                    }
+                }
+            }
             // Set content
+            data["Content"] = Core.Templates.get(data.Connector, displayget ? "bsa/recovery/sqa_get" : "bsa/recovery/sqa_change");
             data["Title"] = "Account Recovery - Secret Question";
+            data["bsa_sqa_username"] = HttpUtility.HtmlEncode(username);
+            if (error != null)
+                data["bsa_sqa_error"] = HttpUtility.HtmlEncode(error);
+            if (secretQuestion != null)
+                data["bsa_sqa_question"] = HttpUtility.HtmlEncode(secretQuestion);
+            if (secretAnswer != null)
+                data["bsa_sqa_answer"] = HttpUtility.HtmlEncode(secretAnswer);
             return true;
         }
         private bool pageAccountRecovery_Email(Data data)
         {
+            // Setup the page
+#if CAPTCHA
+            Captcha.hookPage(data);
+#endif
+            bool sent = false;
             string error = null;
+            // Attempt to deploy a recovery code
+            string email = data.Request.Form["email"];
+            if (email != null && email.Length > 0)
+            {
+#if CSRFP
+                if (!CSRFProtection.authenticated(data))
+                    error = "Invalid request; please try again!";
+#endif
+#if CAPTCHA
+                if (error == null && !Captcha.isCaptchaCorrect(data))
+                    error = "Invalid captcha verification code!";
+#endif
+                if (error == null)
+                {
+                    if (!BSAUtils.validEmail(email))
+                        error = "Invalid e-mail address specified!";
+                    else
+                    {
+                        AccountActions.RecoveryCodeEmail t = AccountActions.recoveryEmailDeploy(data, this, email);
+                        switch (t)
+                        {
+                            case AccountActions.RecoveryCodeEmail.Failed:
+                                error = "The specified e-mail is not associated with any accounts!"; break;
+                            case AccountActions.RecoveryCodeEmail.FailedBanned:
+                                error = "You've tried too many different e-mails! Please try again later..."; break;
+                            case AccountActions.RecoveryCodeEmail.Success:
+                                sent = true; break;
+                            default:
+                                error = "Unknown error occurred!"; break;
+                        }
+                    }
+                }
+            }
             // Set content
             data["Title"] = "Account Recovery - E-mail";
+            data["Content"] = Core.Templates.get(data.Connector, sent ? "bsa/recovery/email_sent" : "bsa/recovery/email_get");
+            if(error != null)
+                data["bsa_recovery_email_error"] = HttpUtility.HtmlEncode(error);
             return true;
         }
-        private bool pageAccountRecovery_EmailVerify(Data data)
+        private bool pageAccountRecovery_EmailNewPassword(Data data)
         {
             string error = null;
+            string code = data.PathInfo[2];
+            string password = data.Request.Form["password"];
+            string passwordConfirm = data.Request.Form["password_confirm"];
+            // Change the password or check it exists
+            if (password != null && (passwordConfirm == null || password != passwordConfirm))
+                error = "Passwords do not match!";
+            else
+            {
+                User.UserCreateSaveStatus uS = User.UserCreateSaveStatus.Error_Regisration;
+                AccountActions.RecoveryCodeEmail s = AccountActions.recoveryEmail(data, this, code, password, ref uS);
+                switch (s)
+                {
+                    case AccountActions.RecoveryCodeEmail.FailedBanned:
+                    case AccountActions.RecoveryCodeEmail.Failed:
+                        // Set content
+                        data["Title"] = "Account Recovery - E-mail";
+                        data["Content"] = Core.Templates.get(data.Connector, "bsa/recovery/email_fail");
+                        return true;
+                    case AccountActions.RecoveryCodeEmail.FailedUserPersist:
+                        switch (uS)
+                        {
+                            case User.UserCreateSaveStatus.InvalidPassword_Length:
+                                error = "Your password must be between " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN] + " to " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX] + " characters in length!"; break;
+                            case User.UserCreateSaveStatus.InvalidPassword_Security:
+                                error = "Your password is too insecure, try another!"; break;
+                            default:
+                                error = "An unknown error occurred, please try again later or contact us!" + uS.ToString(); break;
+                        }
+                        break;
+                    case AccountActions.RecoveryCodeEmail.Success:
+                        // Success - set content!
+                        data["Title"] = "Account Recovery - Success";
+                        data["Content"] = Core.Templates.get(data.Connector, "bsa/recovery/email_success");
+                        return true;
+                }
+            }
             // Set content
             data["Title"] = "Account Recovery - New Password";
+            data["Content"] = Core.Templates.get(data.Connector, "bsa/recovery/email_change");
+            if(error != null)
+                data["bsa_recovery_email_error"] = HttpUtility.HtmlEncode(error);
+            data["bsa_recovery_email_code"] = HttpUtility.HtmlEncode(code);
             return true;
         }
         private bool pageMyAccount(Data data)
         {
+            // Load the current user
+            User u = getCurrentUser(data);
+            // Set content
+            data["Content"] = Core.Templates.get(data.Connector, "bsa/my_account");
+            data["Title"] = "My Account";
+            data["bsa_ma_username"] = u.Username;
+            data["bsa_ma_secret_question"] = u.SecretQuestion;
+            data["bsa_ma_secret_answer"] = u.SecretAnswer;
             return true;
         }
         private bool pageAccountLog(Data data)

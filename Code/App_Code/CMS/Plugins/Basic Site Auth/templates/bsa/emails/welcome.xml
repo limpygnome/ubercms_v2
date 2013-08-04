@@ -1,1 +1,18 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/emails/welcome]]></path><description><![CDATA[The e-mail sent to an account when it's verified or created without verification.]]></description><html><![CDATA[]]></html></template>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/emails/welcome]]></path><description><![CDATA[The e-mail sent to an account when it's verified or created without verification.]]></description><html><![CDATA[<p>
+	Welcome <!--username--> to <!--site_title-->!
+</p>
+<p>
+	You have successfully created an account using the IP <!--host_ip--> at <!--datetime-->; you can login to your account at:
+</p>
+<p>
+	<a href="<!--site_url-->/login"><!--site_url-->/login</a>
+</p>
+<p>
+	If you did not create this account or you want to cancel your registration, please contact us:
+</p>
+<p>
+	<a href="<!--site_url-->/contact"><!--site_url-->/contact</a>
+</p>
+<p>
+	Thank-you!
+</p>]]></html></template>

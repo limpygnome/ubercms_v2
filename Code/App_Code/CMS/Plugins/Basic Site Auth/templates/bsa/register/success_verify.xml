@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/register/success_verify]]></path><description><![CDATA[The register page success verify page.]]></description><html><![CDATA[<h2>Register - E-mail Verification Required</p>
+<p>
+	Your account has been successfully created, however it requires e-mail verification before you can login.
+</p>
+<p>
+	Check your e-mail's inbox or spam folder for further instructions:
+</p>
+<p>
+	<a href="<!--bsa_register_success_email-->"><!--bsa_register_success_email--></a>
+</p>]]></html></template>

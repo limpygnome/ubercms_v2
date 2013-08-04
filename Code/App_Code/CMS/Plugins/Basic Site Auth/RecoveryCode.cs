@@ -34,6 +34,11 @@ namespace CMS.BasicSiteAuth
     /// </summary>
     public class RecoveryCode
     {
+        // Constants ***************************************************************************************************
+        /// <summary>
+        /// The maximum length of a code.
+        /// </summary>
+        public const int CODE_LENGTH_MAX = 16;
         // Enums *******************************************************************************************************
         /// <summary>
         /// Used to indicate the type of recovery-code model.
@@ -42,28 +47,6 @@ namespace CMS.BasicSiteAuth
         {
             Recovery = 0,
             AccountVerification = 1
-        }
-        /// <summary>
-        /// Used for the e-mail recovery method as the status of the operation.
-        /// </summary>
-        public enum RecoveryCodeEmail
-        {
-            /// <summary>
-            /// Indicates the recovery-code exists.
-            /// </summary>
-            Exists,
-            /// <summary>
-            /// The recovery code does not exist or an error occurred.
-            /// </summary>
-            Failed,
-            /// <summary>
-            /// The new password could not be applied; check the status reference output of the method using this enum.
-            /// </summary>
-            FailedUserPersist,
-            /// <summary>
-            /// Successfully changed password and removed recovery code.
-            /// </summary>
-            Success,
         }
         // Fields ******************************************************************************************************
         private bool        persisted,          // Indicates if the model has been persisted to the database.
@@ -88,7 +71,7 @@ namespace CMS.BasicSiteAuth
         /// </summary>
         public void generateNewCode()
         {
-            this.code = BaseUtils.generateRandomString(32);
+            this.code = BaseUtils.generateRandomString(CODE_LENGTH_MAX);
             this.modified = true;
         }
         // Methods - Database Persistence ******************************************************************************
@@ -96,7 +79,29 @@ namespace CMS.BasicSiteAuth
         /// Creates a new recovery-code model and persists it.
         /// </summary>
         /// <param name="conn">Database connector.</param>
-        /// <param name="code">Recovery code.</param>
+        /// <param name="type">Type of recovery code.</param>
+        /// <param name="user">The user which owns the code.</param>
+        /// <returns>A model or null.</returns>
+        public static RecoveryCode create(Connector conn, CodeType type, User user)
+        {
+            return create(conn, BaseUtils.generateRandomString(CODE_LENGTH_MAX), type, user.UserID, DateTime.Now);
+        }
+        /// <summary>
+        /// Creates a new recovery-code model and persists it.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="type">Type of recovery code.</param>
+        /// <param name="userID">The identifier of the user which owns the code.</param>
+        /// <returns>A model or null.</returns>
+        public static RecoveryCode create(Connector conn, CodeType type, int userID)
+        {
+            return create(conn, BaseUtils.generateRandomString(CODE_LENGTH_MAX), type, userID, DateTime.Now);
+        }
+        /// <summary>
+        /// Creates a new recovery-code model and persists it.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="code">Recovery code - 16 characters max.</param>
         /// <param name="type">Type of recovery code.</param>
         /// <param name="user">The user which owns the code.</param>
         /// <param name="datetimeCreated">The creation date and time, used for cleaning up/expiration.</param>
@@ -109,7 +114,7 @@ namespace CMS.BasicSiteAuth
         /// Creates a new recovery-code model and persists it.
         /// </summary>
         /// <param name="conn">Database connector.</param>
-        /// <param name="code">Recovery code.</param>
+        /// <param name="code">Recovery code - 16 characters max.</param>
         /// <param name="type">Type of recovery code.</param>
         /// <param name="userID">The identifier of the user which owns the code.</param>
         /// <param name="datetimeCreated">The creation date and time, used for cleaning up/expiration.</param>
@@ -228,6 +233,15 @@ namespace CMS.BasicSiteAuth
         /// Removes all of the recovery codes belonging to a user.
         /// </summary>
         /// <param name="conn">Database connector.</param>
+        /// <param name="user">The model of the user.</param>
+        public static void remove(Connector conn, User user)
+        {
+            remove(conn, user.UserID);
+        }
+        /// <summary>
+        /// Removes all of the recovery codes belonging to a user.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="userID">The user's identifier.</param>
         public static void remove(Connector conn, int userID)
         {
@@ -258,81 +272,6 @@ namespace CMS.BasicSiteAuth
             PreparedStatement ps = new PreparedStatement("DELETE FROM bsa_recovery_codes WHERE code=?code;");
             ps["code"] = code;
             conn.queryExecute(ps);
-        }
-        // Methods - Usage *********************************************************************************************
-        /// <summary>
-        /// Used for handling an account verification, upgrading the group from unverified to verified.
-        /// </summary>
-        /// <param name="data">The data for the current request.</param>
-        /// <param name="bsa">The BSA plugin.</param>
-        /// <param name="code">The code of the recovery code.</param>
-        /// <param name="email">The e-mail of the account which owns the code, an additional layer of security against brute-force.</param>
-        /// <returns>True if successfully verified, false if not found.</returns>
-        public static bool usage_accountVerify(Data data, BasicSiteAuth bsa, string code, string email)
-        {
-            // Check the IP is not banned (brute-force protection)
-            if (AuthFailedAttempt.isIpBanned(data.Connector, data.Request.UserHostAddress))
-                return false;
-            // Lookup the code
-            RecoveryCode c = RecoveryCode.load(code, email, RecoveryCode.CodeType.Recovery, data.Connector);
-            if (c != null)
-            {
-                User usr = User.load(bsa, data.Connector, c.UserID);
-                if (usr != null && usr.UserGroup.GroupID == Core.Settings[BasicSiteAuth.SETTINGS_GROUP_UNVERIFIED_GROUPID].get<int>())
-                {
-                    // Switch the user-group
-                    usr.UserGroup = bsa.UserGroups[Core.Settings[BasicSiteAuth.SETTINGS_GROUP_USER_GROUPID].get<int>()];
-                    if (usr.save(bsa, data.Connector) != User.UserCreateSaveStatus.Success)
-                        return false;
-                }
-                // Remove the code
-                c.remove(data.Connector);
-                return true;
-            }
-            else
-                // Log as an attempt to authenticate - brute-force protection
-                AuthFailedAttempt.create(data.Connector, data.Request.UserHostAddress, DateTime.Now, AuthFailedAttempt.AuthType.RecoveryCode);
-            return false;
-        }
-        /// <summary>
-        /// Used for handling a recovery-code used for account recovery/password-reset by e-mail. The newPassword
-        /// parameter can be left null to indicate if a recovery code exists.
-        /// </summary>
-        /// <param name="data">The data for the current request.</param>
-        /// <param name="bsa">The BSA plugin.</param>
-        /// <param name="code">The code of the recovery-code.</param>
-        /// <param name="newPassword">The new password; can be null.</param>
-        /// <param name="status">This parameter is set with the status of persisting the new password.</param>
-        /// <returns>The status of the operation.</returns>
-        public static RecoveryCodeEmail usage_recoveryEmail(Data data, BasicSiteAuth bsa, string code, string newPassword, ref User.UserCreateSaveStatus status)
-        {
-            // Check the IP is not banned (brute-force protection)
-            if (AuthFailedAttempt.isIpBanned(data.Connector, data.Request.UserHostAddress))
-                return RecoveryCodeEmail.Failed;
-            // Lookup the code
-            RecoveryCode c = RecoveryCode.load(code, RecoveryCode.CodeType.Recovery, data.Connector);
-            if (c != null)
-            {
-                // Check if to just confirm the code exists
-                if (newPassword == null)
-                    return RecoveryCodeEmail.Exists;
-                // Change the user's password
-                User usr = User.load(bsa, data.Connector, c.UserID);
-                usr.setPassword(bsa, newPassword);
-                User.UserCreateSaveStatus s = usr.save(bsa, data.Connector);
-                if (s != User.UserCreateSaveStatus.Success)
-                {
-                    status = s;
-                    return RecoveryCodeEmail.FailedUserPersist;
-                }
-                // Remove the code
-                c.remove(data.Connector);
-                return RecoveryCodeEmail.Success;
-            }
-            else
-                // Log as an attempt to authenticate - brute-force protection
-                AuthFailedAttempt.create(data.Connector, data.Request.UserHostAddress, DateTime.Now, AuthFailedAttempt.AuthType.RecoveryCode);
-            return RecoveryCodeEmail.Failed;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>

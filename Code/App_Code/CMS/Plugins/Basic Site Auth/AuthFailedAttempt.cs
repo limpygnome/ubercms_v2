@@ -41,7 +41,7 @@ namespace CMS.BasicSiteAuth
         {
             Login = 10,
             LoginThirdParty = 11,
-            RecoveryCode = 20,
+            Recovery = 20,
             API = 30,
             Other = 0
         }
@@ -60,6 +60,16 @@ namespace CMS.BasicSiteAuth
             this.loaded = this.modified = false;
         }
         // Methods - Database Persistence ******************************************************************************
+        /// <summary>
+        /// Creates and persists a model.
+        /// </summary>
+        /// <param name="data">The data for the current request.</param>
+        /// <param name="type">The type of authentication failure.</param>
+        /// <returns>Either the model if persisted or null.</returns>
+        public static AuthFailedAttempt create(Data data, AuthType type)
+        {
+            return create(data.Connector, data.Request.UserHostAddress, DateTime.Now, type);
+        }
         /// <summary>
         /// Creates and persists a model.
         /// </summary>

@@ -144,7 +144,7 @@ namespace CMS
                 {
                     // Log the failed attempt
                     AccountEvent.create(requestData.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__INCORRECT_AUTH__UUID, DateTime.Now, userID, requestData.Request.UserHostAddress, SettingsNode.DataType.String, requestData.Request.UserAgent, SettingsNode.DataType.String);
-                    AuthFailedAttempt.create(requestData.Connector, requestData.Request.UserHostAddress, DateTime.Now, AuthFailedAttempt.AuthType.Login);
+                    AuthFailedAttempt.create(requestData, AuthFailedAttempt.AuthType.Login);
                     errorMessage = "Incorrect username/password!";
                     return false;
                 }
@@ -223,7 +223,8 @@ namespace CMS
                         // Deploy either a welcome or verification e-mail
                         if (emailVerification)
                         {
-                            RecoveryCode code = RecoveryCode.create(data.Connector, BaseUtils.generateRandomString(18), RecoveryCode.CodeType.AccountVerification, u.userID, DateTime.Now);
+                            // Create an e-mail verification recovery code and check we created it
+                            RecoveryCode code = RecoveryCode.create(data.Connector, RecoveryCode.CodeType.AccountVerification, u);
                             if (code == null)
                             {
                                 // Fall-back to a verified account
@@ -272,12 +273,26 @@ namespace CMS
                 }
             }
             /// <summary>
+            /// Loads a user from the database by e-mail.
+            /// </summary>
+            /// <param name="bsa">BSA plugin.</param>
+            /// <param name="conn">Database connector.</param>
+            /// <param name="email">The e-mail of the user.</param>
+            /// <returns>A model or null.</returns>
+            public static User loadByEmail(BasicSiteAuth bsa, Connector conn, string email)
+            {
+                PreparedStatement ps = new PreparedStatement("SELECT * FROM bsa_users WHERE email=?email;");
+                ps["email"] = email;
+                Result result = conn.queryRead(ps);
+                return result.Count == 1 ? load(bsa, result[0]) : null;
+            }
+            /// <summary>
             /// Loads a user from the database.
             /// </summary>
             /// <param name="bsa">BSA plugin.</param>
             /// <param name="conn">Database connector.</param>
             /// <param name="username">The username of the user.</param>
-            /// <returns>Either the model or null.</returns>
+            /// <returns>A the model or null.</returns>
             public static User load(BasicSiteAuth bsa, Connector conn, string username)
             {
                 PreparedStatement ps = new PreparedStatement("SELECT * FROM bsa_users WHERE username=?username;");
@@ -291,10 +306,12 @@ namespace CMS
             /// <param name="bsa">BSA plugin.</param>
             /// <param name="conn">Database connector.</param>
             /// <param name="userID">The identifier of the user.</param>
-            /// <returns>Either the model or null.</returns>
+            /// <returns>A the model or null.</returns>
             public static User load(BasicSiteAuth bsa, Connector conn, int userID)
             {
-                Result result = conn.queryRead("SELECT * FROM bsa_users WHERE userid='" + SQLUtils.escape(userID.ToString()) + "';");
+                PreparedStatement ps = new PreparedStatement("SELECT * FROM bsa_users WHERE userid=?userid;");
+                ps["userid"] = userID;
+                Result result = conn.queryRead(ps);
                 return result.Count == 1 ? load(bsa, result[0]) : null;
             }
             /// <summary>
@@ -302,7 +319,7 @@ namespace CMS
             /// </summary>
             /// <param name="bsa">BSA plugin.</param>
             /// <param name="data">Database data.</param>
-            /// <returns>Either the model or null.</returns>
+            /// <returns>A the model or null.</returns>
             public static User load(BasicSiteAuth bsa, ResultRow data)
             {
                 UserGroup ug = bsa.UserGroups[data.get2<int>("groupid")];
@@ -324,6 +341,7 @@ namespace CMS
             /// <summary>
             /// Persists the user's data to the database.
             /// </summary>
+            /// <param name="bsa">BSA plugin.</param>
             /// <param name="conn">Database connector.</param>
             /// <returns>The state from attempting to persist the user.</returns>
             public UserCreateSaveStatus save(BasicSiteAuth bsa, Connector conn)
@@ -336,6 +354,7 @@ namespace CMS
             /// Warning: this method is solely used (in some cases) for validating data and may accept dirty-data. Thus
             /// if you extend this method, ensure you validate any input data properly!
             /// </summary>
+            /// <param name="bsa">BSA plugin.</param>
             /// <param name="conn">Database connector.</param>
             /// <param name="skipValidation">Skip validation of parameters; possibly quite dangerous - use with extreme caution!</param>
             /// <returns>The state from attempting to persist the user.</returns>
@@ -418,17 +437,24 @@ namespace CMS
             /// <summary>
             /// Sets the user's password. This method will generate a new unique salt for the user, as well as hash
             /// the specified new password.
+            /// 
+            /// Note: this does not persist the model or the password.
             /// </summary>
             /// <param name="newPassword">The plain-text new password, to be hashed.</param>
-            /// <returns>The status of changing the password.</returns>
+            /// <returns>The status of changing the password - either Success, InvalidPassword_Length or InvalidPassword_Security.</returns>
             public UserCreateSaveStatus setPassword(BasicSiteAuth bsa, string newPassword)
             {
-                if (newPassword.ToLower() == "password" || newPassword == "123456" || newPassword == "12345678" || newPassword == "abc123" || newPassword == "qwerty")
+                if (newPassword == null || newPassword.ToLower() == "password" || newPassword == "123456" || newPassword == "12345678" || newPassword == "abc123" || newPassword == "qwerty")
                     return UserCreateSaveStatus.InvalidPassword_Security;
-                Random rand = new Random((int)DateTime.Now.Ticks);
-                this.passwordSalt = BaseUtils.generateRandomString(rand.Next(BasicSiteAuth.BSA_UNIQUE_USER_HASH_MIN, BasicSiteAuth.BSA_UNIQUE_USER_HASH_MAX));
-                this.password = bsa.generateHash(newPassword, this.passwordSalt);
-                return UserCreateSaveStatus.Success;
+                else if (newPassword.Length < Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() || newPassword.Length > Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>())
+                    return UserCreateSaveStatus.InvalidPassword_Length;
+                else
+                {
+                    Random rand = new Random((int)DateTime.Now.Ticks);
+                    this.passwordSalt = BaseUtils.generateRandomString(rand.Next(BasicSiteAuth.BSA_UNIQUE_USER_HASH_MIN, BasicSiteAuth.BSA_UNIQUE_USER_HASH_MAX));
+                    this.password = bsa.generateHash(newPassword, this.passwordSalt);
+                    return UserCreateSaveStatus.Success;
+                }
             }
             // Methods - Properties ************************************************************************************
             /// <summary>

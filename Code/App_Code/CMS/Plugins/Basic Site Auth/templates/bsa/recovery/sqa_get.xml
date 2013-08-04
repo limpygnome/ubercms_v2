@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/sqa_get]]></path><description><![CDATA[The secret question/answer recovery page to get a username.]]></description><html><![CDATA[<h2>Account Recovery - Secret Question/Answer</h2>
+<form method="post" action="/account_recovery/sqa">
+	<div class="TABLE">
+		<div class="ROW">
+			<div class="CELL2">
+				Username:
+			</div>
+			<div class="CELL2">
+				<input type="text" name="username" value="<!--:bsa_sqa_username-->" placeholder="Username..." />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Captcha:
+			</div>
+			<div class="CELL2">
+				<!--include(captcha/embed)-->
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" value="Continue" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<!--IF:bsa_sqa_error-->
+<p class="ERROR">
+	<!--bsa_sqa_error-->
+</p>
+<!--ENDIF:bsa_sqa_error-->]]></html></template>

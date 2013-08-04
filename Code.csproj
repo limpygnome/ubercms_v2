@@ -89,6 +89,7 @@
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AuthFailedAttempt.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BasicSiteAuth.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BSAEmails.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AccountActions.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\BSAUtils.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\RecoveryCode.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\User.cs" />

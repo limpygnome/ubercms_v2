@@ -23,6 +23,7 @@
  *                      2013-07-24      Support for null values.
  *                      2013-07-28      Added direct parameter execution and redone concurrency issues with connector
  *                                      type-switching for cross-platform compatibility.
+ *                      2013-08-04      Fixed critical bug in executeUpdate with UpdateAttribute being wrongly compiled.
  * 
  * *********************************************************************************************************************
  * A class for compiling large SQL statements.
@@ -229,7 +230,7 @@ namespace CMS.Base
                             s.Append(" WHERE ").Append(whereClauses);
                         else if(updateAttribute != null)
                         {
-                            s.Append(" WHERE ?ua_").Append(updateAttribute);
+                            s.Append(" WHERE ").Append(updateAttribute).Append("=?ua_").Append(updateAttribute);
                             ps["ua_" + updateAttribute] = updateValue;
                         }
                         ps.Query = s.Append(";").ToString();

@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS bsa_account_events
 );
 CREATE TABLE IF NOT EXISTS bsa_recovery_codes
 (
-	code VARCHAR(32) PRIMARY KEY,
+	code VARCHAR(16) PRIMARY KEY,
 	userid INT NOT NULL,
 	FOREIGN KEY(`userid`) REFERENCES `bsa_users`(`userid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	datetime_created TIMESTAMP NOT NULL,

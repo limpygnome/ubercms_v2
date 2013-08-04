@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/email_get]]></path><description><![CDATA[The page which asks for the e-mail of a user.]]></description><html><![CDATA[<h2>Account Recovery - E-Mail</h2>
+<form method="post" action="/account_recovery/email">
+	<div class="TABLE">
+		<div class="ROW">
+			<div class="CELL2">
+				E-mail:
+			</div>
+			<div class="CELL2">
+				<input type="text" name="email" placeholder="Email of your account..." />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Captcha:
+			</div>
+			<div class="CELL2">
+				<!--include(captcha/embed)-->
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" value="Send Recovery Code" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<!--IF:bsa_recovery_email_error-->
+<p class="ERROR">
+	<!--bsa_recovery_email_error-->
+</p>
+<!--ENDIF:bsa_recovery_email_error-->]]></html></template>

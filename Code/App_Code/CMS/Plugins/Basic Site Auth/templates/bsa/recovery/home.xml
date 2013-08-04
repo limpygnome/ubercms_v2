@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/home]]></path><description><![CDATA[The homepage for the account recovery area.]]></description><html><![CDATA[<h2>Account Recovery</h2>
+<p>
+	Recovery options:
+</p>
+<p>
+	<a href="/account_recovery/sqa" class="BUTTON">Secret Question/Answer</a>
+	<a href="/account_recovery/email" class="BUTTON">E-mail </a>
+</p>]]></html></template>

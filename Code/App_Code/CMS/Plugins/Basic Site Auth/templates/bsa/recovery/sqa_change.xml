@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/sqa_change]]></path><description><![CDATA[The secret question/answer recovery page to answer the secret question and change password.]]></description><html><![CDATA[<h2>Account Recovery - Secret Question/Answer</h2>
+<form method="post" action="/account_recovery/sqa">
+	<div class="TABLE">
+		<div class="ROW">
+			<div class="CELL2">
+				Username:
+			</div>
+			<div class="CELL2">
+				<!--:bsa_sqa_username-->
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Secret Question:
+			</div>
+			<div class="CELL2">
+				<!--bsa_sqa_question-->
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Secret Answer:
+			</div>
+			<div class="CELL2">
+				<input type="text" name="secret_answer" value="<!--:bsa_sqa_answer-->" placeholder="Secret answer..." />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				New Password:
+			</div>
+			<div class="CELL2">
+				<input type="password" name="password" placeholder="Password..." />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Retype Password:
+			</div>
+			<div class="CELL2">
+				<input type="password" name="password_confirm" placeholder="Retype password..." />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Captcha:
+			</div>
+			<div class="CELL2">
+				<!--include(captcha/embed)-->
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" value="Answer" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+	<input type="hidden" name="username" value="<!--:bsa_sqa_username-->" />
+</form>
+<!--IF:bsa_sqa_error-->
+<p class="ERROR">
+	<!--bsa_sqa_error-->
+</p>
+<!--ENDIF:bsa_sqa_error-->]]></html></template>

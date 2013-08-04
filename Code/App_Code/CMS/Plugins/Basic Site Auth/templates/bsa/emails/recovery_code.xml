@@ -1,1 +1,18 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/emails/recovery_code]]></path><description><![CDATA[The e-mail sent to an account when attempting recovery using a code.]]></description><html><![CDATA[]]></html></template>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/emails/recovery_code]]></path><description><![CDATA[The e-mail sent to an account when attempting recovery using a code.]]></description><html><![CDATA[<p>
+	Hello <!--username-->!
+</p>
+<p>
+	An account recovery via e-mail has been requested from the IP <!--host_ip--> at <!--datetime--> at the community <!--site_title-->. Click the link below to change your account password:
+</p>
+<p>
+	<a href="<!--site_url-->/account_recovery/email/<!--recovery_code-->"><!--site_url-->/account_recovery/email/<!--recovery_code--></a>
+</p>
+<p>
+	If you did not request e-mail recovery, check your <a href="<!--site_url-->/account_log">account log</a> for more details or contact us:
+</p>
+<p>
+	<a href="<!--site_url-->/contact"><!--site_url-->/contact</a>
+</p>
+<p>
+	Thank-you!
+</p>]]></html></template>

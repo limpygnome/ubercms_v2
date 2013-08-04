@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/email_change]]></path><description><![CDATA[The page which enables a user to change their password from a recovery e-mail code.]]></description><html><![CDATA[<h2>Account Recovery - E-mail</h2>
+<form method="post" action="/account_recovery/email/<!--bsa_recovery_email_code-->">
+	<div class="TABLE">
+		<div class="ROW">
+			<div class="CELL2">
+				New Password:
+			</div>
+			<div class="CELL2">
+				<input type="password" name="password" placeholder="New password..." />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Retype New Password:
+			</div>
+			<div class="CELL2">
+				<input type="password" name="password_confirm" placeholder="Retype password..." />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" value="Change" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+</form>
+<!--IF:bsa_recovery_email_error-->
+<p class="ERROR">
+	<!--bsa_recovery_email_error-->
+</p>
+<!--ENDIF:bsa_recovery_email_error-->]]></html></template>
