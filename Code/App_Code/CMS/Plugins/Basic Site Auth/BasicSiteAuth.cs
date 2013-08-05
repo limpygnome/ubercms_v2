@@ -171,7 +171,7 @@ namespace CMS.BasicSiteAuth
             accountEventTypes = null;
         }
         // Methods - Handlers ******************************************************************************************
-        public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        public override bool install(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Setup handlers
             HandlerInfo.RequestEnd = true;
@@ -274,7 +274,7 @@ namespace CMS.BasicSiteAuth
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_MODERATOR_GROUPID, SETTINGS_GROUP_MODERATOR_GROUPID__DESCRIPTION, ugModerator.GroupID);
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_ADMINISTRATOR_GROUPID, SETTINGS_GROUP_ADMINISTRATOR_GROUPID__DESCRIPTION, ugAdministrator.GroupID);
             // Save settings
-            Core.Settings.save(Core.Connector);
+            Core.Settings.save(conn);
             // Create default account event types
             // -- Incorrect authentication
             if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__INCORRECT_AUTH__UUID), ACCOUNT_EVENT__INCORRECT_AUTH__TITLE, ACCOUNT_EVENT__INCORRECT_AUTH__DESC, ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_CLASSPATH, ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_FUNCTION, ref messageOutput) == null)
@@ -310,7 +310,7 @@ namespace CMS.BasicSiteAuth
                 messageOutput.AppendLine("Warning: failed to create root user - '").Append(urStatus.ToString()).Append("'!");
             return true;
         }
-        public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        public override bool uninstall(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Check if the user table exists; if so, abort and inform the user to manually remove it
 #if !DEBUG
@@ -329,10 +329,10 @@ namespace CMS.BasicSiteAuth
             if (!BaseUtils.executeSQL(PathSQL + "/uninstall.sql", conn, ref messageOutput))
                 return false;
             // Remove settings
-            Core.Settings.remove(this);
+            Core.Settings.remove(conn, this);
             return true;
         }
-        public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        public override bool enable(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Add directives
             if (!BaseUtils.preprocessorDirective_Add("BSA", ref messageOutput))
@@ -344,7 +344,7 @@ namespace CMS.BasicSiteAuth
             if (!BaseUtils.contentInstall(PathContent, Core.PathContent, true, ref messageOutput))
                 return false;
             // Reserve URLs
-            if (!BaseUtils.urlRewritingInstall(this, new string[]
+            if (!BaseUtils.urlRewritingInstall(conn, this, new string[]
             {
                 "login",
                 "register",
@@ -355,23 +355,23 @@ namespace CMS.BasicSiteAuth
                 return false;
             return true;
         }
-        public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        public override bool disable(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Unreserve URLs
-            if (!BaseUtils.urlRewritingUninstall(this, ref messageOutput))
+            if (!BaseUtils.urlRewritingUninstall(conn, this, ref messageOutput))
                 return false;
             // Remove content
             if (!BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput))
                 return false;
             // Remove templates
-            if (!Core.Templates.uninstall(this, ref messageOutput))
+            if (!Core.Templates.uninstall(conn, this, ref messageOutput))
                 return false;
             // Remove directives
             if (!BaseUtils.preprocessorDirective_Remove("BSA", ref messageOutput))
                 return false;
             return true;
         }
-        public override bool handler_pluginStart(UberLib.Connector.Connector conn)
+        public override bool handler_pluginStart(Connector conn)
         {
             loadSalts();
             // Load user-groups
@@ -382,10 +382,14 @@ namespace CMS.BasicSiteAuth
         }
         public override void handler_pluginCycle()
         {
+            // Setup connector
+            Connector conn = Core.createConnector(false);
             // Clean old recovery codes
-            RecoveryCode.removeExpired(Core.Connector);
+            RecoveryCode.removeExpired(conn);
             // Delete old failed authentication attempts
-            AuthFailedAttempt.remove(Core.Connector);
+            AuthFailedAttempt.remove(conn);
+            // Dispose connector
+            conn.disconnect();
         }
         public override void  handler_requestEnd(Data data)
         {

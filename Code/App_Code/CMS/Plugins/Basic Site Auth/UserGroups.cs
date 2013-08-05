@@ -65,12 +65,13 @@ namespace CMS.BasicSiteAuth
         /// <summary>
         /// Removes a user-group. Also unpersists the data from the database.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="ug">The user-group to be removed.</param>
-        public void remove(UserGroup ug)
+        public void remove(Connector conn, UserGroup ug)
         {
             lock (this)
             {
-                Core.Connector.queryExecute("DELETE FROM bsa_user_groups WHERE groupid='" + SQLUtils.escape(ug.GroupID.ToString()) + "';");
+                conn.queryExecute("DELETE FROM bsa_user_groups WHERE groupid='" + SQLUtils.escape(ug.GroupID.ToString()) + "';");
                 if (groups.ContainsKey(ug.GroupID))
                     groups.Remove(ug.GroupID);
             }

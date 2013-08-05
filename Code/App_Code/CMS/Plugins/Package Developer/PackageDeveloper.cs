@@ -36,6 +36,7 @@ using System.Text;
 using System.Web;
 using Ionic.Zip;
 using CMS.Base;
+using UberLib.Connector;
 
 namespace CMS.Plugins
 {
@@ -50,28 +51,28 @@ namespace CMS.Plugins
         public PackageDeveloper(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
             : base(uuid, title, directory, state, handlerInfo)
         { }
-        public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        public override bool install(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             return true;
         }
-        public override bool uninstall(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        public override bool uninstall(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             return true;
         }
-        public override bool enable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        public override bool enable(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Install templates
             Core.Templates.install(conn, this, PathTemplates, ref messageOutput);
             // Install URL rewriting paths
-            BaseUtils.urlRewritingInstall(this, new string[] { "package_developer" }, ref messageOutput);
+            BaseUtils.urlRewritingInstall(conn, this, new string[] { "package_developer" }, ref messageOutput);
             return true;
         }
-        public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        public override bool disable(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Remove templates
-            Core.Templates.uninstall(this, ref messageOutput);
+            Core.Templates.uninstall(conn, this, ref messageOutput);
             // Remove URL rewriting paths
-            BaseUtils.urlRewritingUninstall(this, ref messageOutput);
+            BaseUtils.urlRewritingUninstall(conn, this, ref messageOutput);
             return true;
         }
         public override bool handler_handleRequest(Data data)
@@ -114,7 +115,7 @@ namespace CMS.Plugins
                 else
                 {
                     StringBuilder messageOutput = new StringBuilder();
-                    data[Core.Plugins.createFromDirectory(Core.BasePath + "/" + relativePath, ref messageOutput) ? SUCCESS_BOX_VARIDENT : ERROR_BOX_VARIDENT] = messageOutput.Length == 0 ? "No output from the operation." : HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />");
+                    data[Core.Plugins.createFromDirectory(data.Connector, Core.BasePath + "/" + relativePath, ref messageOutput) ? SUCCESS_BOX_VARIDENT : ERROR_BOX_VARIDENT] = messageOutput.Length == 0 ? "No output from the operation." : HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />");
                 }
             }
             else
@@ -274,7 +275,7 @@ namespace CMS.Plugins
             // Dump the templates
             StringBuilder messageOutput = new StringBuilder();
             messageOutput.Append("Dumping templates to '" + HttpUtility.HtmlEncode(dumpDest) + "'...<br />");
-            Core.Templates.dumpForPlugin(dumpDest, plugin, ref messageOutput);
+            Core.Templates.dumpForPlugin(data.Connector, dumpDest, plugin, ref messageOutput);
             messageOutput.Replace("\r", "").Replace("\n", "<br />");
             // Output page
             data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", messageOutput.ToString());
@@ -301,19 +302,19 @@ namespace CMS.Plugins
             switch (data.PathInfo[1])
             {
                 case "install":
-                    Core.Plugins.install(plugin, ref output);
+                    Core.Plugins.install(data.Connector, plugin, ref output);
                     break;
                 case "uninstall":
-                    Core.Plugins.uninstall(plugin, ref output);
+                    Core.Plugins.uninstall(data.Connector, plugin, ref output);
                     break;
                 case "enable":
-                    Core.Plugins.enable(plugin, ref output);
+                    Core.Plugins.enable(data.Connector, plugin, ref output);
                     break;
                 case "disable":
-                    Core.Plugins.disable(plugin, ref output);
+                    Core.Plugins.disable(data.Connector, plugin, ref output);
                     break;
                 case "remove":
-                    Core.Plugins.remove(plugin, false, ref output);
+                    Core.Plugins.remove(data.Connector, plugin, false, ref output);
                     break;
                 case "unload":
                     Core.Plugins.pluginUnload(plugin);
@@ -337,7 +338,7 @@ namespace CMS.Plugins
                     data["Title"] = "Package Developer - Core - Rebuild Handler Cache";
                     break;
                 case "reload_plugins":
-                    Core.Plugins.reload();
+                    Core.Plugins.reload(data.Connector);
                     messageOutput.AppendLine("Reloaded plugin runtime!");
                     data["Title"] = "Package Developer - Core - Reload Plugins";
                     break;

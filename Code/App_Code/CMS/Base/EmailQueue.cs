@@ -106,12 +106,15 @@ namespace CMS.Base
 			Result msgs;
 			MailMessage compiledMessage;
 			StringBuilder queryUpdate;
+            Connector conn;
 			while(true)
 			{
                 try
                 {
+                    // Setup the connector
+                    conn = Core.createConnector(false);
                     // Fetch the next message
-                    msgs = Core.Connector.queryRead(queryPollMessages);
+                    msgs = conn.queryRead(queryPollMessages);
                     // Send each message
                     queryUpdate = new StringBuilder();
                     foreach (ResultRow msg in msgs)
@@ -144,7 +147,10 @@ namespace CMS.Base
                     }
                     // Update the database
                     if(queryUpdate.Length > 0)
-                        Core.Connector.queryExecute(queryUpdate.ToString());
+                        conn.queryExecute(queryUpdate.ToString());
+                    // Dispose the connector
+                    conn.disconnect();
+                    conn = null;
                 }
                 catch (Exception ex)
                 {

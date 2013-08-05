@@ -69,14 +69,15 @@ namespace CMS.BasicSiteAuth
         /// <summary>
         /// Removes an event type from both the collection and the database.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="type">The account event type to be removed.</param>
-        public void remove(AccountEventType type)
+        public void remove(Connector conn, AccountEventType type)
         {
             lock (this)
             {
                 PreparedStatement ps = new PreparedStatement("DELETE FROM bsa_account_event_types WHERE type_uuid=?typeid;");
                 ps["typeid"] = type.TypeUUID.Bytes;
-                Core.Connector.queryExecute(ps);
+                conn.queryExecute(ps);
                 if (types.ContainsKey(type.TypeUUID.Hex))
                     types.Remove(type.TypeUUID.Hex);
             }

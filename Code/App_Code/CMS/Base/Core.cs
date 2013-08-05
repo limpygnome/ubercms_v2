@@ -30,6 +30,7 @@
  *                      2013-07-23      Updated the way settings are handled.
  *                      2013-08-01      Added DefaultHandler property.
  *                      2013-08-02      Improved error handling.
+ *                      2013-08-05      Core connector no longer contnued; likely to cause issues.
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -65,7 +66,6 @@ namespace CMS.Base
 		private static DatabaseType			dbType;								// The type of database connector to create (faster than checking config value each time).
 		private static string 				errorMessage;				        // Used to store the exception message when loading the core (if one occurs).
 		// Fields - Services/Connections/Data **************************************************************************
-		private static Connector			connector;							// The core connector.
 		private static Plugins				plugins;							// Plugin management.
 		private static EmailQueue			emailQueue;							// E-mail queue sending service.
 		private static Templates			templates;							// Template storage and rendering.
@@ -120,8 +120,8 @@ namespace CMS.Base
                                 fail("Invalid provider specified in configuration file!");
                                 break;
                         }
-                        connector = createConnector(true);
-                        if (connector == null)
+                        Connector conn = createConnector(false);
+                        if (conn == null)
                         {
                             fail("Failed to create connector to database server (connection issue)!");
                             return;
@@ -129,13 +129,13 @@ namespace CMS.Base
                         else
                         {
                             // Setup services/data
-                            if ((settings = Settings.loadFromDatabase(connector)) == null)
+                            if ((settings = Settings.loadFromDatabase(conn)) == null)
                                 fail(errorMessage ?? "Failed to load the settings stored in the database!");
                             else if ((emailQueue = EmailQueue.create()) == null)
                                 fail("Failed to start e-mail queue service!");
-                            else if ((templates = Templates.create()) == null)
+                            else if ((templates = Templates.create(conn)) == null)
                                 fail("Failed to load templates!");
-                            else if ((plugins = Plugins.load()) == null)
+                            else if ((plugins = Plugins.load(conn)) == null)
                                 fail(errorMessage ?? "Failed to load plugins!");
                             else
                             {
@@ -144,9 +144,11 @@ namespace CMS.Base
                                 emailQueue.start();
                                 // Invoke plugin handlers
                                 foreach (Plugin p in plugins.Fetch)
-                                    if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStart && !p.handler_pluginStart(connector))
+                                    if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStart && !p.handler_pluginStart(conn))
                                         plugins.pluginUnload(p);
                             }
+                            // Dispose connector
+                            conn.disconnect();
                         }
                     }
 				}
@@ -167,22 +169,25 @@ namespace CMS.Base
 		{
 			lock(typeof(Core))
 			{
+                // Setup connector
+                Connector conn = createConnector(false);
                 // Invoke handlers
                 if (plugins != null)
                 {
                     foreach (Plugin p in plugins.Fetch)
                         if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStop)
-                            p.handler_pluginStop(connector);
+                            p.handler_pluginStop(conn);
                     plugins = null;
                 }
-				// Dispose
-                basePath = null;
-                dbType = DatabaseType.None;
-                if(connector != null)
-					connector.disconnect();
-				connector = null;
+                // Dispose connector
+                conn.disconnect();
+                conn = null;
+				// Dispose services
 				if(emailQueue != null)
 					emailQueue.stop();
+                // Dispose core
+                basePath = null;
+                dbType = DatabaseType.None;
 				emailQueue = null;
 				templates = null;
 				settingsDisk = null;
@@ -220,7 +225,7 @@ namespace CMS.Base
         /// Creates a database connection.
         /// </summary>
         /// <param name="persist">Indicates if the connection should be persistent.</param>
-        /// <returns></returns>
+        /// <returns>Database connector.</returns>
 		public static Connector createConnector(bool persist)
 		{
 			switch(dbType)
@@ -402,19 +407,6 @@ namespace CMS.Base
             {
                 errorMessage = value;
             }
-		}
-        /// <summary>
-        /// The persistent database connection used by the core and its objects; thus no client-dependent properties
-        /// should be used with this connector, since other multi-threaded objects/services may be using the
-        /// connector at the same time. If you require client-dependent properties, you can create a new seperate
-        /// connector using the createConnector method.
-        /// </summary>
-		public static Connector Connector
-		{
-			get
-			{
-				return connector;
-			}
 		}
         /// <summary>
         /// Core settings loaded from disk; this collection is read-only (for safety).

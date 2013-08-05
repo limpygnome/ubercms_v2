@@ -205,7 +205,7 @@ namespace CMS.Base
                     // Clear any previous templates
                     primaryCache.Clear();
                     // Copy the templates from the database
-                    foreach (ResultRow template in Core.Connector.queryRead("SELECT path, html FROM cms_templates"))
+                    foreach (ResultRow template in conn.queryRead("SELECT path, html FROM cms_templates;"))
                         primaryCache.Add(template["path"], template["html"]);
                 }
             }
@@ -219,9 +219,9 @@ namespace CMS.Base
         /// <param name="pathDestination">The physical path to dump the templates.</param>
         /// <param name="path">The template parent path; anything matching the path from the left-side will be dumped e.g. specifying \example will dump everything starting with \example e.g. \example, \example\a, etc.</param>
         /// <param name="messageOutput">Message output.</param>
-        public void dump(string pathDestination, string path, ref StringBuilder messageOutput)
+        public void dump(Connector conn, string pathDestination, string path, ref StringBuilder messageOutput)
         {
-            dump(pathDestination, path, null, ref messageOutput);
+            dump(conn, pathDestination, path, null, ref messageOutput);
         }
         /// <summary>
         /// Dumps templates from the database to disk; useful for development.
@@ -232,11 +232,11 @@ namespace CMS.Base
         /// <param name="pathDestination">The physical path to dump the templates.</param>
         /// <param name="plugin">The owner of the templates to dump; can be null to dump core CMS templates</param>
         /// <param name="messageOutput">Message output.</param>
-        public void dumpForPlugin(string pathDestination, Plugin plugin, ref StringBuilder messageOutput)
+        public void dumpForPlugin(Connector conn, string pathDestination, Plugin plugin, ref StringBuilder messageOutput)
         {
-            dump(pathDestination, null, plugin, ref messageOutput);
+            dump(conn, pathDestination, null, plugin, ref messageOutput);
         }
-        private void dump(string pathDestination, string path, Plugin plugin, ref StringBuilder messageOutput)
+        private void dump(Connector conn, string pathDestination, string path, Plugin plugin, ref StringBuilder messageOutput)
         {
             // Delete destination contents if it already exists
             if (Directory.Exists(pathDestination))
@@ -255,7 +255,7 @@ namespace CMS.Base
             // Write the templates to the destination
             XmlWriter w;
             int count = 0;
-            foreach (ResultRow template in Core.Connector.queryRead("SELECT path, description, html FROM cms_templates WHERE " + (path != null ? "path LIKE '" + SQLUtils.escape(path) + "%'" : plugin != null ? "uuid=" + plugin.UUID.NumericHexString : "uuid IS NULL")))
+            foreach (ResultRow template in conn.queryRead("SELECT path, description, html FROM cms_templates WHERE " + (path != null ? "path LIKE '" + SQLUtils.escape(path) + "%'" : plugin != null ? "uuid=" + plugin.UUID.NumericHexString : "uuid IS NULL") + ";"))
             {
                 // Create dir and file info
                 string dir = pathDestination + "/" + Path.GetDirectoryName(template["path"]);
@@ -327,7 +327,7 @@ namespace CMS.Base
                     }
                 }
                 conn.queryExecute("COMMIT;");
-                reload(Core.Connector);
+                reload(conn);
             }
             catch (Exception ex)
             {
@@ -341,11 +341,11 @@ namespace CMS.Base
         /// </summary>
         /// <param name="path">The template parent path; anything matching the path from the left-side will be dumped e.g. specifying \example will dump everything starting with \example e.g. \example, \example\a, etc.</param>
         /// <returns>True if successful, false if the operation fails.</returns>
-        public bool uninstall(string path, ref StringBuilder messageOutput)
+        public bool uninstall(Connector conn, string path, ref StringBuilder messageOutput)
         {
             try
             {
-                Core.Connector.queryExecute("DELETE FROM cms_templates WHERE path LIKE '" + SQLUtils.escape(path) + "%'");
+                conn.queryExecute("DELETE FROM cms_templates WHERE path LIKE '" + SQLUtils.escape(path) + "%';");
             }
             catch (Exception ex)
             {
@@ -354,7 +354,7 @@ namespace CMS.Base
             }
             try
             {
-                reload(Core.Connector);
+                reload(conn);
             }
             catch (Exception ex)
             {
@@ -369,7 +369,7 @@ namespace CMS.Base
         /// <param name="plugin">The owner of the templates to be removed.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation fails.</returns>
-        public bool uninstall(Plugin plugin, ref StringBuilder messageOutput)
+        public bool uninstall(Connector conn, Plugin plugin, ref StringBuilder messageOutput)
         {
             if (plugin == null)
             {
@@ -378,7 +378,7 @@ namespace CMS.Base
             }
             try
             {
-                Core.Connector.queryExecute("DELETE FROM cms_templates WHERE uuid=" + plugin.UUID.NumericHexString + ";");
+                conn.queryExecute("DELETE FROM cms_templates WHERE uuid=" + plugin.UUID.NumericHexString + ";");
             }
             catch (Exception ex)
             {
@@ -387,7 +387,7 @@ namespace CMS.Base
             }
             try
             {
-                reload(Core.Connector);
+                reload(conn);
             }
             catch (Exception ex)
             {
@@ -527,13 +527,13 @@ namespace CMS.Base
 		/// <summary>
 		/// Creates a new instance of this class, configured and cache loaded (if loading from cache).
 		/// </summary>
-		public static Templates create()
+		public static Templates create(Connector conn)
 		{
 			Templates templates = new Templates();
 			// Cache templates
-            templates.reload(Core.Connector);
+            templates.reload(conn);
             // Load function mappings
-            templates.reloadHandlerFunctions(Core.Connector);
+            templates.reloadHandlerFunctions(conn);
 			return templates;
 		}
         // Methods - Static - Default Handers **************************************************************************

@@ -28,6 +28,7 @@ using System;
 using System.Drawing;
 using System.Text;
 using CMS.Base;
+using UberLib.Connector;
 
 namespace CMS.Plugins
 {
@@ -74,7 +75,7 @@ namespace CMS.Plugins
                     return false;
             }
         }
-        public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
+        public override bool install(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             // Install settings
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_RANDOM_TEXT_MIN, SETTINGS_RANDOM_TEXT_MIN__DESCRIPTION, SETTINGS_RANDOM_TEXT_MIN__DEFAULT);
@@ -86,13 +87,13 @@ namespace CMS.Plugins
             Core.Settings.save(conn);
             return true;
         }
-        public override bool uninstall(UberLib.Connector.Connector conn, ref StringBuilder messageOutput)
+        public override bool uninstall(Connector conn, ref StringBuilder messageOutput)
         {
             // Uninstall settings
-            Core.Settings.remove(UUID);
+            Core.Settings.remove(conn, UUID);
             return true;
         }
-        public override bool enable(UberLib.Connector.Connector conn, ref StringBuilder messageOutput)
+        public override bool enable(Connector conn, ref StringBuilder messageOutput)
         {
             // Install templates
             if (!Core.Templates.install(conn, this, PathTemplates, ref messageOutput))
@@ -101,20 +102,20 @@ namespace CMS.Plugins
             if (!Base.BaseUtils.preprocessorDirective_Add("captcha", ref messageOutput))
                 return false;
             // Reserve URLs
-            if (!BaseUtils.urlRewritingInstall(this, new string[] { "CAPTCHA" }, ref messageOutput))
+            if (!BaseUtils.urlRewritingInstall(conn, this, new string[] { "CAPTCHA" }, ref messageOutput))
                 return false;
             return true;
         }
-        public override bool disable(UberLib.Connector.Connector conn, ref StringBuilder messageOutput)
+        public override bool disable(Connector conn, ref StringBuilder messageOutput)
         {
             // Unreserve URLs
-            if (!BaseUtils.urlRewritingUninstall(this, ref messageOutput))
+            if (!BaseUtils.urlRewritingUninstall(conn, this, ref messageOutput))
                 return false;
             // Remove directives
             if (!BaseUtils.preprocessorDirective_Remove("CAPTCHA", ref messageOutput))
                 return false;
             // Remove templates
-            if (!Core.Templates.uninstall(this, ref messageOutput))
+            if (!Core.Templates.uninstall(conn, this, ref messageOutput))
                 return false;
             return true;
         }

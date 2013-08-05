@@ -385,11 +385,12 @@ namespace CMS.Base
         /// <summary>
         /// Reserves multiple URL rewriting paths.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="plugin">The owner of the paths; cannot be null.</param>
         /// <param name="paths">String array consisting of the paths to reserve.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation fails.</returns>
-        public static bool urlRewritingInstall(Plugin plugin, string[] paths, ref StringBuilder messageOutput)
+        public static bool urlRewritingInstall(Connector conn, Plugin plugin, string[] paths, ref StringBuilder messageOutput)
         {
             if (paths.Length == 0) // Check we have work to do, else we'll just skip straight out.
                 return true;
@@ -404,7 +405,7 @@ namespace CMS.Base
                 foreach (string s in paths)
                     query.Append("(").Append(plugin.UUID.NumericHexString).Append(", '").Append(SQLUtils.escape(s)).Append("'),");
                 query.Remove(query.Length - 1, 1).Append(";");
-                Core.Connector.queryExecute(query.ToString());
+                conn.queryExecute(query.ToString());
             }
             catch (Exception ex)
             {
@@ -416,21 +417,23 @@ namespace CMS.Base
         /// <summary>
         /// Uninstalls all of the URL rewriting reservations associated with the specified plugin.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="plugin">The owner of the paths; cannot be null.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation fails.</returns>
-        public static bool urlRewritingUninstall(Plugin plugin, ref StringBuilder messageOutput)
+        public static bool urlRewritingUninstall(Connector conn, Plugin plugin, ref StringBuilder messageOutput)
         {
-            return urlRewritingUninstall(plugin, null, ref messageOutput);
+            return urlRewritingUninstall(conn, plugin, null, ref messageOutput);
         }
         /// <summary>
         /// Uninstalls all of the URL rewriting reservations associated with the specified plugin.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="plugin">The owner of the paths; cannot be null.</param>
         /// <param name="path">The starting path of elements to be deleted. If you specify e.g. \example, the paths \example, \example\a, \example\b would be deleted.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation fails.</returns>
-        public static bool urlRewritingUninstall(Plugin plugin, string path, ref StringBuilder messageOutput)
+        public static bool urlRewritingUninstall(Connector conn, Plugin plugin, string path, ref StringBuilder messageOutput)
         {
             if (plugin == null)
             {
@@ -440,9 +443,9 @@ namespace CMS.Base
             try
             {
                 if (path == null)
-                    Core.Connector.queryExecute("DELETE FROM cms_urlrewriting WHERE uuid=" + plugin.UUID.NumericHexString + ";");
+                    conn.queryExecute("DELETE FROM cms_urlrewriting WHERE uuid=" + plugin.UUID.NumericHexString + ";");
                 else
-                    Core.Connector.queryExecute("DELETE FROM cms_urlrewriting WHERE full_path LIKE '" + SQLUtils.escape(path) + "%';");
+                    conn.queryExecute("DELETE FROM cms_urlrewriting WHERE full_path LIKE '" + SQLUtils.escape(path) + "%';");
             }
             catch (Exception ex)
             {

@@ -143,18 +143,19 @@ namespace CMS.Base
         /// <summary>
         /// Dynamically loads a plugin into the CMS's runtime. This does not rebuild the plugin handler cache.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="uuid">The identifier of the plugin; can be null without core failure occurring.</param>
         /// <param name="coreError">Indicates if the core should be stopped if the plugin fails to load.</param>
         /// <param name="messageOutput">A place for outputting errors and warnings; can be null.</param>
         /// <returns>True if successful, false if the operation failed.</returns>
-        public bool pluginLoad(UUID uuid, bool coreError, ref StringBuilder messageOutput)
+        public bool pluginLoad(Connector conn, UUID uuid, bool coreError, ref StringBuilder messageOutput)
         {
             if (uuid == null)
                 return false;
             try
             {
                 // Retrieve the plugin's data from the database
-                Result result = Core.Connector.queryRead("SELECT * FROM cms_view_plugins_loadinfo WHERE uuid_raw=" + uuid.NumericHexString + ";");
+                Result result = conn.queryRead("SELECT * FROM cms_view_plugins_loadinfo WHERE uuid_raw=" + uuid.NumericHexString + ";");
                 if (result.Count != 1)
                 {
                     if(coreError)
@@ -263,10 +264,11 @@ namespace CMS.Base
         /// <summary>
         /// Creates a plugin from a zip-file.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="pathToZip">The path to the zip file.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation failed.</returns>
-        public bool createFromZip(string pathToZip, ref StringBuilder messageOutput)
+        public bool createFromZip(Connector conn, string pathToZip, ref StringBuilder messageOutput)
         {
             lock(this)
             {
@@ -297,7 +299,7 @@ namespace CMS.Base
                     doc.Load(outputDir + "/Plugin.config");
                     directory = Core.BasePath + "/" + doc["plugin"]["directory"].InnerText;
                     UUID uuid = UUID.createFromHex(doc["plugin"]["uuid"].InnerText);
-                    if (plugins.ContainsKey(uuid.HexHyphens) || Core.Connector.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
+                    if (plugins.ContainsKey(uuid.HexHyphens) || conn.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
                     {
                         success = false;
                         messageOutput.Append("UUID (univerisally unique identifier) '").Append(uuid.HexHyphens).Append("' already exists! It's likely the plugin has already been installed.").AppendLine();
@@ -328,7 +330,7 @@ namespace CMS.Base
                 }
                 // Create a new plugin from the directory
                 if (success)
-                    success = createFromDirectory(directory, ref messageOutput);
+                    success = createFromDirectory(conn, directory, ref messageOutput);
                 // If the installation failed, remove the directory
                 if (!success)
                 {
@@ -349,10 +351,11 @@ namespace CMS.Base
         /// the plugin files have only been recently added (the class won't exist in the runtime and the core will
         /// fail).
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="directoryPath">The directory of the new plugin.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation failed.</returns>
-        public bool createFromDirectory(string directoryPath, ref StringBuilder messageOutput)
+        public bool createFromDirectory(Connector conn, string directoryPath, ref StringBuilder messageOutput)
         {
             lock (this)
             {
@@ -386,7 +389,7 @@ namespace CMS.Base
                     return false;
                 }
                 // Check the UUID does not exist
-                if (plugins.ContainsKey(uuid.HexHyphens) || Core.Connector.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
+                if (plugins.ContainsKey(uuid.HexHyphens) || conn.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
                 {
                     messageOutput.Append("UUID (univerisally unique identifier) '").Append(uuid.HexHyphens).Append("' already exists! It's likely the plugin has already been installed.").AppendLine();
                     return false;
@@ -406,7 +409,7 @@ namespace CMS.Base
                     ps["directory"] = directory;
                     ps["classpath"] = classPath;
                     ps["priority"] = ((int)priority).ToString();
-                    Core.Connector.queryExecute(ps);
+                    conn.queryExecute(ps);
                 }
                 catch (Exception ex)
                 {
@@ -414,7 +417,7 @@ namespace CMS.Base
                     return false;
                 }
                 // Load the plugin into the runtime, if the class is available (non-critical operation)
-                if (!pluginLoad(uuid, false, ref messageOutput))
+                if (!pluginLoad(conn, uuid, false, ref messageOutput))
                     messageOutput.AppendLine("Warning: could not load the new plugin into the virtual runtime of the CMS. If the plugin files have been added during this operation, ignore this message; else restart the application pool!");
                 else
                     try
@@ -432,10 +435,11 @@ namespace CMS.Base
         /// <summary>
         /// Installs a plugin.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="plugin">The plugin to be installed.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation failed.</returns>
-        public bool install(Plugin plugin, ref StringBuilder messageOutput)
+        public bool install(Connector conn, Plugin plugin, ref StringBuilder messageOutput)
         {
             lock (this)
             {
@@ -454,7 +458,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PreInstall, plugin))
+                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(conn, Plugin.PluginAction.PreInstall, plugin))
                         {
                             messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -463,7 +467,7 @@ namespace CMS.Base
                     // Invoke install handler of plugin
                     try
                     {
-                        if (!plugin.install(Core.Connector, ref messageOutput))
+                        if (!plugin.install(conn, ref messageOutput))
                             return false;
                     }
                     catch (Exception ex)
@@ -474,11 +478,11 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.Disabled;
-                    plugin.save(Core.Connector);
+                    plugin.save(conn);
                     // Invoke post-action handlers
                     foreach (Plugin p in Fetch)
                         if (plugin != p && p.HandlerInfo.PluginAction)
-                            p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PostInstall, plugin);
+                            p.handler_pluginAction(conn, Plugin.PluginAction.PostInstall, plugin);
                 }
             }
             return true;
@@ -486,10 +490,11 @@ namespace CMS.Base
         /// <summary>
         /// Uninstalls a plugin.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="plugin">The plugin to be uninstalled.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation failed.</returns>
-        public bool uninstall(Plugin plugin, ref StringBuilder messageOutput)
+        public bool uninstall(Connector conn, Plugin plugin, ref StringBuilder messageOutput)
         {
             lock (this)
             {
@@ -505,7 +510,7 @@ namespace CMS.Base
                         messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - already uninstalled!");
                         return false;
                     }
-                    else if (plugin.State == Plugin.PluginState.Enabled && !disable(plugin, ref messageOutput))
+                    else if (plugin.State == Plugin.PluginState.Enabled && !disable(conn, plugin, ref messageOutput))
                     {
                         messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborting uninstall, failed to disable plugin!");
                         return false;
@@ -513,7 +518,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PreUninstall, plugin))
+                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(conn, Plugin.PluginAction.PreUninstall, plugin))
                         {
                             messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -522,7 +527,7 @@ namespace CMS.Base
                     // Invoke install handler of plugin
                     try
                     {
-                        if (!plugin.uninstall(Core.Connector, ref messageOutput))
+                        if (!plugin.uninstall(conn, ref messageOutput))
                             return false;
                     }
                     catch (Exception ex)
@@ -532,11 +537,11 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.NotInstalled;
-                    plugin.save(Core.Connector);
+                    plugin.save(conn);
                     // Invoke post-action handlers
                     foreach (Plugin p in Fetch)
                         if (plugin != p && p.HandlerInfo.PluginAction)
-                            p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PostUninstall, plugin);
+                            p.handler_pluginAction(conn, Plugin.PluginAction.PostUninstall, plugin);
                 }
             }
             return true;
@@ -544,10 +549,11 @@ namespace CMS.Base
         /// <summary>
         /// Enables a plugin.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="plugin">The plugin to be enabled.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation failed.</returns>
-        public bool enable(Plugin plugin, ref StringBuilder messageOutput)
+        public bool enable(Connector conn, Plugin plugin, ref StringBuilder messageOutput)
         {
             lock (this)
             {
@@ -571,7 +577,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PreEnable, plugin))
+                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(conn, Plugin.PluginAction.PreEnable, plugin))
                         {
                             messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -580,7 +586,7 @@ namespace CMS.Base
                     // Invoke install handler of plugin
                     try
                     {
-                        if (!plugin.enable(Core.Connector, ref messageOutput))
+                        if (!plugin.enable(conn, ref messageOutput))
                         return false;
                     }
                     catch (Exception ex)
@@ -590,11 +596,11 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.Enabled;
-                    plugin.save(Core.Connector);
+                    plugin.save(conn);
                     // Invoke post-action handlers
                     foreach (Plugin p in Fetch)
                         if (plugin != p && p.HandlerInfo.PluginAction)
-                            p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PostEnable, plugin);
+                            p.handler_pluginAction(conn, Plugin.PluginAction.PostEnable, plugin);
                 }
             }
             return true;
@@ -602,10 +608,11 @@ namespace CMS.Base
         /// <summary>
         /// Disable a plugin.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="plugin">The plugin to be disabled.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation failed.</returns>
-        public bool disable(Plugin plugin, ref StringBuilder messageOutput)
+        public bool disable(Connector conn, Plugin plugin, ref StringBuilder messageOutput)
         {
             lock (this)
             {
@@ -629,7 +636,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PreDisable, plugin))
+                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(conn, Plugin.PluginAction.PreDisable, plugin))
                         {
                             messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -638,7 +645,7 @@ namespace CMS.Base
                     // Invoke install handler of plugin
                     try
                     {
-                        if (!plugin.disable(Core.Connector, ref messageOutput))
+                        if (!plugin.disable(conn, ref messageOutput))
                             return false;
                     }
                     catch (Exception ex)
@@ -648,11 +655,11 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.Disabled;
-                    plugin.save(Core.Connector);
+                    plugin.save(conn);
                     // Invoke post-action handlers
                     foreach (Plugin p in Fetch)
                         if (plugin != p && p.HandlerInfo.PluginAction)
-                            p.handler_pluginAction(Core.Connector, Plugin.PluginAction.PostDisable, plugin);
+                            p.handler_pluginAction(conn, Plugin.PluginAction.PostDisable, plugin);
                 }
             }
             return true;
@@ -660,11 +667,12 @@ namespace CMS.Base
         /// <summary>
         /// Permanently removes a plugin from the CMS; warning: this may delete all database data!
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="plugin">The plugin to be removed/deleted.</param>
         /// <param name="removeDirectory">Indicates if to delete the physical directory of the plugin.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation failed.</returns>
-        public bool remove(Plugin plugin, bool removeDirectory, ref StringBuilder messageOutput)
+        public bool remove(Connector conn, Plugin plugin, bool removeDirectory, ref StringBuilder messageOutput)
         {
             lock (this)
             {
@@ -680,7 +688,7 @@ namespace CMS.Base
                     // Remove from the database
                     try
                     {
-                        Core.Connector.queryExecute("DELETE FROM cms_plugins WHERE uuid=" + plugin.UUID.NumericHexString + ";");
+                        conn.queryExecute("DELETE FROM cms_plugins WHERE uuid=" + plugin.UUID.NumericHexString + ";");
                     }
                     catch (Exception ex)
                     {
@@ -758,11 +766,12 @@ namespace CMS.Base
         /// <summary>
         /// Reloads the collection of plugins from the database; dispose will be invoked on the plugin.
         /// </summary>
-        public void reload()
+        /// <param name="conn">Database connector.</param>
+        public void reload(Connector conn)
         {
-            reload(false);
+            reload(conn, false);
         }
-        private bool reload(bool callByCreator)
+        private bool reload(Connector conn, bool callByCreator)
         {
             lock (this)
             {
@@ -778,7 +787,7 @@ namespace CMS.Base
                     // Load each plugin
                     Assembly ass = Assembly.GetExecutingAssembly();
                     StringBuilder sb = null;
-                    foreach (ResultRow t in Core.Connector.queryRead("SELECT * FROM cms_view_plugins_loadinfo"))
+                    foreach (ResultRow t in conn.queryRead("SELECT * FROM cms_view_plugins_loadinfo"))
                         pluginLoad(ass, t, true, true, ref sb);
                 }
                 catch (Exception ex)
@@ -822,11 +831,12 @@ namespace CMS.Base
         /// <summary>
         /// Creates a new instance of the Plugins manager, with all the plugins loaded and configured.
         /// </summary>
-        /// <returns></returns>
-		public static Plugins load()
+        /// <param name="conn">Database connector.</param>
+        /// <returns>An instance of this model, with plugins loaded.</returns>
+		public static Plugins load(Connector conn)
 		{
             Plugins plugins = new Plugins();
-            plugins.reload(true);
+            plugins.reload(conn, true);
             return plugins;
 		}
         // Methods - Accessors *****************************************************************************************

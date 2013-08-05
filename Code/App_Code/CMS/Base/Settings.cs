@@ -295,21 +295,22 @@ namespace CMS.Base
         /// <summary>
         /// Removes all of the settings owned by a plugin.
         /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="plugin">The owner of the settings to be removed.</param>
-        public void remove(Plugin plugin)
+        public void remove(Connector conn, Plugin plugin)
         {
-            remove(plugin.UUID);
+            remove(conn, plugin.UUID);
         }
         /// <summary>
         /// Removes all of the settings owned by a plugin.
         /// </summary>
         /// <param name="uuid">The identifier of the plugin which owns the setting(s) to be removed.</param>
-        public void remove(UUID uuid)
+        public void remove(Connector conn, UUID uuid)
         {
             lock (this)
             {
                 // Delete settings from the database
-                Core.Connector.queryExecute("DELETE FROM cms_settings WHERE uuid=" + uuid.NumericHexString + ";");
+                conn.queryExecute("DELETE FROM cms_settings WHERE uuid=" + uuid.NumericHexString + ";");
                 // Find keys to remove
                 List<string> temp = new List<string>();
                 foreach (KeyValuePair<string, SettingsNode> kv in config)
@@ -326,13 +327,13 @@ namespace CMS.Base
         /// Removes a single configuration key.
         /// </summary>
         /// <param name="path">The path of the node to be removed.</param>
-        public void remove(string path)
+        public void remove(Connector conn, string path)
         {
             lock (this)
             {
                 if (config.ContainsKey(path))
                 {
-                    Core.Connector.queryExecute("DELETE FROM cms_settings WHERE path='" + SQLUtils.escape(path) + "';");
+                    conn.queryExecute("DELETE FROM cms_settings WHERE path='" + SQLUtils.escape(path) + "';");
                     config.Remove(path);
                 }
             }
