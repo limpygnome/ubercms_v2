@@ -225,7 +225,7 @@ namespace CMS.BasicSiteAuth.Models
                 UserCreateSaveStatus t = u.setPassword(bsa, password);
                 if (t != UserCreateSaveStatus.Success)
                     return t;
-                u.
+                u.PendingDeletion = false;
                 u.Email = email;
                 u.SecretQuestion = secretQuestion;
                 u.SecretAnswer = secretAnswer;
@@ -409,6 +409,7 @@ namespace CMS.BasicSiteAuth.Models
                     sql["secret_answer"] = secretAnswer;
                     sql["groupid"] = userGroup.GroupID.ToString();
                     sql["datetime_register"] = registered;
+                    sql["pending_deletion"] = pendingDeletion ? "1" : "0";
                     if (persisted)
                     {
                         sql.UpdateAttribute = "userid";

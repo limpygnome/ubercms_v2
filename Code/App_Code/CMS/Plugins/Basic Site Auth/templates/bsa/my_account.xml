@@ -78,7 +78,7 @@
 				Secret Answer:
 			</div>
 			<div class="CELL2">
-				<input type="password" name="secret_answer" value="<!--bsa_ma_secret_answer-->" placeholder="" />
+				<input type="password" name="secret_answer" value="<!--bsa_ma_secret_answer-->" placeholder="Secret answer..." />
 			</div>
 			<div class="clear"></div>
 		</div>
@@ -87,7 +87,7 @@
 				Retype Secret Answer:
 			</div>
 			<div class="CELL2">
-				<input type="password" name="secret_answer_confirm" value="<!--bsa_ma_secret_answer-->" placeholder="" />
+				<input type="password" name="secret_answer_confirm" value="<!--bsa_ma_secret_answer_confirm-->" placeholder="Retype secret answer..." />
 			</div>
 			<div class="clear"></div>
 		</div>
@@ -103,4 +103,20 @@
 		<div class="clear"></div>
 	</div>
 	<!--csrf()-->
-</form>]]></html></template>
+</form>
+<!--IF:bsa_ma_error-->
+<p class="ERROR">
+	<!--bsa_ma_error-->
+</p>
+<!--ENDIF:bsa_ma_error-->
+<!--IF:bsa_ma_success-->
+<p class="SUCCESS">
+	Your account settings have successfully been updated!
+</p>
+<!--ENDIF:bsa_ma_success-->
+
+<h3>Options</h3>
+<p>
+	<a href="/my_account/account_log" class="BUTTON">Account Log</a>
+	<a href="/my_account/close" class="BUTTON">Close Account</a>
+</p>]]></html></template>

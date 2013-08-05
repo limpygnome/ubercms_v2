@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/my_account/close]]></path><description><![CDATA[The page used for a user to close their account.]]></description><html><![CDATA[<h2>My Account - Close Account</h2>
+<p>
+	Warning: your account will be queued for deletion; this action will delete all of your data on this site! You will also be logged-out
+	and prevented from logging-in. Your data will be deleted pending review, to prevent abuse.
+</p>
+<form method="post" action="/my_account/close">
+	<div class="TABLE">
+		<div class="ROW">
+			<div class="CELL2">
+				Captcha:
+			</div>
+			<div class="CELL2">
+				<!--include(captcha/embed)-->
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" name="close" name="close" value="Close Account" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<!--IF:bsa_close_error-->
+<p class="ERROR">
+	<!--bsa_close_error-->
+</p>
+<!--ENDIF:bsa_close_error-->]]></html></template>

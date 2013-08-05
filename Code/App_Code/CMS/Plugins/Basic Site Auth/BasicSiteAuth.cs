@@ -421,9 +421,17 @@ namespace CMS.BasicSiteAuth
                 switch (data.PathInfo.ModuleHandler)
                 {
                     case "my_account":
-                        return pageMyAccount(data);
-                    case "account_log":
-                        return pageAccountLog(data);
+                        switch (data.PathInfo[1])
+                        {
+                            case null:
+                                return pageMyAccount(data);
+                            case "account_log":
+                                return pageMyAccount_AccountLog(data);
+                            case "close":
+                                return pageMyAccount_CloseAccount(data);
+                            default:
+                                return false;
+                        }
                     case "logout":
                         return pageLogout(data);
                     default:
@@ -504,6 +512,8 @@ namespace CMS.BasicSiteAuth
                         User.AuthenticationStatus s = u.authenticate(this, password, data, ref ban);
                         switch (s)
                         {
+                            case User.AuthenticationStatus.FailedIncorrect:
+                                error = "Incorrect username or password specified!"; break;
                             case User.AuthenticationStatus.Failed:
                                 error = "An unknown error occurred, please try again!"; break;
                             case User.AuthenticationStatus.FailedBanned:
@@ -929,6 +939,42 @@ namespace CMS.BasicSiteAuth
         }
         private bool pageMyAccount_CloseAccount(Data data)
         {
+#if CAPTCHA
+            Captcha.hookPage(data);
+#endif
+            string error = null;
+            // Check for postback
+            if (data.Request["close"] != null)
+            {
+#if CSRFP
+                if (!CSRFProtection.authenticated(data))
+                    error = "Invalid request; please try again!";
+#endif
+#if CAPTCHA
+                if (error == null && !Captcha.isCaptchaCorrect(data))
+                    error = "Invalid captcha verification code!";
+#endif
+                if (error == null)
+                {
+                    // Fetch the current user
+                    User u = getCurrentUser(data);
+                    // Update the user and persist
+                    u.PendingDeletion = true;
+                    if (u.save(this, data.Connector) != User.UserCreateSaveStatus.Success)
+                        error = "An unknown error occurred, please try again later or contact us!";
+                    else
+                    {
+                        // Destroy the session and redirect to the default handler
+                        invalidateCurrentUserSession();
+                        BaseUtils.redirectAbs(data, "/" + Core.DefaultHandler);
+                    }
+                }
+            }
+            // Set content
+            data["Title"] = "My Account - Close Account";
+            data["Content"] = Core.Templates.get(data.Connector, "bsa/my_account/close");
+            if (error != null)
+                data["bsa_close_error"] = HttpUtility.HtmlEncode(error);
             return true;
         }
         private bool pageLogout(Data data)
@@ -937,7 +983,7 @@ namespace CMS.BasicSiteAuth
             if (usr == null)
                 return false;
             // Dispose the session
-            invalidCurrentUserSession();
+            invalidateCurrentUserSession();
             // Log the event
             AccountEvent.create(data.Connector, this, BasicSiteAuth.ACCOUNT_EVENT__LOGGEDOUT__UUID, DateTime.Now, usr.UserID, data.Request.UserHostAddress, SettingsNode.DataType.String, data.Request.UserAgent, SettingsNode.DataType.String);
             // Set content
@@ -961,7 +1007,7 @@ namespace CMS.BasicSiteAuth
             return null;
 #endif
         }
-        public static void invalidCurrentUserSession()
+        public static void invalidateCurrentUserSession()
         {
 #if !BSA
             return;
