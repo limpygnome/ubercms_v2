@@ -136,6 +136,7 @@ namespace CMS.BasicSiteAuth.Models
                     secretAnswer;       // Account recovery: secret answer.
         UserGroup   userGroup;          // The user's role/group.
         DateTime    registered;         // The date and time of when the user registered.
+        bool        pendingDeletion;    // Indicates if the user is pending deletion.
         bool        persisted,          // Indicates if this model has been persisted to the database.
                     modified;           // Indicates if the data has been modified.
         // Methods - Constructors **********************************************************************************
@@ -179,8 +180,8 @@ namespace CMS.BasicSiteAuth.Models
                 ban = ub;
                 return AuthenticationStatus.FailedBanned;
             }
-            // Check the user-group does not disable the user from logging-in
-            else if (!userGroup.Login)
+            // Check the user-group does not disable the user from logging-in or if the account is pending deletion
+            else if (!userGroup.Login || pendingDeletion)
                 return AuthenticationStatus.FailedDisabled;
             else
             {
@@ -224,6 +225,7 @@ namespace CMS.BasicSiteAuth.Models
                 UserCreateSaveStatus t = u.setPassword(bsa, password);
                 if (t != UserCreateSaveStatus.Success)
                     return t;
+                u.
                 u.Email = email;
                 u.SecretQuestion = secretQuestion;
                 u.SecretAnswer = secretAnswer;
@@ -350,6 +352,7 @@ namespace CMS.BasicSiteAuth.Models
             usr.secretAnswer = data["secret_answer"];
             usr.userGroup = ug;
             usr.registered = data.get2<DateTime>("datetime_register");
+            usr.pendingDeletion = data.get2<string>("pending_deletion").Equals("1");
             return usr;
         }
         /// <summary>
@@ -588,6 +591,21 @@ namespace CMS.BasicSiteAuth.Models
             set
             {
                 registered = value;
+                modified = true;
+            }
+        }
+        /// <summary>
+        /// Indicates if the account is pending deletion.
+        /// </summary>
+        public bool PendingDeletion
+        {
+            get
+            {
+                return pendingDeletion;
+            }
+            set
+            {
+                pendingDeletion = value;
                 modified = true;
             }
         }

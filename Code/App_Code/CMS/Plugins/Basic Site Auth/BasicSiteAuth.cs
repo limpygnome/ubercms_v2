@@ -923,7 +923,11 @@ namespace CMS.BasicSiteAuth
                 data.setFlag("bsa_ma_success");
             return true;
         }
-        private bool pageAccountLog(Data data)
+        private bool pageMyAccount_AccountLog(Data data)
+        {
+            return true;
+        }
+        private bool pageMyAccount_CloseAccount(Data data)
         {
             return true;
         }
