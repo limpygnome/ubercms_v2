@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Web;
 using CMS.Base;
+using CMS.BasicSiteAuth.Models;
 
 namespace CMS.BasicSiteAuth
 {
@@ -123,7 +124,7 @@ namespace CMS.BasicSiteAuth
                 // Create a new recovery code
                 RecoveryCode rc = RecoveryCode.create(data.Connector, RecoveryCode.CodeType.Recovery, u);
                 // E-mail the user
-                BSAEmails.sendRecoveryCode(data, u, rc.Code);
+                Emails.sendRecoveryCode(data, u, rc.Code);
                 // Log the event
                 AccountEvent.create(data.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__RECOVERYCODE_SENT__UUID, DateTime.Now, u.UserID, data.Request.UserHostAddress, SettingsNode.DataType.String, data.Request.UserAgent, SettingsNode.DataType.String);
                 return rc == null ? RecoveryCodeEmail.Failed : RecoveryCodeEmail.Success;

@@ -30,7 +30,7 @@ using System.Reflection;
 using CMS.Base;
 using UberLib.Connector;
 
-namespace CMS.BasicSiteAuth
+namespace CMS.BasicSiteAuth.Models
 {
     /// <summary>
     /// A model for account event types.

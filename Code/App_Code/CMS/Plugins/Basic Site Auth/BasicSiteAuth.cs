@@ -35,6 +35,7 @@ using System.Xml;
 using System.Web.Security;
 using CMS.Base;
 using CMS.Plugins;
+using CMS.BasicSiteAuth.Models;
 using UberLib.Connector;
 
 namespace CMS.BasicSiteAuth
@@ -536,7 +537,7 @@ namespace CMS.BasicSiteAuth
             // Fetch data
             string rawEmail = data.PathInfo[3];
             int ind;
-            if (rawEmail == null || rawEmail.Length == 0 || (ind = rawEmail.IndexOf('@')) == -1 || ind >= rawEmail.Length || !BSAUtils.validEmail(rawEmail))
+            if (rawEmail == null || rawEmail.Length == 0 || (ind = rawEmail.IndexOf('@')) == -1 || ind >= rawEmail.Length || !Utils.validEmail(rawEmail))
                 return false;
             // Set content
             data["bsa_register_success_email"] = "http://www." + rawEmail.Substring(ind + 1);
@@ -747,7 +748,7 @@ namespace CMS.BasicSiteAuth
 #endif
                 if (error == null)
                 {
-                    if (!BSAUtils.validEmail(email))
+                    if (!Utils.validEmail(email))
                         error = "Invalid e-mail address specified!";
                     else
                     {

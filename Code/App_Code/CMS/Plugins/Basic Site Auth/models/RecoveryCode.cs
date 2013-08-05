@@ -27,7 +27,7 @@ using System;
 using CMS.Base;
 using UberLib.Connector;
 
-namespace CMS.BasicSiteAuth
+namespace CMS.BasicSiteAuth.Models
 {
     /// <summary>
     /// A model for a verification or account recovery code.

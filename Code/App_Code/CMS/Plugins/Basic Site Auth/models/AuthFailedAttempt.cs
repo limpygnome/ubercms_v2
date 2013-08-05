@@ -29,7 +29,7 @@ using System.Web;
 using UberLib.Connector;
 using CMS.Base;
 
-namespace CMS.BasicSiteAuth
+namespace CMS.BasicSiteAuth.Models
 {
     /// <summary>
     /// A model for representing failed authentication attempts.

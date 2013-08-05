@@ -28,10 +28,11 @@ using System.Text;
 using System.Web;
 using UberLib.Connector;
 using CMS.Base;
+using CMS.BasicSiteAuth.Models;
 
 namespace CMS.BasicSiteAuth
 {
-    public static class BSAEmails
+    public static class Emails
     {
         /// <summary>
         /// Sends an account verification e-mail.

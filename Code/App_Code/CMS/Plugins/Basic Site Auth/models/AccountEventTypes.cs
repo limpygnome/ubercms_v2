@@ -32,7 +32,7 @@ using System.Collections.Generic;
 using CMS.Base;
 using UberLib.Connector;
 
-namespace CMS.BasicSiteAuth
+namespace CMS.BasicSiteAuth.Models
 {
     /// <summary>
     /// Stores a collection of account event type models.

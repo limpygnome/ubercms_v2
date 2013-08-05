@@ -30,7 +30,7 @@ using CMS.BasicSiteAuth;
 using CMS.Base;
 using UberLib.Connector;
 
-namespace CMS.BasicSiteAuth
+namespace CMS.BasicSiteAuth.Models
 {
     /// <summary>
     /// A model to represent a user-group of the basic site authentication plugin.

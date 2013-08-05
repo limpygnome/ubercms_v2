@@ -30,7 +30,7 @@ using System.Collections.Generic;
 using UberLib.Connector;
 using CMS.Base;
 
-namespace CMS.BasicSiteAuth
+namespace CMS.BasicSiteAuth.Models
 {
     /// <summary>
     /// A data-structure for managing the collection of user-groups for the basic site authentication plugin.

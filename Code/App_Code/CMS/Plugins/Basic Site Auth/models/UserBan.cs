@@ -30,7 +30,7 @@ using System.Web;
 using CMS.Base;
 using UberLib.Connector;
 
-namespace CMS.BasicSiteAuth
+namespace CMS.BasicSiteAuth.Models
 {
     public class UserBan
     {

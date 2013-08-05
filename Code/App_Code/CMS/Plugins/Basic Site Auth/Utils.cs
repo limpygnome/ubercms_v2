@@ -31,7 +31,7 @@ namespace CMS.BasicSiteAuth
     /// <summary>
     /// A utility class for shared common code within the basic site authentication plugin.
     /// </summary>
-    public static class BSAUtils
+    public static class Utils
     {
         // Methods - Validation ****************************************************************************************
         /// <summary>
