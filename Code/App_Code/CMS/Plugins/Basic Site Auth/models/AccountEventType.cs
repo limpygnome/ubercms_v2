@@ -14,7 +14,7 @@
  *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
  *                      http://creativecommons.org/licenses/by-sa/3.0/
  * 
- *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/AccountEventType.cs
+ *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/models/AccountEventType.cs
  * 
  *      Change-Log:
  *                      2013-07-24      Created initial class.

@@ -1,4 +1,29 @@
-﻿using System;
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ * 
+ *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/AccountActions.cs
+ * 
+ *      Change-Log:
+ *                      2013-08-05      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * A class of methods for applying actions to accounts, using a share of models.
+ * *********************************************************************************************************************
+ */
+using System;
 using System.Collections.Generic;
 using System.Web;
 using CMS.Base;
