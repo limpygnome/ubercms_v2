@@ -69,6 +69,29 @@ namespace CMS.BasicSiteAuth
             /// </summary>
             Success
         }
+        public enum AccountUpdate
+        {
+            /// <summary>
+            /// Indicates a general exception occurred.
+            /// </summary>
+            Failed,
+            /// <summary>
+            /// Indicates the current password is incorrect
+            /// </summary>
+            FailedCurrentPassword,
+            /// <summary>
+            /// Indicates the password could not be updated.
+            /// </summary>
+            FailedPassword,
+            /// <summary>
+            /// Indicates the user settings failed to persist.
+            /// </summary>
+            FailedUserPersist,
+            /// <summary>
+            /// Indicates the operation was successful.
+            /// </summary>
+            Success
+        }
         // Methods - Static - Registration *****************************************************************************
         /// <summary>
         /// Used for handling an account verification, upgrading the group from unverified to verified.
@@ -238,6 +261,60 @@ namespace CMS.BasicSiteAuth
                 }
             }
             return RecoverySQA.Failed;
+        }
+        // Methods - Static - Account **********************************************************************************
+        /// <summary>
+        /// Updates the settings of the current user's account.
+        /// </summary>
+        /// <param name="data">The data for the current request.</param>
+        /// <param name="bsa">BSA plugin.</param>
+        /// <param name="user">The current user of the session.</param>
+        /// <param name="currentPassword">The user's current password.</param>
+        /// <param name="password">The new password; can be left null or empty.</param>
+        /// <param name="secretQuestion">The new secret question; can be left null.</param>
+        /// <param name="secretAnswer">The new secret answer; can be left null.</param>
+        /// <param name="persistStatus">If the returned status of this operation is FailedUserPersist or FailedCurrentPassword, the persistence issue is outputted to this parameter.</param>
+        /// <returns>The status of the operation.</returns>
+        public static AccountUpdate updateAccount(Data data, BasicSiteAuth bsa, User user, string currentPassword, string password, string secretQuestion, string secretAnswer, ref User.UserCreateSaveStatus persistStatus)
+        {
+            // Check the required parameters are valid
+            if (data == null || user == null)
+                return AccountUpdate.Failed;
+            else if (currentPassword == null)
+                return AccountUpdate.FailedCurrentPassword;
+            // Check the current password is correct
+            UserBan ban = null;
+            User.AuthenticationStatus s = user.authenticate(bsa, currentPassword, data, ref ban);
+            if (s == User.AuthenticationStatus.Failed)
+                return AccountUpdate.Failed;
+            else if (s == User.AuthenticationStatus.FailedBanned || s == User.AuthenticationStatus.FailedDisabled || s == User.AuthenticationStatus.FailedIncorrect || s == User.AuthenticationStatus.FailedTempBanned)
+                return AccountUpdate.FailedCurrentPassword;
+            else
+            {
+                User.UserCreateSaveStatus up;
+                // Update the model
+                // -- Password
+                if (password != null && password.Length > 0 && (up = user.setPassword(bsa, password)) != User.UserCreateSaveStatus.Success)
+                {
+                    persistStatus = up;
+                    return AccountUpdate.FailedPassword;
+                }
+                // -- Secret question
+                if (secretQuestion != null)
+                    user.SecretQuestion = secretQuestion;
+                // -- Secret answer
+                if (secretAnswer != null)
+                    user.SecretAnswer = secretAnswer;
+                // Save the model
+                up = user.save(bsa, data.Connector);
+                if (up != User.UserCreateSaveStatus.Success)
+                {
+                    persistStatus = up;
+                    return AccountUpdate.FailedUserPersist;
+                }
+                else
+                    return AccountUpdate.Success;
+            }
         }
     }
 }

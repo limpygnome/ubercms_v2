@@ -27,7 +27,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Web.Security;
@@ -49,116 +48,116 @@ namespace CMS.BasicSiteAuth
         /// <summary>
         /// UUID of this plugin with no hypthens in upper-case.
         /// </summary>
-        public const string BSA_UUID_NHUC = "943C3F9DDFCB483DBF3448AD5231A15F";
-        public const int BSA_UNIQUE_USER_HASH_MIN = 10;
-        public const int BSA_UNIQUE_USER_HASH_MAX = 16;
-        private const string HTTPCONTEXTITEMS_BSA_CURRENT_USER = "bsa_current_user";
+        public const string     BSA_UUID_NHUC = "943C3F9DDFCB483DBF3448AD5231A15F";
+        public const int        BSA_UNIQUE_USER_HASH_MIN = 10;
+        public const int        BSA_UNIQUE_USER_HASH_MAX = 16;
+        private const string    HTTPCONTEXTITEMS_BSA_CURRENT_USER = "bsa_current_user";
         // Constants - Settings ****************************************************************************************
         // -- User Restrictions ****************************************************************************************
-        public const string SETTINGS_USERNAME_MIN = "bsa/account/username_min";
-        public const string SETTINGS_USERNAME_MIN__DESCRIPTION = "The minimum number of characters a username can be.";
-        public const int SETTINGS_USERNAME_MIN__DEFAULT = 2;
+        public const string     SETTINGS_USERNAME_MIN = "bsa/account/username_min";
+        public const string     SETTINGS_USERNAME_MIN__DESCRIPTION = "The minimum number of characters a username can be.";
+        public const int        SETTINGS_USERNAME_MIN__DEFAULT = 2;
 
-        public const string SETTINGS_USERNAME_MAX = "bsa/account/username_max";
-        public const string SETTINGS_USERNAME_MAX__DESCRIPTION = "The maximum number of characters a username can be.";
-        public const int SETTINGS_USERNAME_MAX__DEFAULT = 32;
+        public const string     SETTINGS_USERNAME_MAX = "bsa/account/username_max";
+        public const string     SETTINGS_USERNAME_MAX__DESCRIPTION = "The maximum number of characters a username can be.";
+        public const int        SETTINGS_USERNAME_MAX__DEFAULT = 32;
 
-        public const string SETTINGS_PASSWORD_MIN = "bsa/account/password_min";
-        public const string SETTINGS_PASSWORD_MIN__DESCRIPTION = "The minimum number of characters a password can be.";
-        public const int SETTINGS_PASSWORD_MIN__DEFAULT = 6;
+        public const string     SETTINGS_PASSWORD_MIN = "bsa/account/password_min";
+        public const string     SETTINGS_PASSWORD_MIN__DESCRIPTION = "The minimum number of characters a password can be.";
+        public const int        SETTINGS_PASSWORD_MIN__DEFAULT = 6;
 
-        public const string SETTINGS_PASSWORD_MAX = "bsa/account/password_max";
-        public const string SETTINGS_PASSWORD_MAX__DESCRIPTION = "The maximum number of characters a password can be.";
-        public const int SETTINGS_PASSWORD_MAX__DEFAULT = 128;
+        public const string     SETTINGS_PASSWORD_MAX = "bsa/account/password_max";
+        public const string     SETTINGS_PASSWORD_MAX__DESCRIPTION = "The maximum number of characters a password can be.";
+        public const int        SETTINGS_PASSWORD_MAX__DEFAULT = 128;
 
-        public const string SETTINGS_EMAIL_MIN = "bsa/account/email_min";
-        public const string SETTINGS_EMAIL_MIN__DESCRIPTION = "The minimum number of characters an e-mail can be.";
-        public const int SETTINGS_EMAIL_MIN__DEFAULT = 6;
+        public const string     SETTINGS_EMAIL_MIN = "bsa/account/email_min";
+        public const string     SETTINGS_EMAIL_MIN__DESCRIPTION = "The minimum number of characters an e-mail can be.";
+        public const int        SETTINGS_EMAIL_MIN__DEFAULT = 6;
 
-        public const string SETTINGS_EMAIL_MAX = "bsa/account/email_max";
-        public const string SETTINGS_EMAIL_MAX_DESCRIPTION = "The maximum number of characters an e-mail can be.";
-        public const int SETTINGS_EMAIL_MAX__DEFAULT = 64;
+        public const string     SETTINGS_EMAIL_MAX = "bsa/account/email_max";
+        public const string     SETTINGS_EMAIL_MAX_DESCRIPTION = "The maximum number of characters an e-mail can be.";
+        public const int        SETTINGS_EMAIL_MAX__DEFAULT = 64;
 
-        public const string SETTINGS_SECRETQUESTION_MIN = "bsa/account/secretquestion_min";
-        public const string SETTINGS_SECRETQUESTION_MIN__DESCRIPTION = "The minimum characters a secret question can be.";
-        public const int SETTINGS_SECRETQUESTION_MIN__DEFAULT = 0;
+        public const string     SETTINGS_SECRETQUESTION_MIN = "bsa/account/secretquestion_min";
+        public const string     SETTINGS_SECRETQUESTION_MIN__DESCRIPTION = "The minimum characters a secret question can be.";
+        public const int        SETTINGS_SECRETQUESTION_MIN__DEFAULT = 0;
 
-        public const string SETTINGS_SECRETQUESTION_MAX = "bsa/account/secretquestion_max";
-        public const string SETTINGS_SECRETQUESTION_MAX__DESCRIPTION = "The maximum characters a secret question can be.";
-        public const int SETTINGS_SECRETQUESTION_MAX__DEFAULT = 64;
+        public const string     SETTINGS_SECRETQUESTION_MAX = "bsa/account/secretquestion_max";
+        public const string     SETTINGS_SECRETQUESTION_MAX__DESCRIPTION = "The maximum characters a secret question can be.";
+        public const int        SETTINGS_SECRETQUESTION_MAX__DEFAULT = 64;
 
-        public const string SETTINGS_SECRETANSWER_MIN = "bsa/account/secretanswer_min";
-        public const string SETTINGS_SECRETANSWER_MIN__DESCRIPTION = "The minimum characters a secret answer can be.";
-        public const int SETTINGS_SECRETANSWER_MIN__DEFAULT = 0;
+        public const string     SETTINGS_SECRETANSWER_MIN = "bsa/account/secretanswer_min";
+        public const string     SETTINGS_SECRETANSWER_MIN__DESCRIPTION = "The minimum characters a secret answer can be.";
+        public const int        SETTINGS_SECRETANSWER_MIN__DEFAULT = 0;
 
-        public const string SETTINGS_SECRETANSWER_MAX = "bsa/account/secretanswer_max";
-        public const string SETTINGS_SECRETANSWER_MAX__DESCRIPTION = "The maximum characters a secret answer can be.";
-        public const int SETTINGS_SECRETANSWER_MAX__DEFAULT = 64;
+        public const string     SETTINGS_SECRETANSWER_MAX = "bsa/account/secretanswer_max";
+        public const string     SETTINGS_SECRETANSWER_MAX__DESCRIPTION = "The maximum characters a secret answer can be.";
+        public const int        SETTINGS_SECRETANSWER_MAX__DEFAULT = 64;
 
-        public const string SETTINGS_EMAIL_VERIFICATION = "bsa/account/email_verification";
-        public const string SETTINGS_EMAIL_VERIFICATION__DESCRIPTION = "Specifies if users need to verify their accounts via e-mail.";
-        public const bool SETTINGS_EMAIL_VERIFICATION__DEFAULT = true;
+        public const string     SETTINGS_EMAIL_VERIFICATION = "bsa/account/email_verification";
+        public const string     SETTINGS_EMAIL_VERIFICATION__DESCRIPTION = "Specifies if users need to verify their accounts via e-mail.";
+        public const bool       SETTINGS_EMAIL_VERIFICATION__DEFAULT = true;
         // -- User Groups **********************************************************************************************
-        public const string SETTINGS_GROUP_UNVERIFIED_GROUPID = "bsa/groups/unverified_groupid";
-        public const string SETTINGS_GROUP_UNVERIFIED_GROUPID__DESCRIPTION = "The identifier of the unverified group.";
+        public const string     SETTINGS_GROUP_UNVERIFIED_GROUPID = "bsa/groups/unverified_groupid";
+        public const string     SETTINGS_GROUP_UNVERIFIED_GROUPID__DESCRIPTION = "The identifier of the unverified group.";
 
-        public const string SETTINGS_GROUP_USER_GROUPID = "bsa/groups/user_groupid";
-        public const string SETTINGS_GROUP_USER_GROUPID__DESCRIPTION = "The identifier of the user group.";
+        public const string     SETTINGS_GROUP_USER_GROUPID = "bsa/groups/user_groupid";
+        public const string     SETTINGS_GROUP_USER_GROUPID__DESCRIPTION = "The identifier of the user group.";
 
-        public const string SETTINGS_GROUP_MODERATOR_GROUPID = "bsa/groups/moderator_groupid";
-        public const string SETTINGS_GROUP_MODERATOR_GROUPID__DESCRIPTION = "The identifier of the moderator group.";
+        public const string     SETTINGS_GROUP_MODERATOR_GROUPID = "bsa/groups/moderator_groupid";
+        public const string     SETTINGS_GROUP_MODERATOR_GROUPID__DESCRIPTION = "The identifier of the moderator group.";
 
-        public const string SETTINGS_GROUP_ADMINISTRATOR_GROUPID = "bsa/groups/administrator_groupid";
-        public const string SETTINGS_GROUP_ADMINISTRATOR_GROUPID__DESCRIPTION = "The identifier of the administrator group.";
+        public const string     SETTINGS_GROUP_ADMINISTRATOR_GROUPID = "bsa/groups/administrator_groupid";
+        public const string     SETTINGS_GROUP_ADMINISTRATOR_GROUPID__DESCRIPTION = "The identifier of the administrator group.";
         // -- Authentication Failed Attempts ***************************************************************************
-        public const string SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD = "bsa/authfailedattempts/ban_period";
-        public const string SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD__DESCRIPTION = "The duration an IP is banned from being able to login after reaching the failed attempts threshold.";
-        public const int SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD__DEFAULT = 3600000;
+        public const string     SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD = "bsa/authfailedattempts/ban_period";
+        public const string     SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD__DESCRIPTION = "The duration an IP is banned from being able to login after reaching the failed attempts threshold.";
+        public const int        SETTINGS_AUTHFAILEDATTEMPTS_BAN_PERIOD__DEFAULT = 3600000;
 
-        public const string SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD = "bsa/authfailedattempts/threshold";
-        public const string SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD__DESCRIPTION = "The threshold/maximum number of failed attempts allowed; once exceeded, an IP is banned for a period.";
-        public const int SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD__DEFAULT = 5;
+        public const string     SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD = "bsa/authfailedattempts/threshold";
+        public const string     SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD__DESCRIPTION = "The threshold/maximum number of failed attempts allowed; once exceeded, an IP is banned for a period.";
+        public const int        SETTINGS_AUTHFAILEDATTEMPTS_THRESHOLD__DEFAULT = 5;
         // -- Recovery Codes *******************************************************************************************
-        public const string SETTINGS_RECOVERYCODES_EXPIRE = "bsa/recoverycodes/expire";
-        public const string SETTINGS_RECOVERYCODES_EXPIRE__DESCRIPTION = "The life-span of a recovery code in milliseconds.";
-        public const int SETTINGS_RECOVERYCODES_EXPIRE__DEFAULT = 3600000;
+        public const string     SETTINGS_RECOVERYCODES_EXPIRE = "bsa/recoverycodes/expire";
+        public const string     SETTINGS_RECOVERYCODES_EXPIRE__DESCRIPTION = "The life-span of a recovery code in milliseconds.";
+        public const int        SETTINGS_RECOVERYCODES_EXPIRE__DEFAULT = 3600000;
         // Constants - Account Event Types *****************************************************************************
         // -- Incorrect authentication
-        public const string ACCOUNT_EVENT__INCORRECT_AUTH__UUID = "B98F1FC842D04A3D914F5653D098DB50";
-        public const string ACCOUNT_EVENT__INCORRECT_AUTH__TITLE = "Incorrect Authentication";
-        public const string ACCOUNT_EVENT__INCORRECT_AUTH__DESC = "An incorrect authentication attempt was made on the account.";
-        public const string ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
-        public const string ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_FUNCTION = "incorrectAuth";
+        public const string     ACCOUNT_EVENT__INCORRECT_AUTH__UUID = "B98F1FC842D04A3D914F5653D098DB50";
+        public const string     ACCOUNT_EVENT__INCORRECT_AUTH__TITLE = "Incorrect Authentication";
+        public const string     ACCOUNT_EVENT__INCORRECT_AUTH__DESC = "An incorrect authentication attempt was made on the account.";
+        public const string     ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string     ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_FUNCTION = "incorrectAuth";
         // -- Authentication
-        public const string ACCOUNT_EVENT__AUTH__UUID = "0FF9AA9A77A64499BB6C12FC7BF04594";
-        public const string ACCOUNT_EVENT__AUTH__TITLE = "Authenticated";
-        public const string ACCOUNT_EVENT__AUTH__DESC = "Account was successfully authenticated.";
-        public const string ACCOUNT_EVENT__AUTH__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
-        public const string ACCOUNT_EVENT__AUTH__RENDER_FUNCTION = "authed";
+        public const string     ACCOUNT_EVENT__AUTH__UUID = "0FF9AA9A77A64499BB6C12FC7BF04594";
+        public const string     ACCOUNT_EVENT__AUTH__TITLE = "Authenticated";
+        public const string     ACCOUNT_EVENT__AUTH__DESC = "Account was successfully authenticated.";
+        public const string     ACCOUNT_EVENT__AUTH__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string     ACCOUNT_EVENT__AUTH__RENDER_FUNCTION = "authed";
         // -- Changed account settings
-        public const string ACCOUNT_EVENT__CHANGEDSETTINGS__UUID = "6D1B51E00B4D4459A67F8C6B67E2A37B";
-        public const string ACCOUNT_EVENT__CHANGEDSETTINGS__TITLE = "Account Settings Changed";
-        public const string ACCOUNT_EVENT__CHANGEDSETTINGS__DESC = "The settings of the account were changed.";
-        public const string ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
-        public const string ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_FUNCTION = "changedSettings";
+        public const string     ACCOUNT_EVENT__CHANGEDSETTINGS__UUID = "6D1B51E00B4D4459A67F8C6B67E2A37B";
+        public const string     ACCOUNT_EVENT__CHANGEDSETTINGS__TITLE = "Account Settings Changed";
+        public const string     ACCOUNT_EVENT__CHANGEDSETTINGS__DESC = "The settings of the account were changed.";
+        public const string     ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string     ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_FUNCTION = "changedSettings";
         // -- Logged-out
-        public const string ACCOUNT_EVENT__LOGGEDOUT__UUID = "C21622AD82624E57843900DDB9A27CAF";
-        public const string ACCOUNT_EVENT__LOGGEDOUT__TITLE = "Logged Out";
-        public const string ACCOUNT_EVENT__LOGGEDOUT__DESC = "The account was logged-out.";
-        public const string ACCOUNT_EVENT__LOGGEDOUT__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
-        public const string ACCOUNT_EVENT__LOGGEDOUT__RENDER_FUNCTION = "loggedOut";
+        public const string     ACCOUNT_EVENT__LOGGEDOUT__UUID = "C21622AD82624E57843900DDB9A27CAF";
+        public const string     ACCOUNT_EVENT__LOGGEDOUT__TITLE = "Logged Out";
+        public const string     ACCOUNT_EVENT__LOGGEDOUT__DESC = "The account was logged-out.";
+        public const string     ACCOUNT_EVENT__LOGGEDOUT__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string     ACCOUNT_EVENT__LOGGEDOUT__RENDER_FUNCTION = "loggedOut";
         // -- Recovery secret question/answer attempted
-        public const string ACCOUNT_EVENT__SECRETQA_ATTEMPT__UUID = "D63560D8DC8F491BAE1693D5EFA9839A";
-        public const string ACCOUNT_EVENT__SECRETQA_ATTEMPT__TITLE = "Secret Question/Answer Recovery Attempt";
-        public const string ACCOUNT_EVENT__SECRETQA_ATTEMPT__DESC = "An attempt to recover the account using a secret question/answer was made.";
-        public const string ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
-        public const string ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_FUNCTION = "secretQaAttempt";
+        public const string     ACCOUNT_EVENT__SECRETQA_ATTEMPT__UUID = "D63560D8DC8F491BAE1693D5EFA9839A";
+        public const string     ACCOUNT_EVENT__SECRETQA_ATTEMPT__TITLE = "Secret Question/Answer Recovery Attempt";
+        public const string     ACCOUNT_EVENT__SECRETQA_ATTEMPT__DESC = "An attempt to recover the account using a secret question/answer was made.";
+        public const string     ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string     ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_FUNCTION = "secretQaAttempt";
         // -- Recovery code sent
-        public const string ACCOUNT_EVENT__RECOVERYCODE_SENT__UUID = "02D9335BAA6A4741BB29E6E7F00D901C";
-        public const string ACCOUNT_EVENT__RECOVERYCODE_SENT__TITLE = "Recovery Code Sent";
-        public const string ACCOUNT_EVENT__RECOVERYCODE_SENT__DESC = "A recovery code was sent to the account's e-mail.";
-        public const string ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
-        public const string ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_FUNCTION = "recoveryCodeSent";
+        public const string     ACCOUNT_EVENT__RECOVERYCODE_SENT__UUID = "02D9335BAA6A4741BB29E6E7F00D901C";
+        public const string     ACCOUNT_EVENT__RECOVERYCODE_SENT__TITLE = "Recovery Code Sent";
+        public const string     ACCOUNT_EVENT__RECOVERYCODE_SENT__DESC = "A recovery code was sent to the account's e-mail.";
+        public const string     ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_CLASSPATH = "CMS.BasicSiteAuth.AET_Render";
+        public const string     ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_FUNCTION = "recoveryCodeSent";
         // Fields ******************************************************************************************************
         private string                          salt1,                  // The first salt, used for generating a secure SHA-512 hash.
                                                 salt2;                  // The second salt, used for generating a secure SHA-512 hash.
@@ -484,25 +483,40 @@ namespace CMS.BasicSiteAuth
             if (username != null && password != null)
             {
                 // Validate security
-#if CAPTCHA
-                if (!Captcha.isCaptchaCorrect(data))
-                    error = "Invalid captcha verification code!";
-#endif
 #if CSRFP
-                if (error == null && !CSRFProtection.authenticated(data))
+                if (!CSRFProtection.authenticated(data))
                     error = "Invalid request; please try again!";
 #endif
-                // Attempt to authenticate
+#if CAPTCHA
+                if (error == null && !Captcha.isCaptchaCorrect(data))
+                    error = "Invalid captcha verification code!";
+#endif
                 if (error == null)
                 {
+                    // Fetch the user
                     User u = User.load(this, data.Connector, username);
                     if (u == null)
                         error = "Invalid username/password!";
-                    else if (u.authenticate(this, password, data, ref error))
+                    else
                     {
-                        // Success!
-                        FormsAuthentication.SetAuthCookie(username, keepLoggedIn);
-                        BaseUtils.redirect(data, data.Request.UrlReferrer != null && data.Request.UrlReferrer.AbsolutePath != "/login" ? data.Request.UrlReferrer.AbsoluteUri : BaseUtils.getAbsoluteURL(data, "/" + Core.DefaultHandler));
+                        // Attempt to authenticate
+                        UserBan ban = null;
+                        User.AuthenticationStatus s = u.authenticate(this, password, data, ref ban);
+                        switch (s)
+                        {
+                            case User.AuthenticationStatus.Failed:
+                                error = "An unknown error occurred, please try again!"; break;
+                            case User.AuthenticationStatus.FailedBanned:
+                                error = "Your account has been banned: '" + (ban.Reason == null || ban.Reason.Length == 0 ? "unspecified reason" : ban.Reason) + "'; the ban will expire at: " + (ban.DateTimeEnd == DateTime.MaxValue ? "never" : ban.DateTimeEnd.ToString("YYYY-MM-dd HH:mm:ss")) + "."; break;
+                            case User.AuthenticationStatus.FailedDisabled:
+                                error = "Your account is disabled from logging-in!"; break;
+                            case User.AuthenticationStatus.FailedTempBanned:
+                                error = "Your IP has been temporarily banned for too many incorrect attempts, try again later!"; break;
+                            case User.AuthenticationStatus.Success:
+                                FormsAuthentication.SetAuthCookie(username, keepLoggedIn);
+                                BaseUtils.redirect(data, data.Request.UrlReferrer != null && data.Request.UrlReferrer.AbsolutePath != "/login" ? data.Request.UrlReferrer.AbsoluteUri : BaseUtils.getAbsoluteURL(data, "/" + Core.DefaultHandler));
+                                break;
+                        }
                     }
                 }
             }
@@ -568,7 +582,7 @@ namespace CMS.BasicSiteAuth
                     error = "Invalid request, please try again!";
 #endif
 #if CAPTCHA
-                if (error != null && !Captcha.isCaptchaCorrect(data))
+                if (error == null && !Captcha.isCaptchaCorrect(data))
                     error = "Incorrect captcha verification code!";
 #endif
                 if (error != null)
@@ -587,7 +601,8 @@ namespace CMS.BasicSiteAuth
                         {
                             case User.UserCreateSaveStatus.Success:
                                 // Attempt to authenticate the user
-                                if (u.authenticate(this, password, data, ref error))
+                                UserBan ub = null;
+                                if (u.authenticate(this, password, data, ref ub) == User.AuthenticationStatus.Success)
                                     // Redirect to the main page
                                     BaseUtils.redirectAbs(data, "/" + Core.DefaultHandler);
                                 else
@@ -823,14 +838,89 @@ namespace CMS.BasicSiteAuth
         }
         private bool pageMyAccount(Data data)
         {
+#if CAPTCHA
+            Captcha.hookPage(data);
+#endif
+            string error = null;
+            bool success = false;
             // Load the current user
             User u = getCurrentUser(data);
+            // Fetch form data and check for postback
+            string  currentPassword = data.Request.Form["password"],
+                    newPassword = data.Request.Form["new_password"],
+                    newPasswordConfirm = data.Request.Form["new_password_confirm"],
+                    secretQuestion = data.Request.Form["secret_question"],
+                    secretAnswer = data.Request.Form["secret_answer"],
+                    secretAnswerConfirm = data.Request.Form["secret_answer_confirm"];
+            if (currentPassword != null && newPassword != null && newPasswordConfirm != null && secretQuestion != null &&
+                secretAnswer != null && secretAnswerConfirm != null)
+            {
+#if CSRFP
+                if (!CSRFProtection.authenticated(data))
+                    error = "Invalid request, please try again!";
+#endif
+#if CAPTCHA
+                if (error == null && !Captcha.isCaptchaCorrect(data))
+                    error = "Incorrect captcha verification code!";
+#endif
+                if (error == null)
+                {
+                    // Check the new password's match
+                    if (newPassword != null && newPassword.Length > 0 && (newPasswordConfirm == null || newPasswordConfirm != newPassword))
+                        error = "New password's do not match!";
+                    // Check the secret answer's match
+                    else if (secretAnswer != null && secretAnswer.Length > 0 && (secretAnswer == null || secretAnswer != secretAnswerConfirm))
+                        error = "Secret answer's do not match!";
+                    else
+                    {
+                        // Attempt to update the account
+                        User.UserCreateSaveStatus ps = User.UserCreateSaveStatus.Error_Regisration;
+                        AccountActions.AccountUpdate t = AccountActions.updateAccount(data, this, u, currentPassword, newPassword, secretQuestion, secretAnswer, ref ps);
+                        switch (t)
+                        {
+                            case AccountActions.AccountUpdate.Failed:
+                                error = "An unknown error occurred, please try again later!"; break;
+                            case AccountActions.AccountUpdate.FailedCurrentPassword:
+                                error = "Current password is incorrect or you've made too many incorrect attempts!"; break;
+                            case AccountActions.AccountUpdate.FailedPassword:
+                                switch (ps)
+                                {
+                                    case User.UserCreateSaveStatus.InvalidPassword_Length:
+                                        error = "Your new password must be between " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN] + " to " + Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX] + " characters in length!"; break;
+                                    case User.UserCreateSaveStatus.InvalidPassword_Security:
+                                        error = "The desired new password is too basic, pick another!"; break;
+                                    default:
+                                        error = "An unknown issue occurred updating your password, please try again later!"; break;
+                                }
+                                break;
+                            case AccountActions.AccountUpdate.FailedUserPersist:
+                                switch (ps)
+                                {
+                                    case User.UserCreateSaveStatus.InvalidSecretQuestion_Length:
+                                        error = "Your secret question must be between x to x characters in length!"; break;
+                                    case User.UserCreateSaveStatus.InvalidSecretAnswer_Length:
+                                        error = "Your secret answer must be between x to x characters in length!"; break;
+                                    default:
+                                        error = "An unknown issue occurred updating your secret question/answer, please try again later!"; break;
+                                }
+                                break;
+                            case AccountActions.AccountUpdate.Success:
+                                success = true; break;
+                        }
+                    }
+                }
+            }
             // Set content
             data["Content"] = Core.Templates.get(data.Connector, "bsa/my_account");
             data["Title"] = "My Account";
-            data["bsa_ma_username"] = u.Username;
-            data["bsa_ma_secret_question"] = u.SecretQuestion;
-            data["bsa_ma_secret_answer"] = u.SecretAnswer;
+            data["bsa_ma_username"] = HttpUtility.HtmlEncode(u.Username);
+            data["bsa_ma_secret_question"] = HttpUtility.HtmlEncode(secretQuestion ?? u.SecretQuestion);
+            data["bsa_ma_secret_answer"] = HttpUtility.HtmlEncode(secretAnswer ?? u.SecretAnswer);
+            data["bsa_ma_secret_answer_confirm"] = HttpUtility.HtmlEncode(secretAnswerConfirm ?? u.SecretAnswer);
+            if (error != null)
+                data["bsa_ma_error"] = HttpUtility.HtmlEncode(error);
+            else if(success)
+                data.setFlag("bsa_ma_success");
             return true;
         }
         private bool pageAccountLog(Data data)
@@ -851,7 +941,7 @@ namespace CMS.BasicSiteAuth
             data["Content"] = Core.Templates.get(data.Connector, "bsa/logout");
             return true;
         }
-        // Methods - Static ********************************************************************************************
+        // Methods - Static - User Related *****************************************************************************
         /// <summary>
         /// Gets the user object for the current request; returns null if the user is anonymous. This can be invoked
         /// at any stage; if the user for the current request has not been loaded, it will be loaded.
@@ -949,45 +1039,7 @@ namespace CMS.BasicSiteAuth
                 File.WriteAllText(salts, saltsConfig.ToString());
             }
         }
-        /// <summary>
-        /// Generates a hash for a piece of string data, primarily intended for usage with user passwords.
-        /// </summary>
-        /// <param name="data">The string to be hashed.</param>
-        /// <param name="uniqueSalt">A salt unique for this hash; this must have a length of at least two!</param>
-        /// <returns></returns>
-        public string generateHash(string data, string uniqueSalt)
-        {
-            int usLenHalf = uniqueSalt.Length / 2;
-            byte[] rawData = Encoding.UTF8.GetBytes(uniqueSalt.Substring(0, usLenHalf) + data + uniqueSalt.Substring(usLenHalf));
-            byte[] rawSalt1 = Encoding.UTF8.GetBytes(salt1);
-            byte[] rawSalt2 = Encoding.UTF8.GetBytes(salt2);
-            int usLenInd = uniqueSalt.Length - 1;
-            // Apply salt
-            int s1, s2;
-            long buffer;
-            for (int i = 0; i < rawData.Length; i++)
-            {
-                buffer = 0;
-                // Change the value of the current byte
-                for (s1 = 0; s1 < rawSalt1.Length; s1++)
-                    for (s2 = 0; s2 < rawSalt2.Length; s2++)
-                        buffer = rawData[i] + ((salt1.Length + rawData[i]) * (rawSalt1[s1] + salt2.Length) * (rawSalt2[s2] + rawData.Length));
-                // Apply third (unique user) hash
-                buffer |= uniqueSalt[i % usLenInd];
-                // Round it down within numeric range of byte
-                while (buffer > byte.MaxValue)
-                    buffer -= byte.MaxValue;
-                // Check the value is not below 0
-                if (buffer < 0) buffer = 0;
-                // Reset the byte value
-                rawData[i] = (byte)buffer;
-            }
-            // Hash the byte-array
-            HashAlgorithm hasher = new SHA512Managed();
-            Byte[] computedHash = hasher.ComputeHash(rawData);
-            // Convert to base64 and return
-            return Convert.ToBase64String(computedHash);
-        }
+        
         // Methods - Properties ****************************************************************************************
         /// <summary>
         /// A collection of all the user-groups.
@@ -1007,6 +1059,26 @@ namespace CMS.BasicSiteAuth
             get
             {
                 return this.accountEventTypes;
+            }
+        }
+        /// <summary>
+        /// The first salt used for generating password hash's.
+        /// </summary>
+        public string Salt1
+        {
+            get
+            {
+                return salt1;
+            }
+        }
+        /// <summary>
+        /// The second salt used for generating password hash's.
+        /// </summary>
+        public string Salt2
+        {
+            get
+            {
+                return salt2;
             }
         }
     }

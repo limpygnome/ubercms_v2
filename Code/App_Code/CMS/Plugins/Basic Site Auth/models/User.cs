@@ -99,6 +99,33 @@ namespace CMS.BasicSiteAuth.Models
             /// </summary>
             Error_Regisration = 900
         };
+        public enum AuthenticationStatus
+        {
+            /// <summary>
+            /// Indicates a general exception occurred.
+            /// </summary>
+            Failed,
+            /// <summary>
+            /// Indicates too many attempts have been made from the IP and they're temporarily banned.
+            /// </summary>
+            FailedTempBanned,
+            /// <summary>
+            /// Indicates the account is banned.
+            /// </summary>
+            FailedBanned,
+            /// <summary>
+            /// Indicates the account is disabled from being able to login.
+            /// </summary>
+            FailedDisabled,
+            /// <summary>
+            /// Indicates the attempted password was incorrect.
+            /// </summary>
+            FailedIncorrect,
+            /// <summary>
+            /// The user has been successfully authenticated.
+            /// </summary>
+            Success
+        };
         // Fields **************************************************************************************************
         int         userID;             // The identifier of the user.
         string      username,           // The username of the user.
@@ -123,54 +150,43 @@ namespace CMS.BasicSiteAuth.Models
         /// Note: this method does not set any ASP.NET authentication, this should be handled by the calling method.
         /// This is because this method could be used by APIs which may use session keys or some alternate system
         /// to ASP.NET's authentication.
+        /// 
+        /// Note 2: this method also has protection against brute-force authentication with banning; incorrect
+        /// authentication attempts are also logged to account events.
         /// </summary>
         /// <param name="bsa">BSA plugin.</param>
         /// <param name="password">The plain-text password to be tested against this user.</param>
         /// <param name="requestData">The data for the current request.</param>
-        /// <param name="errorMessage">An error-message output; set to null if no error occurs.</param>
+        /// <param name="ban">If FailedBan is returned, the ban is outputted to this parameter.</param>
         /// <returns>True if authenticated, false if authentication failed.</returns>
-        public bool authenticate(BasicSiteAuth bsa, string password, Data requestData, ref string errorMessage)
+        public AuthenticationStatus authenticate(BasicSiteAuth bsa, string password, Data requestData, ref UserBan ban)
         {
             // Check the user has not exceeded the maximum amount of authentication attempts
             if (AuthFailedAttempt.isIpBanned(requestData.Connector, requestData.Request.UserHostAddress))
-            {
-                errorMessage = "Your IP has been temporarily banned for too many incorrect attempts, please try again later!";
-                return false;
-            }
+                return AuthenticationStatus.FailedTempBanned;
             // Check the password is correct
             else if (!validPassword(bsa, password))
             {
                 // Log the failed attempt
                 AccountEvent.create(requestData.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__INCORRECT_AUTH__UUID, DateTime.Now, userID, requestData.Request.UserHostAddress, SettingsNode.DataType.String, requestData.Request.UserAgent, SettingsNode.DataType.String);
                 AuthFailedAttempt.create(requestData, AuthFailedAttempt.AuthType.Login);
-                errorMessage = "Incorrect username/password!";
-                return false;
+                return AuthenticationStatus.FailedIncorrect;
             }
             // Check the user is not banned
             UserBan ub = UserBan.getLatestBan(requestData.Connector, this);
             if (ub != null)
             {
-                StringBuilder b = new StringBuilder();
-                b.Append("Your account has been banned for the following reason: '");
-                b.Append(ub.Reason);
-                b.Append("'; this ban will expire at: ");
-                b.Append(ub.DateTimeEnd != DateTime.MaxValue ? ub.DateTimeEnd.ToString("YYYY-MM-dd HH:mm:ss") : "never");
-                b.Append(".");
-                errorMessage = b.ToString();
-                return false;
+                ban = ub;
+                return AuthenticationStatus.FailedBanned;
             }
             // Check the user-group does not disable the user from logging-in
             else if (!userGroup.Login)
-            {
-                errorMessage = "Your account is disabled from logging-in (user-group).";
-                return false;
-            }
+                return AuthenticationStatus.FailedDisabled;
             else
             {
                 // Log the success
                 AccountEvent.create(requestData.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__AUTH__UUID, DateTime.Now, userID, requestData.Request.UserHostAddress, SettingsNode.DataType.String, requestData.Request.UserAgent, SettingsNode.DataType.String);
-                errorMessage = null;
-                return true;
+                return AuthenticationStatus.Success;
             }
         }
         /// <summary>
@@ -183,7 +199,7 @@ namespace CMS.BasicSiteAuth.Models
         {
             if (password == null || password.Length == 0)
                 return false;
-            return bsa.generateHash(password, passwordSalt) == this.password;
+            return Utils.generateHash(bsa, password, passwordSalt) == this.password;
         }
         // Mehods - Database Persistence ***************************************************************************
         /// <summary>
@@ -450,7 +466,7 @@ namespace CMS.BasicSiteAuth.Models
             {
                 Random rand = new Random((int)DateTime.Now.Ticks);
                 this.passwordSalt = BaseUtils.generateRandomString(rand.Next(BasicSiteAuth.BSA_UNIQUE_USER_HASH_MIN, BasicSiteAuth.BSA_UNIQUE_USER_HASH_MAX));
-                this.password = bsa.generateHash(newPassword, this.passwordSalt);
+                this.password = Utils.generateHash(bsa, newPassword, this.passwordSalt);
                 return UserCreateSaveStatus.Success;
             }
         }
