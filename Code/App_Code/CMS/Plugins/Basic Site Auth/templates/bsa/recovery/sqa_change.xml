@@ -3,55 +3,79 @@
 	<div class="TABLE">
 		<div class="ROW">
 			<div class="CELL2">
-				Username:
+				<div class="P">
+					Username:
+				</div>
 			</div>
 			<div class="CELL2">
-				<!--:bsa_sqa_username-->
-			</div>
-			<div class="clear"></div>
-		</div>
-		<div class="ROW">
-			<div class="CELL2">
-				Secret Question:
-			</div>
-			<div class="CELL2">
-				<!--bsa_sqa_question-->
+				<div class="P">
+					<!--:bsa_sqa_username-->
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				Secret Answer:
+				<div class="P">
+					Secret Question:
+				</div>
 			</div>
 			<div class="CELL2">
-				<input type="text" name="secret_answer" value="<!--:bsa_sqa_answer-->" placeholder="Secret answer..." />
-			</div>
-			<div class="clear"></div>
-		</div>
-		<div class="ROW">
-			<div class="CELL2">
-				New Password:
-			</div>
-			<div class="CELL2">
-				<input type="password" name="password" placeholder="Password..." />
+				<div class="P">
+					<!--bsa_sqa_question-->
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				Retype Password:
+				<div class="P">
+					Secret Answer:
+				</div>
 			</div>
 			<div class="CELL2">
-				<input type="password" name="password_confirm" placeholder="Retype password..." />
+				<div class="P">
+					<input type="text" name="secret_answer" value="<!--:bsa_sqa_answer-->" placeholder="Secret answer..." />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				Captcha:
+				<div class="P">
+					New Password:
+				</div>
 			</div>
 			<div class="CELL2">
-				<!--include(captcha/embed)-->
+				<div class="P">
+					<input type="password" name="password" placeholder="Password..." />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Retype Password:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="password" name="password_confirm" placeholder="Retype password..." />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Captcha:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<!--include(captcha/embed)-->
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
@@ -60,7 +84,9 @@
 				&nbsp;
 			</div>
 			<div class="CELL2">
-				<input type="submit" value="Answer" />
+				<div class="P">
+					<input type="submit" value="Answer" />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>

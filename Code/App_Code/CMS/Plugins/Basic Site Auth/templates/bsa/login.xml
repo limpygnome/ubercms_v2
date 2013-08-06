@@ -3,29 +3,41 @@
 	<div class="TABLE">
 		<div class="ROW">
 			<div class="CELL2">
-				Username:
+				<div class="P">
+					Username:
+				</div>
 			</div>
 			<div class="CELL2">
-				<input type="text" name="username" value="<!--:bsa_login_username-->" placeholder="Username..." />
+				<div class="P">
+					<input type="text" name="username" value="<!--:bsa_login_username-->" placeholder="Username..." />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				Password:
+				<div class="P">
+					Password:
+				</div>
 			</div>
 			<div class="CELL2">
-				<input type="password" name="password" placeholder="Password..." />
+				<div class="P">
+					<input type="password" name="password" placeholder="Password..." />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<!--IF:Captcha-->
 		<div class="ROW">
 			<div class="CELL2">
-				Captcha:
+				<div class="P">
+					Captcha:
+				</div>
 			</div>
 			<div class="CELL2">
-				<!--include(captcha/embed)-->
+				<div class="P">
+					<!--include(captcha/embed)-->
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
@@ -35,10 +47,12 @@
 				&nbsp;
 			</div>
 			<div class="CELL2">
-				<span class="checkbox">
-					<input type="checkbox" id="bsaloginpersist" name="session_persist" <!--IF:bsa_login_persist-->checked="checked"<!--ENDIF:bsa_login_persist-->/>
-					<label for="bsaloginpersist">Keep Me Logged In</label>
-				</span>
+				<div class="P">
+					<span class="checkbox">
+						<input type="checkbox" id="bsaloginpersist" name="session_persist" <!--IF:bsa_login_persist-->checked="checked"<!--ENDIF:bsa_login_persist-->/>
+						<label for="bsaloginpersist">Keep Me Logged In</label>
+					</span>
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
@@ -47,7 +61,9 @@
 				&nbsp;
 			</div>
 			<div class="CELL2">
-				<input type="submit" value="Login" />
+				<div class="P">
+					<input type="submit" value="Login" />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>

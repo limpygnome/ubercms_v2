@@ -3,97 +3,137 @@
 	<div class="TABLE">
 		<div class="ROW HEADER">
 			<div class="CELL1">
-				Account
+				<div class="P">
+					Account
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				Username:
+				<div class="P">
+					Username:
+				</div>
 			</div>
 			<div class="CELL2">
-				<input type="text" name="username" value="<!--:bsa_register_username-->" placeholder="Desired username..." />
-			</div>
-			<div class="clear"></div>
-		</div>
-		<div class="ROW">
-			<div class="CELL2">
-				Password:
-			</div>
-			<div class="CELL2">
-				<input type="password" name="password" placeholder="Desired password..." />
+				<div class="P">
+					<input type="text" name="username" value="<!--:bsa_register_username-->" placeholder="Desired username..." />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				Retype Password:
+				<div class="P">
+					Password:
+				</div>
 			</div>
 			<div class="CELL2">
-				<input type="password" name="password_confirm" placeholder="Retype the password..." />
+				<div class="P">
+					<input type="password" name="password" placeholder="Desired password..." />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				E-mail:
+				<div class="P">
+					Retype Password:
+				</div>
 			</div>
 			<div class="CELL2">
-				<input type="text" name="email" value="<!--:bsa_register_email-->" placeholder="E-mail..." />
+				<div class="P">
+					<input type="password" name="password_confirm" placeholder="Retype the password..." />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					E-mail:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="text" name="email" value="<!--:bsa_register_email-->" placeholder="E-mail..." />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW HEADER">
 			<div class="CELL1">
-				Recovery
+				<div class="P">
+					Recovery
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				Secret Question:
+				<div class="P">
+					Secret Question:
+				</div>
 			</div>
 			<div class="CELL2">
-				<input type="text" name="secret_question" value="<!--:bsa_register_secret_question-->" placeholder="Secret question..." />
-			</div>
-			<div class="clear"></div>
-		</div>
-		<div class="ROW">
-			<div class="CELL2">
-				Secret Answer:
-			</div>
-			<div class="CELL2">
-				<input type="password" name="secret_answer" value="<!--:bsa_register_secret_answer-->" placeholder="Secret answer..." />
+				<div class="P">
+					<input type="text" name="secret_question" value="<!--:bsa_register_secret_question-->" placeholder="Secret question..." />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				Retype Secret Answer:
+				<div class="P">
+					Secret Answer:
+				</div>
 			</div>
 			<div class="CELL2">
-				<input type="password" name="secret_answer_confirm" value="<!--:bsa_register_secret_answer-->" placeholder="Retype secret answer..." />
+				<div class="P">
+					<input type="password" name="secret_answer" value="<!--:bsa_register_secret_answer-->" placeholder="Secret answer..." />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Retype Secret Answer:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="password" name="secret_answer_confirm" value="<!--:bsa_register_secret_answer-->" placeholder="Retype secret answer..." />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL1">
-				Note: the secret question and answer can both be left blank to disable recovery using this option. Your secret answer is like a second password, make sure it's secure!
+				<div class="P">
+					Note: the secret question and answer can both be left blank to disable recovery using this option. Your secret answer is like a second password, make sure it's secure!
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW HEADER">
 			<div class="CELL1">
-				Security
+				<div class="P">
+					Security
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				Captcha:
+				<div class="P">
+					Captcha:
+				</div>
 			</div>
 			<div class="CELL2">
-				<!--include(captcha/embed)-->
+				<div class="P">
+					<!--include(captcha/embed)-->
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
@@ -102,7 +142,9 @@
 				&nbsp;
 			</div>
 			<div class="CELL2">
-				<input type="submit" value="Register" />
+				<div class="P">
+					<input type="submit" value="Register" />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>

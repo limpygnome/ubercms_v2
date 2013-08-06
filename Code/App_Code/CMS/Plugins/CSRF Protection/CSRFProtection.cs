@@ -18,6 +18,7 @@
  * 
  *      Change-Log:
  *                      2013-07-31      Created and finished initial class.
+ *                      2013-08-06      Added query-string support.
  * 
  * *********************************************************************************************************************
  * A plugin for offering cross-site request forgery (CSRF) protection. This mechanism works by placing a token as a
@@ -62,6 +63,8 @@ namespace CMS.Plugins
             // Install template function handlers
             if (!Core.Templates.handlerAdd(conn, this, "csrf", "CMS.Plugins.CSRFProtection", "templateHandler_csrf", ref messageOutput))
                 return false;
+            if (!Core.Templates.handlerAdd(conn, this, "csrf_qs", "CMS.Plugins.CSRFProtection", "templateHandler_csrf_qs", ref messageOutput))
+                return false;
             return true;
         }
         public override bool disable(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)
@@ -70,9 +73,9 @@ namespace CMS.Plugins
             if (!BaseUtils.preprocessorDirective_Remove("CSRFP", ref messageOutput))
                 return false;
             // Uninstall template function handlers
-            if (!Core.Templates.handlerRemove(conn, "cssrf", ref messageOutput))
-                return false;
-            return base.disable(conn, ref messageOutput);
+            Core.Templates.handlerRemove(conn, "csrf", ref messageOutput);
+            Core.Templates.handlerRemove(conn, "csrf_qs", ref messageOutput);
+            return true;
         }
         public override void handler_requestStart(Data data)
         {
@@ -117,9 +120,10 @@ namespace CMS.Plugins
         {
 #if CSRFP
             string fdata = data.Request.Form[CSRF_KEY];
+            string qsdata = data.Request.QueryString[CSRF_KEY];
             HttpCookie cdata = data.Request.Cookies[CSRF_KEY];
             // Ensure the form data length is correct and then check the cookie and form data are the same
-            return cdata != null && fdata != null && fdata.Length == CSRF_TOKEN_LENGTH && fdata == cdata.Value;
+            return cdata != null && ((fdata != null && fdata.Length == CSRF_TOKEN_LENGTH && fdata == cdata.Value) || (qsdata != null && qsdata.Length == CSRF_TOKEN_LENGTH && qsdata == cdata.Value));
 #else
             return true;
 #endif
@@ -136,6 +140,24 @@ namespace CMS.Plugins
         {
 #if CSRFP
             return "<input type=\"hidden\" name=\"" + CSRF_KEY + "\" value=\"" + getCSRFToken(data) + "\" />";
+#else
+            return string.Empty;
+#endif
+        }
+
+        /// <summary>
+        /// The CSRF query-string template function for including CSRF validation via query-string, required for
+        /// CSRF security.
+        /// 
+        /// This will return 'csrfp=[token]', thus you can embed it within URLs.
+        /// </summary>
+        /// <param name="data">The current request's data.</param>
+        /// <param name="args">Not required; can be null.</param>
+        /// <returns>The CSRF token for the current session with the query-string key.</returns>
+        public static string templateHandler_csrf_qs(Data data, string[] args)
+        {
+#if CSRFP
+            return CSRF_KEY + "=" + getCSRFToken(data);
 #else
             return string.Empty;
 #endif

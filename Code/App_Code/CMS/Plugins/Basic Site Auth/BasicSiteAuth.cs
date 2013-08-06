@@ -52,6 +52,7 @@ namespace CMS.BasicSiteAuth
         public const int        BSA_UNIQUE_USER_HASH_MIN = 10;
         public const int        BSA_UNIQUE_USER_HASH_MAX = 16;
         private const string    HTTPCONTEXTITEMS_BSA_CURRENT_USER = "bsa_current_user";
+        private const int       ACCOUNT_EVENTS_PER_PAGE = 10;
         // Constants - Settings ****************************************************************************************
         // -- User Restrictions ****************************************************************************************
         public const string     SETTINGS_USERNAME_MIN = "bsa/account/username_min";
@@ -935,6 +936,71 @@ namespace CMS.BasicSiteAuth
         }
         private bool pageMyAccount_AccountLog(Data data)
         {
+            // Setup page
+            BaseUtils.headerAppendCss("/content/css/bsa.css", ref data);
+            // Fetch the current user
+            User u = getCurrentUser(data);
+            if(u == null)
+                return false;
+            // Check for postback actions
+            string error = null;
+            string action = data.Request.Form["action"] ?? data.Request.QueryString["action"];
+            if (action != null)
+            {
+#if CSRFP
+                if (!CSRFProtection.authenticated(data))
+                    error = "Invalid request, please try again!";
+#endif
+                if (error == null)
+                {
+                    // Handle the action
+                    switch (action)
+                    {
+                        case "Clear All":
+                            AccountEvent.removeAll(data.Connector, u);
+                            break;
+                        case "remove":
+                            AccountEvent ae;
+                            if ((ae = AccountEvent.load(this, data.Connector, int.Parse(data.Request.QueryString["id"]))) != null)
+                            {
+                                // Attempt to load the model
+                                ae.remove(data.Connector);
+                                BaseUtils.redirectAbs(data, "/my_account/account_log");
+                            }
+                            else
+                                error = "Event with ID '" + data.Request.QueryString["id"] + "' could not be loaded!";
+                            break;
+                        default:
+                            error = "Unknown action '" + action + "'!"; break;
+                    }
+                }
+            }
+            // Fetch display parameters
+            int page;
+            if (!int.TryParse(data.PathInfo[2], out page) || page < 0)
+                page = 1;
+            // Fetch account events
+            StringBuilder items = new StringBuilder();
+            AccountEvent[] events = AccountEvent.loadByUser(this, data.Connector, u, ACCOUNT_EVENTS_PER_PAGE, page, AccountEvent.Sorting.DateTimeDescending);
+            if(events.Length > 0)
+            {
+                foreach (AccountEvent ae in events)
+                {
+                    // Render the event and append it
+                    items.Append((string)ae.Type.RenderMethod.Invoke(null, new object[] { data, ae }));
+                }
+                data["bsa_account_log_items"] = items.ToString();
+            }
+            // Set content
+            data["Title"] = "My Account - Account Log";
+            data["Content"] = Core.Templates.get(data.Connector, "bsa/my_account/account_log");
+            if (error != null)
+                data["bsa_account_log_error"] = HttpUtility.HtmlEncode(error);
+            data["bsa_account_log_page"] = page.ToString();
+            if(page > 1)
+                data["bsa_account_log_prev"] = (page - 1).ToString();
+            if (page < int.MaxValue && events.Length == ACCOUNT_EVENTS_PER_PAGE)
+                data["bsa_account_log_next"] = (page + 1).ToString();
             return true;
         }
         private bool pageMyAccount_CloseAccount(Data data)

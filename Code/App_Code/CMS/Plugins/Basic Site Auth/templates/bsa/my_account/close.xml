@@ -7,10 +7,14 @@
 	<div class="TABLE">
 		<div class="ROW">
 			<div class="CELL2">
-				Captcha:
+				<div class="P">
+					Captcha:
+				</div>
 			</div>
 			<div class="CELL2">
-				<!--include(captcha/embed)-->
+				<div class="P">
+					<!--include(captcha/embed)-->
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
@@ -19,7 +23,9 @@
 				&nbsp;
 			</div>
 			<div class="CELL2">
-				<input type="submit" name="close" name="close" value="Close Account" />
+				<div class="P">
+					<input type="submit" name="close" name="close" value="Close Account" />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
@@ -31,4 +37,9 @@
 <p class="ERROR">
 	<!--bsa_close_error-->
 </p>
-<!--ENDIF:bsa_close_error-->]]></html></template>
+<!--ENDIF:bsa_close_error-->
+
+<h3>Options</h3>
+<p>
+	<a href="/my_account" class="BUTTON">My Account</a>
+</p>]]></html></template>

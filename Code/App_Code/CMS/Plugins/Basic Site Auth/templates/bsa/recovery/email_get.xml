@@ -3,19 +3,27 @@
 	<div class="TABLE">
 		<div class="ROW">
 			<div class="CELL2">
-				E-mail:
+				<div class="P">
+					E-mail:
+				</div>
 			</div>
 			<div class="CELL2">
-				<input type="text" name="email" placeholder="Email of your account..." />
+				<div class="P">
+					<input type="text" name="email" placeholder="Email of your account..." />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
 		<div class="ROW">
 			<div class="CELL2">
-				Captcha:
+				<div class="P">
+					Captcha:
+				</div>
 			</div>
 			<div class="CELL2">
-				<!--include(captcha/embed)-->
+				<div class="P">
+					<!--include(captcha/embed)-->
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>
@@ -24,7 +32,9 @@
 				&nbsp;
 			</div>
 			<div class="CELL2">
-				<input type="submit" value="Send Recovery Code" />
+				<div class="P">
+					<input type="submit" value="Send Recovery Code" />
+				</div>
 			</div>
 			<div class="clear"></div>
 		</div>

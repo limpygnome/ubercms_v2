@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/my_account/account_log]]></path><description><![CDATA[The main layout page for account log.]]></description><html><![CDATA[<h2>My Account - Account Log</h2>
+
+<div class="TABLE">
+	<div class="ROW HEADER">
+		<div class="CELL BSA_AL_1">
+			<div class="P">
+				ID
+			</div>
+		</div>
+		<div class="CELL BSA_AL_2">
+			<div class="P">
+				Type
+			</div>
+		</div>
+		<div class="CELL BSA_AL_3">
+			<div class="P">
+				Information
+			</div>
+		</div>
+		<div class="CELL BSA_AL_4">
+			<div class="P">
+				Date & Time
+			</div>
+		</div>
+		<div class="CELL BSA_AL_5">
+			<div class="P">
+				Options
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--IF:bsa_account_log_items-->
+		<!--bsa_account_log_items-->
+	<!--ELSE-->
+	<div class="ROW">
+		<div class="CELL1">
+			<div class="P">
+				No account events to display.
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--ENDIF:bsa_account_log_items-->
+	<div class="clear"></div>
+</div>
+
+<p class="tac">
+<!--IF:bsa_account_log_prev-->
+	<a class="fl BUTTON" href="/my_account/account_log/<!--bsa_account_log_prev-->">Previous</a>
+<!--ENDIF:bsa_account_log_prev-->
+
+Page <!--bsa_account_log_page-->
+
+<!--IF:bsa_account_log_next-->
+	<a class="fr BUTTON" href="/my_account/account_log/<!--bsa_account_log_next-->">Next</a>
+<!--ENDIF:bsa_account_log_next-->
+
+</p>
+
+<!--IF:bsa_account_log_error-->
+<p class="ERROR">
+	<!--bsa_account_log_error-->
+</p>
+<!--ENDIF:bsa_account_log_error-->
+
+<h3>Actions</h3>
+<form method="post" action="/my_account/account_log">
+	<p>
+			<a href="/my_account" class="BUTTON">My Account</a>
+			<input type="submit" name="action" value="Clear All" class="BUTTON" />
+	</p>
+	<!--csrf()-->
+</form>]]></html></template>

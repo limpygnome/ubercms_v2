@@ -266,12 +266,15 @@ body
 {
     display: block;
 }
-.TABLE .ROW .CELL1, .TABLE .ROW .CELL2, .TABLE .ROW .CELL3, .TABLE .ROW .CELL4
+.TABLE .ROW .CELL, .TABLE .ROW .CELL1, .TABLE .ROW .CELL2, .TABLE .ROW .CELL3, .TABLE .ROW .CELL4
 {
     vertical-align: middle;
     display: inline-block;
     float: left;
-	padding: 1%;
+}
+.TABLE .ROW .P
+{
+	padding: 0.5em;
 }
 .TABLE .ROW .CELL1
 {
@@ -279,15 +282,15 @@ body
 }
 .TABLE .ROW .CELL2
 {
-    width: 48%;
+    width: 50%;
 }
 .TABLE .ROW .CELL3
 {
-    width: 30.33%;
+    width: 33.33%;
 }
 .TABLE .ROW .CELL4
 {
-    width: 21%;
+    width: 25%;
 }
 .TABLE input, .BUTTON
 {

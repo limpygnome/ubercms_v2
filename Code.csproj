@@ -83,6 +83,7 @@
     <Compile Include="Code\App_Code\CMS\Base\SQLCompiler.cs" />
     <Compile Include="Code\App_Code\CMS\Base\Version.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic 404 Page\Basic404Page.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AET_Render.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\AccountEvent.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\AccountEventType.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\AccountEventTypes.cs" />
@@ -154,6 +155,7 @@
     <Content Include="Code\App_Code\CMS\Plugins\CSRF Protection\Plugin.config">
       <SubType>Designer</SubType>
     </Content>
+    <None Include="Code\App_Code\CMS\Plugins\Basic Site Auth\files.list" />
     <None Include="Code\installer\files.list" />
   </ItemGroup>
 </Project>

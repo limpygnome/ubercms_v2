@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/my_account/account_log_item]]></path><description><![CDATA[A generic account log item.]]></description><html><![CDATA[<div class="ROW RBSA">
+	<div class="CELL BSA_AL_1">
+		<div class="P">
+			<ID>
+		</div>
+	</div>
+	<div class="CELL BSA_AL_2">
+		<div class="P">
+			<TYPE>
+		</div>
+	</div>
+	<div class="CELL BSA_AL_3">
+		<div class="P">
+			<INFORMATION>
+		</div>
+	</div>
+	<div class="CELL BSA_AL_4" title="<DATE_TIME_FULL>">
+		<div class="P">
+			<DATE_TIME>
+		</div>
+	</div>
+	<div class="CELL BSA_AL_5" title="<DATE_TIME_FULL>">
+		<div class="P">
+			<a href="/my_account/account_log?action=remove&id=<ID>&<!--csrf_qs()-->" class="BUTTON">Remove</a>
+		</div>
+	</div>
+	<div class="clear"></div>
+</div>]]></html></template>

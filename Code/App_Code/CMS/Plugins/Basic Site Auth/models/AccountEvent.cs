@@ -114,12 +114,12 @@ namespace CMS.BasicSiteAuth.Models
         /// <param name="conn">Database connector.</param>
         /// <param name="usr">The user.</param>
         /// <param name="amount">The number of models to load.</param>
-        /// <param name="offset">The offset in pages.</param>
+        /// <param name="offset">The offset in pages; starting at one.</param>
         /// <param name="sorting">The sorting of events.</param>
         /// <returns>Array of models; may be empty - never null.</returns>
         public static AccountEvent[] loadByUser(BasicSiteAuth bsa, Connector conn, User usr, int amount, int offset, Sorting sorting)
         {
-            Result result = conn.queryRead("SELECT * FROM bsa_view_account_events WHERE userid='" + SQLUtils.escape(usr.UserID.ToString()) + "' LIMIT " + amount + " OFFSET " + ((offset * amount) - amount) + " ORDER BY " + buildSorting(sorting));
+            Result result = conn.queryRead("SELECT * FROM bsa_view_account_events WHERE userid='" + SQLUtils.escape(usr.UserID.ToString()) + "' ORDER BY " + buildSorting(sorting) + " LIMIT " + amount + " OFFSET " + ((offset * amount) - amount));
             return load(bsa, result);
         }
         /// <summary>
@@ -129,14 +129,14 @@ namespace CMS.BasicSiteAuth.Models
         /// <param name="conn">Database connector.</param>
         /// <param name="usr">The user.</param>
         /// <param name="amount">The number of models to load.</param>
-        /// <param name="offset">The offset in pages.</param>
+        /// <param name="offset">The offset in pages; starting at one.</param>
         /// <param name="sorting">The sorting of events.</param>
         /// <param name="periodStart">The inclusive starting date of events.</param>
         /// <param name="periodEnd">The inclusive ending date of events.</param>
         /// <returns>Array of models; may be empty - never null.</returns>
         public static AccountEvent[] loadByUser(BasicSiteAuth bsa, Connector conn, User usr, int amount, int offset, Sorting sorting, DateTime periodStart, DateTime periodEnd)
         {
-            Result result = conn.queryRead("SELECT * FROM bsa_view_account_events WHERE userid='" + SQLUtils.escape(usr.UserID.ToString()) + "' AND datetime >= '" + SQLUtils.escape(periodStart.ToString("YYYY-MM-dd HH:mm:ss")) + "' AND datetime <= '" + SQLUtils.escape(periodEnd.ToString("YYYY-MM-dd HH:mm:ss")) + "' LIMIT " + amount + " OFFSET " + ((offset * amount) - amount) + " ORDER BY " + buildSorting(sorting));
+            Result result = conn.queryRead("SELECT * FROM bsa_view_account_events WHERE userid='" + SQLUtils.escape(usr.UserID.ToString()) + "' AND datetime >= '" + SQLUtils.escape(periodStart.ToString("YYYY-MM-dd HH:mm:ss")) + "' AND datetime <= '" + SQLUtils.escape(periodEnd.ToString("YYYY-MM-dd HH:mm:ss")) + "' ORDER BY " + buildSorting(sorting) + " LIMIT " + amount + " OFFSET " + ((offset * amount) - amount));
             return load(bsa, result);
         }
         /// <summary>
@@ -169,7 +169,11 @@ namespace CMS.BasicSiteAuth.Models
             a.eventid = data.get2<int>("eventid");
             a.userid = data.get2<int>("userid");
             a.eventType = bsa.AccountEventTypes[data.get2<string>("type_uuid")];
-            a.param1 = SettingsNode.parseType(data.get2<string>("param1"));
+            a.param1DataType = SettingsNode.parseType(data.get2<string>("param1_datatype"));
+            a.param1 = SettingsNode.parseTypeValue(a.param1DataType, data.get2<string>("param1"));
+            a.param2DataType = SettingsNode.parseType(data.get2<string>("param2_datatype"));
+            a.param2 = SettingsNode.parseTypeValue(a.param2DataType, data.get2<string>("param2"));
+            a.datetime = data.get2<DateTime>("datetime");
             return a;
         }
         /// <summary>
@@ -202,6 +206,27 @@ namespace CMS.BasicSiteAuth.Models
             }
             modified = false;
             return true;
+        }
+        /// <summary>
+        /// Unpersists the model from the database.
+        /// </summary>
+        /// <param name="conn">Datbaase connector</param>
+        public void remove(Connector conn)
+        {
+            PreparedStatement ps = new PreparedStatement("DELETE FROM bsa_account_events WHERE eventid=?eventid;");
+            ps["eventid"] = eventid;
+            conn.queryExecute(ps);
+        }
+        /// <summary>
+        /// Removes all of the events belonging to a user.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="user">The user of the account events.</param>
+        public static void removeAll(Connector conn, User user)
+        {
+            PreparedStatement ps = new PreparedStatement("DELETE FROM bsa_account_events WHERE userid=?userid;");
+            ps["userid"] = user.UserID;
+            conn.queryExecute(ps);
         }
         // Methods *****************************************************************************************************
         private static string buildSorting(Sorting sorting)

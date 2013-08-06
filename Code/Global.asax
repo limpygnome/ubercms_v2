@@ -18,6 +18,10 @@
 		// Check for excluded directories
 		else if(path.StartsWith("/content") || path.StartsWith("/mirror") || path.StartsWith("/install") || path.StartsWith("favicon.ico"))
 			return;
+        // Append query-string data
+        string qs = System.Web.HttpContext.Current.Request.QueryString.ToString();
+        if(qs.Length > 0)
+            path += "&" + qs;
         // Rewrite path to Default.aspx
         System.Web.HttpContext.Current.RewritePath(Request.ApplicationPath + "Default.aspx?path=" + path, true);
 #endif

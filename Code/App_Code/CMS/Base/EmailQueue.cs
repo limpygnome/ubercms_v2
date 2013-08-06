@@ -152,10 +152,10 @@ namespace CMS.Base
                     conn.disconnect();
                     conn = null;
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Core.fail("E-mail queue exception: '" + ex.GetBaseException().Message + "' - '" + ex.StackTrace + "'!");
-                    return;
+                    //Core.fail("E-mail queue exception: '" + ex.GetBaseException().Message + "' - '" + ex.StackTrace + "'!");
+                    //return;
                 }
 				// Sleep to avoid excessive CPU usage
 				Thread.Sleep(messagePollDelay);
