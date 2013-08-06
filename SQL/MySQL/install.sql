@@ -16,7 +16,10 @@ CREATE TABLE IF NOT EXISTS cms_plugins
 	directory TEXT NOT NULL,
 	classpath TEXT NOT NULL,
 	priority INT DEFAULT 0,
-	state INT DEFAULT 0
+	state INT DEFAULT 0,
+	version_major INT NOT NULL,
+	version_minor INT NOT NULL,
+	version_build INT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS cms_plugin_handlers
 (
@@ -81,7 +84,7 @@ CREATE TABLE IF NOT EXISTS cms_email_queue
 );
 -- Create views
 CREATE OR REPLACE VIEW cms_view_plugins_loadinfo AS
-	SELECT HEX(p.uuid) AS uuid, p.uuid AS uuid_raw, p.title, p.directory, p.classpath, p.priority, p.state, ph.request_start, ph.request_end, ph.page_error, ph.page_not_found, ph.plugin_start, ph.plugin_stop, ph.plugin_action, ph.cycle_interval FROM cms_plugins AS p LEFT OUTER JOIN cms_plugin_handlers AS ph ON ph.uuid=p.uuid ORDER BY p.priority DESC;
+	SELECT HEX(p.uuid) AS uuid, p.uuid AS uuid_raw, p.title, p.directory, p.classpath, p.priority, p.state, p.version_major, p.version_minor, p.version_build, ph.request_start, ph.request_end, ph.page_error, ph.page_not_found, ph.plugin_start, ph.plugin_stop, ph.plugin_action, ph.cycle_interval FROM cms_plugins AS p LEFT OUTER JOIN cms_plugin_handlers AS ph ON ph.uuid=p.uuid ORDER BY p.priority DESC;
 
 CREATE OR REPLACE VIEW cms_view_settings_load AS
 	SELECT path, HEX(uuid) AS uuid, type, value, description FROM cms_settings;

@@ -48,8 +48,8 @@ namespace CMS.Plugins
         // Constants ***************************************************************************************************
         private const string ERROR_BOX_VARIDENT = "PackageDeveloperError";
         private const string SUCCESS_BOX_VARIDENT = "PackageDeveloperSuccess";
-        public PackageDeveloper(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
-            : base(uuid, title, directory, state, handlerInfo)
+        public PackageDeveloper(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version)
+            : base(uuid, title, directory, state, handlerInfo, version)
         { }
         public override bool install(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
@@ -128,7 +128,7 @@ namespace CMS.Plugins
                 plugins.Append(item
                     .Replace("%UUID%", plugin.UUID.HexHyphens)
                     .Replace("%STATE%", HttpUtility.HtmlEncode(plugin.State.ToString()))
-                    .Replace("%VERSION%", plugin.VersionMajor + "." + plugin.VersionMinor + "." + plugin.VersionBuild)
+                    .Replace("%VERSION%", plugin.Version.Major + "." + plugin.Version.Minor + "." + plugin.Version.Build)
                     .Replace("%TITLE%", HttpUtility.HtmlEncode(plugin.Title))
                     );
             }
@@ -231,7 +231,7 @@ namespace CMS.Plugins
             data["Title"] = "Package Developer - Package Plugin";
             // Create a new archive in the base directory, add every file in the base of the target plugin to the archive
             StringBuilder output = new StringBuilder();
-            string archivePath = Core.BasePath + "/" + System.IO.Path.GetFileName(plugin.RelativeDirectory) + "_" + plugin.VersionMajor + "." + plugin.VersionMinor + "." + plugin.VersionBuild + ".zip";
+            string archivePath = Core.BasePath + "/" + System.IO.Path.GetFileName(plugin.RelativeDirectory) + "_" + plugin.Version.Major + "." + plugin.Version.Minor + "." + plugin.Version.Build + ".zip";
             output.Append("Creating archive at '").Append(HttpUtility.HtmlEncode(archivePath)).Append("'...");
             using(ZipFile archive = new ZipFile(archivePath))
             {

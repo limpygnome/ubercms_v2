@@ -65,6 +65,7 @@ namespace CMS.Base
 		private static CoreState			currentState = CoreState.Stopped;	// The current state of the core.
 		private static DatabaseType			dbType;								// The type of database connector to create (faster than checking config value each time).
 		private static string 				errorMessage;				        // Used to store the exception message when loading the core (if one occurs).
+        private static Version              version;                            // The version of the CMS/base.
 		// Fields - Services/Connections/Data **************************************************************************
 		private static Plugins				plugins;							// Plugin management.
 		private static EmailQueue			emailQueue;							// E-mail queue sending service.
@@ -110,6 +111,8 @@ namespace CMS.Base
                         fail(errorMessage ?? "Failed to load disk settings!");
                     else
                     {
+                        // Load the version information
+                        version = new Version(settingsDisk["settings/version/major"].get<int>(), settingsDisk["settings/version/minor"].get<int>(), settingsDisk["settings/version/build"].get<int>());
                         // Setup connector
                         switch (settingsDisk["settings/database/provider"].get<string>())
                         {
@@ -192,6 +195,7 @@ namespace CMS.Base
 				templates = null;
 				settingsDisk = null;
 				settings = null;
+                version = null;
                 // Dispose temporary directory
                 try
                 {
@@ -478,6 +482,16 @@ namespace CMS.Base
             get
             {
                 return Core.Settings["core/title"].get<string>();
+            }
+        }
+        /// <summary>
+        /// The version of the CMS/base.
+        /// </summary>
+        public static Version Version
+        {
+            get
+            {
+                return version;
             }
         }
 	}

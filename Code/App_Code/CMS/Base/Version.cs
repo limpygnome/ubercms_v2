@@ -17,46 +17,74 @@
  *      Path:           /CMS/Base/Version.cs
  * 
  *      Change-Log:
- *                      2013-07-23      Created initial class.
+ *                      2013-08-06      Finished initial class.
  *                      
  * *********************************************************************************************************************
- * Version information about the CMS.
+ * A model for version information.
  * *********************************************************************************************************************
  */
 using System;
 
 namespace CMS.Base
 {
-    public static class Version
+    public class Version
     {
+        // Fields ******************************************************************************************************
+        private int     major,  // The major release version.
+                        minor,  // The minor release version.
+                        build;  // The build release version.
+        // Methods - Constructors **************************************************************************************
+        public Version()
+        {
+            this.major = this.minor = this.build = 0;
+        }
+        public Version(int major, int minor, int build)
+        {
+            this.major = major;
+            this.minor = minor;
+            this.build = build;
+        }
+        // Methods - Properties ****************************************************************************************
         /// <summary>
-        /// The current version major.
+        /// The major release version.
         /// </summary>
-        public static int Major
+        public int Major
         {
             get
             {
-                return 2;
+                return major;
+            }
+            set
+            {
+                major = value;
             }
         }
         /// <summary>
-        /// The current version minor.
+        /// The minor release version.
         /// </summary>
-        public static int Minor
+        public int Minor
         {
             get
             {
-                return 0;
+                return minor;
+            }
+            set
+            {
+                minor = value;
             }
         }
         /// <summary>
-        /// The current version build.
+        /// The build release version.
         /// </summary>
-        public static int Build
+        public int Build
         {
             get
             {
-                return 0;
+                return build;
+            }
+            set
+            {
+                build = value;
             }
         }
     }

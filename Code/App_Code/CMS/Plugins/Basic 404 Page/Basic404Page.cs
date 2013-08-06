@@ -36,8 +36,8 @@ namespace CMS.Plugins
     /// </summary>
     public class Basic404Page : Plugin
     {
-        public Basic404Page(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
-            : base(uuid, title, directory, state, handlerInfo)
+        public Basic404Page(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version)
+            : base(uuid, title, directory, state, handlerInfo, version)
         { }
         public override bool install(Connector conn, ref System.Text.StringBuilder messageOutput)
         {

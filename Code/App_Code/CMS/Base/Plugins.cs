@@ -217,7 +217,7 @@ namespace CMS.Base
                 // Create an instance of the class and add it
                 try
                 {
-                    Plugin plugin = (Plugin)ass.CreateInstance(data["classpath"], false, BindingFlags.CreateInstance, null, new object[] { uuid, data["title"], data["directory"], state, phi }, null, null);
+                    Plugin plugin = (Plugin)ass.CreateInstance(data["classpath"], false, BindingFlags.CreateInstance, null, new object[] { uuid, data["title"], data["directory"], state, phi, new Version(data.get2<int>("version_major"), data.get2<int>("version_minor"), data.get2<int>("version_build")) }, null, null);
                     if (plugin != null)
                         plugins.Add(uuid.Hex.ToUpper(), plugin);
                     else
@@ -366,6 +366,7 @@ namespace CMS.Base
                 }
                 int priority;
                 string title, directory, classPath;
+                int versionMajor, versionMinor, versionBuild;
                 UUID uuid;
                 // Read base configuration
                 try
@@ -382,6 +383,9 @@ namespace CMS.Base
                         messageOutput.Append("Invalid UUID '").Append(doc["plugin"]["uuid"].InnerText).AppendLine("'!");
                         return false;
                     }
+                    versionMajor = int.Parse(doc["plugin"]["version_major"].InnerText);
+                    versionMinor = int.Parse(doc["plugin"]["version_minor"].InnerText);
+                    versionBuild = int.Parse(doc["plugin"]["version_build"].InnerText);
                 }
                 catch (Exception ex)
                 {
@@ -400,15 +404,18 @@ namespace CMS.Base
                     messageOutput.AppendLine("Incorrect directory location! Should be at '" + Core.BasePath + "/" + directory + "', however directory is at '" + directoryPath + "'! If you need to change the install location of a plugin, modify its 'Plugin.config' file, however the new path MUST be relative.");
                     return false;
                 }
-                // Update the database
+                // Insert the plugin into the database
                 try
                 {
-                    PreparedStatement ps = new PreparedStatement("INSERT INTO cms_plugins (uuid, title, directory, classpath, priority) VALUES(?uuid, ?title, ?directory, ?classpath, ?priority); INSERT INTO cms_plugin_handlers (uuid) VALUES(?uuid);");
+                    PreparedStatement ps = new PreparedStatement("INSERT INTO cms_plugins (uuid, title, directory, classpath, priority, version_major, version_minor, version_build) VALUES(?uuid, ?title, ?directory, ?classpath, ?priority, ?version_major, ?version_minor, ?version_build); INSERT INTO cms_plugin_handlers (uuid) VALUES(?uuid);");
                     ps["uuid"] = uuid.Bytes;
                     ps["title"] = title;
                     ps["directory"] = directory;
                     ps["classpath"] = classPath;
                     ps["priority"] = ((int)priority).ToString();
+                    ps["version_major"] = versionMajor;
+                    ps["version_minor"] = versionMajor;
+                    ps["version_build"] = versionBuild;
                     conn.queryExecute(ps);
                 }
                 catch (Exception ex)

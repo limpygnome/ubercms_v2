@@ -30,6 +30,7 @@
  *                                      Moved namespace to Core.Base.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-29      Refactored FullPath to Path.
+ *                      2013-08-06      Versioning redone to be database based, less effort when updating.
  * 
  * *********************************************************************************************************************
  * Base class for all plugins. This contains information about the plugin and methods to be implemented as handlers.
@@ -67,15 +68,16 @@ namespace CMS.Base
             PostEnable
         }
 		// Fields ******************************************************************************************************
-        private bool stateChanged;                  // Indicates if the state of the plugin has changed.
-        private UUID uuid;                          // The universally unique identifier of the plugin.
-		private PluginState state;                  // The state of the plugin.
-        private PluginHandlerInfo handlerInfo;      // The handler information of the plugin.
-        private DateTime lastCycled;                // The last time the plugin cycled; DateTime.Min as value means the plugin has yet to cycle.
-        private string title;                       // The title of the plugin.
-        private string directory;                   // The relative path of the plugin's base directory.
+        private bool                    stateChanged;       // Indicates if the state of the plugin has changed.
+        private UUID                    uuid;               // The universally unique identifier of the plugin.
+		private PluginState             state;              // The state of the plugin.
+        private PluginHandlerInfo       handlerInfo;        // The handler information of the plugin.
+        private DateTime                lastCycled;         // The last time the plugin cycled; DateTime.Min as value means the plugin has yet to cycle.
+        private string                  title;              // The title of the plugin.
+        private string                  directory;          // The relative path of the plugin's base directory.
+        private Version                 version;            // The current version of the plugin.
         // Methods - Constructors **************************************************************************************
-        public Plugin(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
+        public Plugin(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Version version)
         {
             this.uuid = uuid;
             this.title = title;
@@ -83,6 +85,7 @@ namespace CMS.Base
             this.state = state;
             this.handlerInfo = handlerInfo;
             this.lastCycled = DateTime.MinValue;
+            this.version = version;
         }
 		// Methods - Abstract - State **********************************************************************************
         /// <summary>
@@ -232,33 +235,13 @@ namespace CMS.Base
 			}
 		}
         /// <summary>
-        /// The major version of this plugin.
+        /// The version of this plugin.
         /// </summary>
-        public virtual int VersionMajor
+        public Version Version
         {
             get
             {
-                return 1;
-            }
-        }
-        /// <summary>
-        /// The minor version of this plugin.
-        /// </summary>
-        public virtual int VersionMinor
-        {
-            get
-            {
-                return 0;
-            }
-        }
-        /// <summary>
-        /// The build version of this plugin.
-        /// </summary>
-        public virtual int VersionBuild
-        {
-            get
-            {
-                return 0;
+                return version;
             }
         }
         /// <summary>

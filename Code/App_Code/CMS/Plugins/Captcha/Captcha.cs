@@ -61,8 +61,8 @@ namespace CMS.Plugins
         public const string SETTINGS_FONT_SIZE_MAX__DESCRIPTION = "The maximum font-size of the captcha text.";
         public const int SETTINGS_FONT_SIZE_MAX__DEFAULT = 22;
         // Methods - Constructors **************************************************************************************
-        public Captcha(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo)
-            : base(uuid, title, directory, state, handlerInfo)
+        public Captcha(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version)
+            : base(uuid, title, directory, state, handlerInfo, version)
         { }
         // Methods - Handlers ******************************************************************************************
         public override bool handler_handleRequest(Data data)
