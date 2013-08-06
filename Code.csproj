@@ -72,6 +72,8 @@
     </VisualStudio>
   </ProjectExtensions>
   <ItemGroup>
+    <Content Include="Code\App_Code\CMS\Plugins\Basic Articles\sql\install.sql" />
+    <Content Include="Code\App_Code\CMS\Plugins\Basic Articles\sql\uninstall.sql" />
     <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\sql\install.sql" />
     <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\sql\uninstall.sql" />
     <Content Include="Code\App_Code\CMS\Plugins\Example\Plugin.config" />
@@ -131,9 +133,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Code\App_Code\CMS\Plugins\Admin Panel\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\Articles\content\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\Articles\sql\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\Articles\templates\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Basic Articles\content\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Basic Articles\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\content\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Captcha\templates\" />
@@ -150,6 +151,7 @@
     <Content Include="Code\App_Code\CMS\Plugins\Basic 404 Page\Plugin.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Code\App_Code\CMS\Plugins\Basic Articles\Plugin.config" />
     <None Include="Code\App_Code\CMS\Plugins\Basic 404 Page\files.list" />
     <Content Include="Code\App_Code\CMS\Plugins\Captcha\Plugin.config" />
     <Content Include="Code\App_Code\CMS\Plugins\CSRF Protection\Plugin.config">

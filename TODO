@@ -13,6 +13,22 @@ theory, be far more efficient and faster.
 > add create method to models for short factory construction (with bool or custom return).
 
 
+
+> comments addon -> comments for a path (based on pathinfo)
+--> allows universal comments system across multiple plugins
+> ajax addon
+--> fetch page, place data variables in response, only update containers with the same name as the variables
+----> ability to send response requiring full redirect
+------> would save bandwidth wasted on sending the full page.
+> basic image store
+--> upload imagery
+--> compressed
+--> ability to embed in articles; hooks/adds article render table
+--> html5 drag+drop etc
+> add ability for account user log to be used for articles system
+--> add universal hooks to BSA for account event loading by types etc - specify array of uuids?
+
+
 Official Plugins
 ----------------------------------------------------------------------------------------------------------------------->
 Package Developer
