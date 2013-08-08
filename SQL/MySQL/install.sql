@@ -1,86 +1,77 @@
--- Drop tables
-SET FOREIGN_KEY_CHECKS=0;
-DROP TABLE IF EXISTS `cms_plugins`;
-DROP TABLE IF EXISTS `cms_settings`;
-DROP TABLE IF EXISTS `cms_urlrewriting`;
-DROP TABLE IF EXISTS `cms_templates`;
-DROP TABLE IF EXISTS `cms_email_queue`;
-DROP TABLE IF EXISTS `cms_plugin_handlers`;
-SET FOREIGN_KEY_CHECKS=1;
-
 -- Create tables
-CREATE TABLE IF NOT EXISTS cms_plugins
+CREATE TABLE cms_plugins
 (
-	uuid CHAR(16) PRIMARY KEY,
-	title TEXT NOT NULL,
-	directory TEXT NOT NULL,
-	classpath TEXT NOT NULL,
-	priority INT DEFAULT 0,
-	state INT DEFAULT 0,
-	version_major INT NOT NULL,
-	version_minor INT NOT NULL,
-	version_build INT NOT NULL
+	uuid									CHAR(16) PRIMARY KEY,
+	title									TEXT NOT NULL,
+	directory								TEXT NOT NULL,
+	classpath								TEXT NOT NULL,
+	priority								INT DEFAULT 0,
+	state									INT DEFAULT 0,
+	version_major							INT NOT NULL,
+	version_minor							INT NOT NULL,
+	version_build							INT NOT NULL
 );
-CREATE TABLE IF NOT EXISTS cms_plugin_handlers
+CREATE TABLE cms_plugin_handlers
 (
-	uuid CHAR(16) PRIMARY KEY,
-	FOREIGN KEY(`uuid`) REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	request_start VARCHAR(1) DEFAULT 0,
-	request_end VARCHAR(1) DEFAULT 0,
-	page_error VARCHAR(1) DEFAULT 0,
-	page_not_found VARCHAR(1) DEFAULT 0,
-	plugin_start VARCHAR(1) DEFAULT 0,
-	plugin_stop VARCHAR(1) DEFAULT 0,
-	plugin_action VARCHAR(1) DEFAULT 0,
-	cycle_interval INT DEFAULT 0
+	uuid									CHAR(16) PRIMARY KEY,
+	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	request_start							VARCHAR(1) DEFAULT 0,
+	request_end								VARCHAR(1) DEFAULT 0,
+	page_error								VARCHAR(1) DEFAULT 0,
+	page_not_found							VARCHAR(1) DEFAULT 0,
+	plugin_start							VARCHAR(1) DEFAULT 0,
+	plugin_stop								VARCHAR(1) DEFAULT 0,
+	plugin_action							VARCHAR(1) DEFAULT 0,
+	cycle_interval							INT DEFAULT 0
 );
-CREATE TABLE IF NOT EXISTS cms_settings
+CREATE TABLE cms_settings
 (
-	path VARCHAR(128) PRIMARY KEY,
-	uuid CHAR(16),
-	FOREIGN KEY(`uuid`) REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	type VARCHAR(1) NOT NULL,
-	value TEXT,
-	description TEXT
+	path									VARCHAR(128) PRIMARY KEY,
+	uuid									CHAR(16),
+	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	type									VARCHAR(1) NOT NULL,
+	value									TEXT,
+	description								TEXT
 );
-CREATE TABLE IF NOT EXISTS cms_urlrewriting
+CREATE TABLE cms_urlrewriting
 (
-	urlid INT PRIMARY KEY AUTO_INCREMENT,
-	parent INT,
-	FOREIGN KEY(`parent`) REFERENCES `cms_urlrewriting`(`urlid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	uuid CHAR(16),
-	FOREIGN KEY(`uuid`) REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	full_path TEXT NOT NULL,
-	priority INT DEFAULT 0
+	urlid									INT PRIMARY KEY AUTO_INCREMENT,
+	parent									INT,
+	FOREIGN KEY(`parent`)					REFERENCES `cms_urlrewriting`(`urlid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	uuid									CHAR(16),
+	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	full_path								VARCHAR(128),
+	priority								INT DEFAULT 0
 );
-CREATE TABLE IF NOT EXISTS cms_templates
+CREATE INDEX `full_path` ON `cms_urlrewriting`(`full_path`);
+CREATE TABLE cms_templates
 (
-	path VARCHAR(128) PRIMARY KEY,
-	uuid CHAR(16),
-	FOREIGN KEY(`uuid`) REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	description TEXT,
-	html TEXT
+	path									VARCHAR(128) PRIMARY KEY,
+	uuid									CHAR(16),
+	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	description								TEXT,
+	html									TEXT
 );
-CREATE TABLE IF NOT EXISTS cms_template_handlers
+CREATE TABLE cms_template_handlers
 (
 	-- path: the path/function-name when called from a template
 	-- classpath: the location of the class in the assembly e.g. CMS.Base.Templates
 	-- function_name: the name of the function within the class to be invoked.
-	path VARCHAR(128) PRIMARY KEY,
-	uuid CHAR(16),
-	FOREIGN KEY(`uuid`) REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	classpath VARCHAR(128) NOT NULL,
-	function_name VARCHAR(128) NOT NULL
+	path									VARCHAR(128) PRIMARY KEY,
+	uuid									CHAR(16),
+	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	classpath								VARCHAR(128) NOT NULL,
+	function_name							VARCHAR(128) NOT NULL
 );
-CREATE TABLE IF NOT EXISTS cms_email_queue
+CREATE TABLE cms_email_queue
 (
-	emailid INT PRIMARY KEY AUTO_INCREMENT,
-	email TEXT,
-	subject TEXT,
-	body TEXT,
-	html VARCHAR(1) DEFAULT 1,
-	errors INT DEFAULT 0,
-	last_sent TIMESTAMP
+	emailid									INT PRIMARY KEY AUTO_INCREMENT,
+	email									TEXT,
+	subject									TEXT,
+	body									TEXT,
+	html									VARCHAR(1) DEFAULT 1,
+	errors									INT DEFAULT 0,
+	last_sent								TIMESTAMP
 );
 -- Create views
 CREATE OR REPLACE VIEW cms_view_plugins_loadinfo AS
