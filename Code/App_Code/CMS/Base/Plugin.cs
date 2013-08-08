@@ -50,12 +50,20 @@ namespace CMS.Base
 	public abstract class Plugin
 	{
 		// Enums *******************************************************************************************************
+        /// <summary>
+        /// The state of a plugin.
+        /// 
+        /// Warning: the integer values of this enum are hard-written in the database.
+        /// </summary>
 		public enum PluginState
 		{
 			NotInstalled = 0,
 			Disabled = 1,
 			Enabled = 2
 		}
+        /// <summary>
+        /// The type of action performed on a plugin.
+        /// </summary>
         public enum PluginAction
         {
             PreInstall,

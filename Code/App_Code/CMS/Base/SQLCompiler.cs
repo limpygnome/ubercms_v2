@@ -294,5 +294,15 @@ namespace CMS.Base
                 updateValue = value;
             }
         }
+        /// <summary>
+        /// The total number of attributes.
+        /// </summary>
+        public int Count
+        {
+            get
+            {
+                return attributes.Count;
+            }
+        }
     }
 }

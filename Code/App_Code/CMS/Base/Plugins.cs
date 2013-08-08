@@ -71,26 +71,6 @@ namespace CMS.Base
             cacheRequestStart = cacheRequestEnd = cachePageError = cachePageNotFound = new Plugin[0];
 		}
 		// Methods *****************************************************************************************************
-		/// <summary>
-		/// Finds the available plugins to serve a request. Returns an empty array if a consistency issue has occurred
-		/// (a plugin cannot be found).
-		/// </summary>
-		/// <returns>The request handlers.</returns>
-		/// <param name="pathInfo">Path info.</param>
-		/// <param name="conn">Database connector.</param>
-		public Plugin[] findRequestHandlers(PathInfo pathInfo, Connector conn)
-		{
-			Result r = conn.queryRead("SELECT DISTINCT HEX(ur.uuid) AS uuid FROM cms_urlrewriting AS ur LEFT OUTER JOIN cms_plugins AS p ON p.uuid=ur.uuid WHERE p.state='" + (int)Plugin.PluginState.Enabled + "' AND (ur.full_path='" + SQLUtils.escape(pathInfo.FullPath) + "' OR ur.full_path ='" + SQLUtils.escape(pathInfo.ModuleHandler) + "') ORDER BY ur.priority DESC");
-            List<Plugin> result = new List<Plugin>(r.Count);
-			Plugin p;
-			foreach(ResultRow plugin in r)
-			{
-                p = this[plugin["uuid"]];
-                if(p != null)
-                    result.Add(p);
-			}
-			return result.ToArray();
-		}
         /// <summary>
         /// Invoked when a page exception occurs.
         /// </summary>
@@ -176,7 +156,7 @@ namespace CMS.Base
         {
             lock (this)
             {   
-                UUID uuid = UUID.createFromHex(data["uuid"]);
+                UUID uuid = UUID.parse(data["uuid"]);
                 if (uuid == null)
                 {
                     if(coreError)
@@ -298,7 +278,7 @@ namespace CMS.Base
                     XmlDocument doc = new XmlDocument();
                     doc.Load(outputDir + "/Plugin.config");
                     directory = Core.BasePath + "/" + doc["plugin"]["directory"].InnerText;
-                    UUID uuid = UUID.createFromHex(doc["plugin"]["uuid"].InnerText);
+                    UUID uuid = UUID.parse(doc["plugin"]["uuid"].InnerText);
                     if (plugins.ContainsKey(uuid.HexHyphens) || conn.queryCount("SELECT COUNT('') FROM cms_plugins WHERE uuid=" + uuid.NumericHexString + ";") > 0)
                     {
                         success = false;
@@ -377,7 +357,7 @@ namespace CMS.Base
                     title = doc["plugin"]["title"].InnerText;
                     directory = doc["plugin"]["directory"].InnerText;
                     classPath = doc["plugin"]["class_path"].InnerText;
-                    uuid = UUID.createFromHexHyphens(doc["plugin"]["uuid"].InnerText);
+                    uuid = UUID.parse(doc["plugin"]["uuid"].InnerText);
                     if (uuid == null)
                     {
                         messageOutput.Append("Invalid UUID '").Append(doc["plugin"]["uuid"].InnerText).AppendLine("'!");

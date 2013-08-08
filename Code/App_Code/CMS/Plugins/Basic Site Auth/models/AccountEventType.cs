@@ -110,7 +110,7 @@ namespace CMS.BasicSiteAuth.Models
         {
             AccountEventType a = new AccountEventType();
             a.persisted = true;
-            a.typeUUID = UUID.createFromHex(data.get2<string>("type_uuid"));
+            a.typeUUID = UUID.parse(data.get2<string>("type_uuid"));
             a.title = data.get2<string>("title");
             a.description = data.get2<string>("description");
             a.renderClasspath = data.get2<string>("render_classpath");

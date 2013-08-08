@@ -1,5 +1,5 @@
 ﻿-- Create tables
-CREATE TABLE IF NOT EXISTS bsa_user_groups
+CREATE TABLE bsa_user_groups
 (
 	groupid INT PRIMARY KEY AUTO_INCREMENT,
 	title VARCHAR(32) NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS bsa_user_groups
 	administrator VARCHAR(1) NOT NULL DEFAULT 0,
 	login VARCHAR(1) NOT NULL DEFAULT 1
 );
-CREATE TABLE IF NOT EXISTS bsa_users
+CREATE TABLE bsa_users
 (
 	userid INT PRIMARY KEY AUTO_INCREMENT,
 	username VARCHAR(32) UNIQUE NOT NULL,
@@ -42,8 +42,8 @@ CREATE TABLE IF NOT EXISTS bsa_users
 	datetime_register TIMESTAMP,
 	pending_deletion VARCHAR(1) DEFAULT 0
 );
-CREATE INDEX bsa_index_username ON bsa_users(username);
-CREATE TABLE IF NOT EXISTS bsa_user_bans
+CREATE INDEX `bsa_index_username` ON bsa_users(`username`);
+CREATE TABLE bsa_user_bans
 (
 	banid INT PRIMARY KEY AUTO_INCREMENT,
 	userid INT NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS bsa_user_bans
 	banned_by INT,
 	FOREIGN KEY(`banned_by`) REFERENCES `bsa_users`(`userid`) ON UPDATE CASCADE ON DELETE SET NULL
 );
-CREATE TABLE IF NOT EXISTS bsa_account_event_types
+CREATE TABLE bsa_account_event_types
 (
 	type_uuid CHAR(16) PRIMARY KEY,
 	title VARCHAR(128),
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS bsa_account_event_types
 	render_classpath VARCHAR(128) NOT NULL,
 	render_function VARCHAR(64) NOT NULL
 );
-CREATE TABLE IF NOT EXISTS bsa_account_events
+CREATE TABLE bsa_account_events
 (
 	eventid INT PRIMARY KEY AUTO_INCREMENT,
 	userid INT NOT NULL,
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS bsa_account_events
 	param2 TEXT,
 	param2_datatype VARCHAR(1) NOT NULL
 );
-CREATE TABLE IF NOT EXISTS bsa_recovery_codes
+CREATE TABLE bsa_recovery_codes
 (
 	code VARCHAR(16) PRIMARY KEY,
 	userid INT NOT NULL,
@@ -83,14 +83,14 @@ CREATE TABLE IF NOT EXISTS bsa_recovery_codes
 	datetime_created TIMESTAMP NOT NULL,
 	type INT NOT NULL
 );
-CREATE TABLE IF NOT EXISTS bsa_authentication_failed_attempts
+CREATE TABLE bsa_authentication_failed_attempts
 (
 	-- 45 characters for ipv4 tunneling with ipv6
 	ip VARCHAR(45) NOT NULL,
 	datetime TIMESTAMP NOT NULL,
 	type VARCHAR(1) NOT NULL
 );
-CREATE INDEX bsa_index_authentication_failed_attempts ON bsa_authentication_failed_attempts(ip);
+CREATE INDEX `bsa_index_authentication_failed_attempts` ON bsa_authentication_failed_attempts(`ip`);
 
 -- Create views
 -- -- Account event types, with type UUID attribute as hex string

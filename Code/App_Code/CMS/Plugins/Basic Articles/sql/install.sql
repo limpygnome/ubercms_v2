@@ -1,67 +1,85 @@
 ﻿-- Create tables
+SET FOREIGN_KEY_CHECKS=0;
+
 CREATE TABLE ba_article_thread
 (
-	uuid_thread				CHAR(16) PRIMARY KEY,
-	full_path				TEXT NOT NULL,
-	uuid_article_current	CHAR(16),
-	thumbnail				MEDIUMBLOB
+	uuid_thread							CHAR(16) PRIMARY KEY,
+	urlid								INT UNIQUE,
+	FOREIGN KEY(`urlid`)				REFERENCES cms_urlrewriting(`urlid`) ON UPDATE CASCADE ON DELETE SET NULL,
+	uuid_article_current				CHAR(16),
+	FOREIGN KEY(`uuid_article_current`)	REFERENCES ba_article(`uuid_article`) ON UPDATE CASCADE ON DELETE SET NULL,
+	thumbnail							VARCHAR(1) DEFAULT 0
 );
 CREATE TABLE ba_article_thread_permissions
 (
-	uuid_thread				CHAR(16) PRIMARY KEY,
-	groupid					INT,
-	FOREIGN KEY(`groupid`) REFERENCES bsa_user_groups(`groupid`) ON UPDATE CASCADE ON DELETE CASCADE
+	uuid_thread							CHAR(16) NOT NULL,
+	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE,
+	groupid								INT NOT NULL,
+	FOREIGN KEY(`groupid`)				REFERENCES bsa_user_groups(`groupid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	PRIMARY KEY(`uuid_thread`, `groupid`)
+);
+CREATE TABLE ba_article_thread_views
+(
+	uuid_thread							CHAR(16) NOT NULL,
+	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE,
+	ipid								INT NOT NULL,
+	FOREIGN KEY(`ipid`)					REFERENCES ba_article_thread_views_ip(`ipid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	PRIMARY KEY(uuid_thread, ipid)
+);
+CREATE TABLE ba_article_thread_views_ip
+(
+	ipid								INT PRIMARY KEY AUTO_INCREMENT,
+	ip									VARCHAR(45) UNIQUE NOT NULL
 );
 CREATE TABLE ba_article
 (
-	uuid_article			CHAR(16) PRIMARY KEY,
-	uuid_thread				CHAR(16),
-	FOREIGN KEY(`uuid_thread`) REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE,
+	uuid_article						CHAR(16) PRIMARY KEY,
+	uuid_thread							CHAR(16),
+	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE,
 
-	title					VARCHAR(128),
-	text_raw				TEXT,
-	text_cache				TEXT,
-	datetime_created		TIMESTAMP NOT NULL,
-	datetime_edited			TIMESTAMP NOT NULL,
+	title								VARCHAR(128),
+	text_raw							TEXT,
+	text_cache							TEXT,
+	datetime_created					TIMESTAMP NOT NULL,
+	datetime_modified					TIMESTAMP NOT NULL,
 
-	published				VARCHAR(1) DEFAULT 0,
-	comments				VARCHAR(1) DEFAULT 0,
-	html					VARCHAR(1) DEFAULT 0,
-	hide_panel				VARCHAR(1) DEFAULT 0,
+	published							VARCHAR(1) DEFAULT 0,
+	comments							VARCHAR(1) DEFAULT 0,
+	html								VARCHAR(1) DEFAULT 0,
+	hide_panel							VARCHAR(1) DEFAULT 0,
 
-	userid_author			INT,
-	FOREIGN KEY(`userid_author`) REFERENCES bsa_users(`userid`) ON UPDATE CASCADE ON DELETE NO ACTION,
-	userid_publisher		INT,
-	FOREIGN KEY(`userid_publisher`) REFERENCES bsa_users(`userid`) ON UPDATE CASCADE ON DELETE NO ACTION
+	userid_author						INT,
+	FOREIGN KEY(`userid_author`)		REFERENCES bsa_users(`userid`) ON UPDATE CASCADE ON DELETE NO ACTION,
+	userid_publisher					INT,
+	FOREIGN KEY(`userid_publisher`)		REFERENCES bsa_users(`userid`) ON UPDATE CASCADE ON DELETE NO ACTION
 );
 ALTER TABLE `ba_article` CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
-ALTER TABLE `ba_article` ADD INDEX uuid_article(uuid_article);
-ALTER TABLE `ba_article_thread` ADD INDEX uuid_article_current(uuid_article_current);
-ALTER TABLE `ba_article_thread` ADD CONSTRAINT `FK_uuid_article_current` FOREIGN KEY(`uuid_article_current`) REFERENCES ba_article(`uuid_article`) ON UPDATE CASCADE ON DELETE SET NULL;
 
 CREATE TABLE ba_tags
 (
-	tagid					INT	PRIMARY KEY AUTO_INCREMENT,
-	keyword					VARCHAR(32) NOT NULL UNIQUE
+	tagid								INT	PRIMARY KEY AUTO_INCREMENT,
+	keyword								VARCHAR(32) NOT NULL UNIQUE
 );
 CREATE TABLE bsa_tags_thread
 (
-	tagid					INT NOT NULL,
-	FOREIGN KEY(`tagid`) REFERENCES ba_tags(`tagid) ON UPDATE CASCADE ON DELETE CASCADE,
-	uuid_thread				CHAR(16) NOT NULL,
-	FOREIGN KEY(uuid_thread) REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE
+	tagid								INT NOT NULL,
+	FOREIGN KEY(`tagid`)				REFERENCES ba_tags(`tagid`) ON UPDATE CASCADE ON DELETE CASCADE,
+	uuid_thread							CHAR(16) NOT NULL,
+	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE,
+	PRIMARY KEY(`tagid`, `uuid_thread`)
 );
 
--- Create triggers
--- -- Update the current article for a thread when an article is deleted
-CREATE TRIGGER ba_trigger_thread_currentarticle
-	AFTER UPDATE ON `ba_article_thread` FOR EACH ROW
-	BEGIN
-		DECLARE temp_uuid CHAR(16);
-		SET @temp_uuid := (SELECT uuid_article FROM ba_article WHERE uuid_thread=OLD.uuid_thread LIMIT 1);
-		IF (NEW.uuid_article_current IS NULL) AND (SELECT @temp_uuid) IS NOT NULL THEN
-			UPDATE ba_article_thread SET uuid_article_current=(SELECT uuid_article FROM ba_article WHERE uuid_thread=OLD.uuid_thread LIMIT 1);
-		END IF;
-	END;
+SET FOREIGN_KEY_CHECKS=1;
 
 -- Create views
+CREATE OR REPLACE VIEW ba_view_load_article_thread AS
+	SELECT HEX(bat.uuid_thread) AS uuid_thread, bat.urlid, url.full_path, HEX(bat.uuid_article_current) AS uuid_article_current, bat.thumbnail FROM ba_article_thread AS bat LEFT OUTER JOIN cms_urlrewriting AS url ON url.urlid=bat.urlid;
+
+CREATE OR REPLACE VIEW ba_view_load_article AS
+	SELECT uuid_article AS uuid_article_raw, HEX(uuid_article) AS uuid_article, HEX(uuid_thread) AS uuid_thread. title, text_raw, text_cache, datetime_created, datetime_edited, published, comments, html, hide_panel, userid_author, userid_publisher FROM ba_article;
+-- -- Should only be used for viewing the full raw text of an article (excludes cache)
+CREATE OR REPLACE VIEW ba_view_load_article_raw AS
+	SELECT uuid_article AS uuid_article_raw, HEX(uuid_article) AS uuid_article, HEX(uuid_thread) AS uuid_thread. title, text_raw, datetime_created, datetime_edited, published, comments, html, hide_panel, userid_author, userid_publisher FROM ba_article;
+-- -- Should only be used for viewing an article (excludes raw text).
+CREATE OR REPLACE VIEW ba_view_load_article_rendered AS
+	SELECT uuid_article AS uuid_article_raw, HEX(uuid_article) AS uuid_article, HEX(uuid_thread) AS uuid_thread. title, text_cache, datetime_created, datetime_edited, published, comments, html, hide_panel, userid_author, userid_publisher FROM ba_article;

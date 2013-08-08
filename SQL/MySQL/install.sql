@@ -36,11 +36,9 @@ CREATE TABLE cms_settings
 CREATE TABLE cms_urlrewriting
 (
 	urlid									INT PRIMARY KEY AUTO_INCREMENT,
-	parent									INT,
-	FOREIGN KEY(`parent`)					REFERENCES `cms_urlrewriting`(`urlid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	uuid									CHAR(16),
 	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	full_path								VARCHAR(128),
+	full_path								VARCHAR(128) UNIQUE,
 	priority								INT DEFAULT 0
 );
 CREATE INDEX `full_path` ON `cms_urlrewriting`(`full_path`);
@@ -85,6 +83,9 @@ CREATE OR REPLACE VIEW cms_view_template_handlers AS
 
 CREATE OR REPLACE VIEW cms_view_email_queue AS
 	SELECT emailid, email, subject, body, html FROM cms_email_queue WHERE (errors=0 OR (last_sent IS NULL OR last_sent < (CURRENT_TIMESTAMP - INTERVAL 15 minute))) ORDER BY errors ASC, emailid ASC;
+
+CREATE OR REPLACE VIEW cms_view_request_handlers AS
+	SELECT DISTINCT ur.urlid, HEX(ur.uuid) AS uuid, ur.full_path, ur.priority FROM cms_urlrewriting AS ur LEFT OUTER JOIN cms_plugins AS p ON p.uuid=ur.uuid WHERE p.state=2 ORDER BY ur.priority DESC;
 
 -- Insert core settings
 INSERT INTO cms_settings (path, uuid, type, value, description) VALUES

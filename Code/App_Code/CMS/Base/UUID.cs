@@ -19,6 +19,7 @@
  *      Change-Log:
  *                      2013-07-21      Created initial class.
  *                      2013-07-30      Added Bytes property and changed the SQLValue property to NumericHexString.
+ *                      2013-08-08      Added improved validation and replaced fatory methods with parse.
  * 
  * *********************************************************************************************************************
  * A model for representing a universally unique identifier, following the RFC 4122 standard:
@@ -27,6 +28,7 @@
  */
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CMS.Base
 {
@@ -57,28 +59,46 @@ namespace CMS.Base
         }
         // Methods - Factory Creators **********************************************************************************
         /// <summary>
-        /// Creates a new UUID object; the string should be 32 characters (no hypthens). Protection against null and
-        /// empty strings.
+        /// Parses a UUID object from the string hex representation of the UUID data.
         /// </summary>
-        /// <param name="hex"></param>
-        /// <returns></returns>
-        public static UUID createFromHex(string hex)
+        /// <param name="hex">String hex representation of the UUID. Can contain hyphens or no hypens; case insensitive.</param>
+        /// <returns>UUID model or null if invalid.</returns>
+        public static UUID parse(string hex)
         {
-            if (hex == null || hex.Length != 32)
-                return null;
-            return new UUID(hex);
+            return isValid(hex) ? hex.Length == 32 ? new UUID(hex) : new UUID(hex.Replace("-", "")) : null;
         }
         /// <summary>
-        /// Creates a new UUID object; the string should be 36 characters with hypthens. Protection against null and
-        /// empty strings.
+        /// Indicates if a UUID is valid.
         /// </summary>
-        /// <param name="hex"></param>
-        /// <returns></returns>
-        public static UUID createFromHexHyphens(string hex)
+        /// <param name="data">The data to be tested as a UUID.</param>
+        /// <returns>True = valid, false = invalid.</returns>
+        public static bool isValid(string data)
         {
-            if (hex == null || hex.Length != 36)
-                return null;
-            return createFromHex(hex.Replace("-", ""));
+            // Validate basic structure
+            if (data == null || data.Length != 32 || data.Length != 36)
+                return false;
+            // Perform regex pattern test
+            // -- Matches hyphens or non-hyhens; chars must be 0-9, a-f or/and A-F.
+            return Regex.IsMatch(data, @"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})|([0-9a-fA-F]{32})");
+        }
+        // Methods - Generation ****************************************************************************************
+        static readonly char[] hexchars = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+        /// <summary>
+        /// Generates a version 4 UUID.
+        /// </summary>
+        /// <returns>Model of generated UUID.</returns>
+        public static UUID generateVersion4()
+        {
+            // 12 rand, 4, 3 rand, (8, 9, A or B),  3 rand, 12
+            StringBuilder sb = new StringBuilder();
+            Random rand = new Random((int)DateTime.Now.ToBinary());
+            int i;
+            for (i = 0; i < 12; i++) sb.Append(hexchars[rand.Next(0, 15)]);
+            sb.Append('4');
+            for (i = 0; i < 3; i++) sb.Append(hexchars[rand.Next(0, 15)]);
+            sb.Append(hexchars[rand.Next(8, 11)]);
+            for (i = 0; i < 15; i++) sb.Append(hexchars[rand.Next(0, 15)]);
+            return new UUID(sb.ToString());
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>

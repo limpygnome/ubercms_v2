@@ -278,22 +278,22 @@ namespace CMS.BasicSiteAuth
             Core.Settings.save(conn);
             // Create default account event types
             // -- Incorrect authentication
-            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__INCORRECT_AUTH__UUID), ACCOUNT_EVENT__INCORRECT_AUTH__TITLE, ACCOUNT_EVENT__INCORRECT_AUTH__DESC, ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_CLASSPATH, ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_FUNCTION, ref messageOutput) == null)
+            if (AccountEventType.create(conn, this, UUID.parse(ACCOUNT_EVENT__INCORRECT_AUTH__UUID), ACCOUNT_EVENT__INCORRECT_AUTH__TITLE, ACCOUNT_EVENT__INCORRECT_AUTH__DESC, ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_CLASSPATH, ACCOUNT_EVENT__INCORRECT_AUTH__RENDER_FUNCTION, ref messageOutput) == null)
                 return false;
             // -- Authenticated
-            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__AUTH__UUID), ACCOUNT_EVENT__AUTH__TITLE, ACCOUNT_EVENT__AUTH__DESC, ACCOUNT_EVENT__AUTH__RENDER_CLASSPATH, ACCOUNT_EVENT__AUTH__RENDER_FUNCTION, ref messageOutput) == null)
+            if (AccountEventType.create(conn, this, UUID.parse(ACCOUNT_EVENT__AUTH__UUID), ACCOUNT_EVENT__AUTH__TITLE, ACCOUNT_EVENT__AUTH__DESC, ACCOUNT_EVENT__AUTH__RENDER_CLASSPATH, ACCOUNT_EVENT__AUTH__RENDER_FUNCTION, ref messageOutput) == null)
                 return false;
             // -- Changed account settings
-            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__CHANGEDSETTINGS__UUID), ACCOUNT_EVENT__CHANGEDSETTINGS__TITLE, ACCOUNT_EVENT__CHANGEDSETTINGS__DESC, ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_CLASSPATH, ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_FUNCTION, ref messageOutput) == null)
+            if (AccountEventType.create(conn, this, UUID.parse(ACCOUNT_EVENT__CHANGEDSETTINGS__UUID), ACCOUNT_EVENT__CHANGEDSETTINGS__TITLE, ACCOUNT_EVENT__CHANGEDSETTINGS__DESC, ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_CLASSPATH, ACCOUNT_EVENT__CHANGEDSETTINGS__RENDER_FUNCTION, ref messageOutput) == null)
                 return false;
             // -- Logged-out
-            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__LOGGEDOUT__UUID), ACCOUNT_EVENT__LOGGEDOUT__TITLE, ACCOUNT_EVENT__LOGGEDOUT__DESC, ACCOUNT_EVENT__LOGGEDOUT__RENDER_CLASSPATH, ACCOUNT_EVENT__LOGGEDOUT__RENDER_FUNCTION, ref messageOutput) == null)
+            if (AccountEventType.create(conn, this, UUID.parse(ACCOUNT_EVENT__LOGGEDOUT__UUID), ACCOUNT_EVENT__LOGGEDOUT__TITLE, ACCOUNT_EVENT__LOGGEDOUT__DESC, ACCOUNT_EVENT__LOGGEDOUT__RENDER_CLASSPATH, ACCOUNT_EVENT__LOGGEDOUT__RENDER_FUNCTION, ref messageOutput) == null)
                 return false;
             // -- Recovery secret question/answer attempted
-            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__SECRETQA_ATTEMPT__UUID), ACCOUNT_EVENT__SECRETQA_ATTEMPT__TITLE, ACCOUNT_EVENT__SECRETQA_ATTEMPT__DESC, ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_CLASSPATH, ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_FUNCTION, ref messageOutput) == null)
+            if (AccountEventType.create(conn, this, UUID.parse(ACCOUNT_EVENT__SECRETQA_ATTEMPT__UUID), ACCOUNT_EVENT__SECRETQA_ATTEMPT__TITLE, ACCOUNT_EVENT__SECRETQA_ATTEMPT__DESC, ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_CLASSPATH, ACCOUNT_EVENT__SECRETQA_ATTEMPT__RENDER_FUNCTION, ref messageOutput) == null)
                 return false;
             // -- Recovery code sent
-            if (AccountEventType.create(conn, this, UUID.createFromHex(ACCOUNT_EVENT__RECOVERYCODE_SENT__UUID), ACCOUNT_EVENT__RECOVERYCODE_SENT__TITLE, ACCOUNT_EVENT__RECOVERYCODE_SENT__DESC, ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_CLASSPATH, ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_FUNCTION, ref messageOutput) == null)
+            if (AccountEventType.create(conn, this, UUID.parse(ACCOUNT_EVENT__RECOVERYCODE_SENT__UUID), ACCOUNT_EVENT__RECOVERYCODE_SENT__TITLE, ACCOUNT_EVENT__RECOVERYCODE_SENT__DESC, ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_CLASSPATH, ACCOUNT_EVENT__RECOVERYCODE_SENT__RENDER_FUNCTION, ref messageOutput) == null)
                 return false;
             // Load salts for the installation process
             loadSalts();

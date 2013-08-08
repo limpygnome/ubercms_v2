@@ -81,7 +81,7 @@ public partial class _Default : System.Web.UI.Page
                         p.handler_requestStart(data);
                 // Lookup and invoke possible request handler's
                 bool handled = false;
-                foreach (Plugin p in Core.Plugins.findRequestHandlers(data.PathInfo, data.Connector))
+                foreach (Plugin p in UrlRewriting.findRequestHandlers(data.PathInfo, data.Connector))
                 {
                     if (p.State == Plugin.PluginState.Enabled && (handled = p.handler_handleRequest(data)))
                         break;
