@@ -394,7 +394,7 @@ namespace CMS.Base
                     ps["classpath"] = classPath;
                     ps["priority"] = ((int)priority).ToString();
                     ps["version_major"] = versionMajor;
-                    ps["version_minor"] = versionMajor;
+                    ps["version_minor"] = versionMinor;
                     ps["version_build"] = versionBuild;
                     conn.queryExecute(ps);
                 }

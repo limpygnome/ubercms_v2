@@ -99,10 +99,10 @@ namespace CMS.Plugins
             if (!Core.Templates.install(conn, this, PathTemplates, ref messageOutput))
                 return false;
             // Install directives
-            if (!Base.BaseUtils.preprocessorDirective_Add("captcha", ref messageOutput))
+            if (!Base.BaseUtils.preprocessorDirective_Add("CAPTCHA", ref messageOutput))
                 return false;
             // Reserve URLs
-            if (!BaseUtils.urlRewritingInstall(conn, this, new string[] { "CAPTCHA" }, ref messageOutput))
+            if (!BaseUtils.urlRewritingInstall(conn, this, new string[] { "captcha" }, ref messageOutput))
                 return false;
             return true;
         }
