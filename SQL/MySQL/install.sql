@@ -41,7 +41,6 @@ CREATE TABLE cms_urlrewriting
 	full_path								VARCHAR(128) UNIQUE,
 	priority								INT DEFAULT 0
 );
-CREATE INDEX `full_path` ON `cms_urlrewriting`(`full_path`);
 CREATE TABLE cms_templates
 (
 	path									VARCHAR(128) PRIMARY KEY,

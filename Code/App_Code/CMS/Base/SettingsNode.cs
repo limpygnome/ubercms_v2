@@ -199,6 +199,14 @@ namespace CMS.Base
         {
             return value.ToString();
         }
+        // Methods - Mutators ******************************************************************************************
+        /// <summary>
+        /// Resets the state of the node.
+        /// </summary>
+        public void reset()
+        {
+            this.state = SettingsNodeState.None;
+        }
         // Methods - Properties ****************************************************************************************
         /// <summary>
         /// The persisted state of this setting between this application and the data-store.

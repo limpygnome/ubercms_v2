@@ -348,6 +348,7 @@ namespace CMS.BasicSiteAuth
             if (!BaseUtils.urlRewritingInstall(conn, this, new string[]
             {
                 "login",
+                "logout",
                 "register",
                 "account_recovery",
                 "my_account",

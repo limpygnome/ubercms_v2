@@ -95,9 +95,10 @@ namespace CMS.Base
                             sqlUpdated.Append("UPDATE cms_settings SET value='").Append(SQLUtils.escape(k.Value.ToString())).Append("', type='").Append(SQLUtils.escape(((int)k.Value.ValueDataType).ToString())).Append("' WHERE path='").Append(SQLUtils.escape(k.Key)).Append("'; ");
                             break;
                         case SettingsNode.SettingsNodeState.Added:
-                            sqlInserted.Append("('").Append(SQLUtils.escape(k.Key)).Append("', ").Append(k.Value.OwnerUUID.NumericHexString).Append(", ").Append((k.Value.Description == null ? "NULL" : "'" + k.Value.Description + "'")).Append(", '").Append(SQLUtils.escape(((int)k.Value.ValueDataType).ToString())).Append("', ").Append((k.Value.Value == null ? "NULL" : "'" + k.Value.Value + "'")).Append("),");
+                            sqlInserted.Append("('").Append(SQLUtils.escape(k.Key)).Append("', ").Append(k.Value.OwnerUUID.NumericHexString).Append(", ").Append((k.Value.Description == null ? "NULL" : "'" + SQLUtils.escape(k.Value.Description) + "'")).Append(", '").Append(SQLUtils.escape(((int)k.Value.ValueDataType).ToString())).Append("', ").Append((k.Value.Value == null ? "NULL" : "'" + SQLUtils.escape(k.Value.Value.ToString()) + "'")).Append("),");
                             break;
                     }
+                    k.Value.reset();
                 }
 				// Push to the database
 				if(sqlUpdated.Length > 0)

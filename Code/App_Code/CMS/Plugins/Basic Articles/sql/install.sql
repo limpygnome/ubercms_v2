@@ -63,13 +63,13 @@ CREATE OR REPLACE VIEW ba_view_load_article_thread AS
 	SELECT HEX(bat.uuid_thread) AS uuid_thread, bat.urlid, url.full_path, HEX(bat.uuid_article_current) AS uuid_article_current, bat.thumbnail FROM ba_article_thread AS bat LEFT OUTER JOIN cms_urlrewriting AS url ON url.urlid=bat.urlid;
 
 CREATE OR REPLACE VIEW ba_view_load_article AS
-	SELECT uuid_article AS uuid_article_raw, HEX(uuid_article) AS uuid_article, HEX(uuid_thread) AS uuid_thread. title, text_raw, text_cache, datetime_created, datetime_edited, published, comments, html, hide_panel, userid_author, userid_publisher FROM ba_article;
+	SELECT uuid_article AS uuid_article_raw, HEX(uuid_article) AS uuid_article, HEX(uuid_thread) AS uuid_thread, title, text_raw, text_cache, datetime_created, datetime_modified, published, comments, html, hide_panel, userid_author, userid_publisher FROM ba_article;
 -- -- Should only be used for viewing the full raw text of an article (excludes cache)
 CREATE OR REPLACE VIEW ba_view_load_article_raw AS
-	SELECT uuid_article AS uuid_article_raw, HEX(uuid_article) AS uuid_article, HEX(uuid_thread) AS uuid_thread. title, text_raw, datetime_created, datetime_edited, published, comments, html, hide_panel, userid_author, userid_publisher FROM ba_article;
+	SELECT uuid_article AS uuid_article_raw, HEX(uuid_article) AS uuid_article, HEX(uuid_thread) AS uuid_thread, title, text_raw, datetime_created, datetime_modified, published, comments, html, hide_panel, userid_author, userid_publisher FROM ba_article;
 -- -- Should only be used for viewing an article (excludes raw text).
 CREATE OR REPLACE VIEW ba_view_load_article_rendered AS
-	SELECT uuid_article AS uuid_article_raw, HEX(uuid_article) AS uuid_article, HEX(uuid_thread) AS uuid_thread. title, text_cache, datetime_created, datetime_edited, published, comments, html, hide_panel, userid_author, userid_publisher FROM ba_article;
+	SELECT uuid_article AS uuid_article_raw, HEX(uuid_article) AS uuid_article, HEX(uuid_thread) AS uuid_thread, title, text_cache, datetime_created, datetime_modified, published, comments, html, hide_panel, userid_author, userid_publisher FROM ba_article;
 
 CREATE OR REPLACE VIEW ba_view_tags AS
 	SELECT tt.uuid_thread AS uuid_thread_raw, HEX(tt.uuid_thread) AS uuid_thread, t.tagid, t.keyword FROM bsa_tags_thread AS tt LEFT OUTER JOIN ba_tags AS t ON t.tagid=tt.tagid ORDER BY t.keyword ASC;

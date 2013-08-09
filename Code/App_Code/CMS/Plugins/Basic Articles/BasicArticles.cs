@@ -25,6 +25,7 @@ namespace CMS.BasicArticles
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__TEXT_LENGTH_MAX, Settings.SETTINGS__TEXT_LENGTH_MAX__DESC, Settings.SETTINGS__TEXT_LENGTH_MAX__DEFAULT);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MIN, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MIN__DESC, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MIN__DEFAULT);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MAX, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MAX__DESC, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MAX__DEFAULT);
+            Core.Settings.save(conn);
             return true;
         }
         public override bool uninstall(Connector conn, ref System.Text.StringBuilder messageOutput)

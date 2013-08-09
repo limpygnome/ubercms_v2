@@ -314,14 +314,14 @@ namespace CMS.Base
                         doc.LoadXml(File.ReadAllText(file));
                         SQLCompiler sql = new SQLCompiler();
                         sql["path"] = doc["template"]["path"].InnerText;
-                        sql["uuid"] = plugin.UUID.Bytes;
+                        sql["uuid"] = plugin == null ? null : plugin.UUID.Bytes;
                         sql["description"] = doc["template"]["description"].InnerText;
                         sql["html"] = doc["template"]["html"].InnerText;
                         sql.executeInsert(conn, "cms_templates");
                     }
                     catch (Exception ex)
                     {
-                        messageOutput.AppendLine("Failed to install templates from '" + pathSource + "', exception occurred processing file '" + file + "': '" + ex.Message + "'!");
+                        messageOutput.AppendLine("Failed to install templates from '" + pathSource + "', exception occurred processing file '" + file + "': '" + ex.Message + "' - '" + ex.StackTrace + "'!");
                         conn.queryExecute("ROLLBACK;");
                         return false;
                     }
@@ -366,7 +366,7 @@ namespace CMS.Base
         /// <summary>
         /// Uninstalls templates from the database based on the ownership by a plugin.
         /// </summary>
-        /// <param name="plugin">The owner of the templates to be removed.</param>
+        /// <param name="plugin">The owner of the templates to be removed; cannot be null.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation fails.</returns>
         public bool uninstall(Connector conn, Plugin plugin, ref StringBuilder messageOutput)
