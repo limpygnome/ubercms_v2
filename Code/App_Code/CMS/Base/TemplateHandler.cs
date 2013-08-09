@@ -59,7 +59,7 @@ namespace CMS.Base
         public static TemplateHandler load(ResultRow data)
         {
             TemplateHandler th = new TemplateHandler();
-            th.uuid = UUID.createFromHex(data["uuid"]);
+            th.uuid = UUID.parse(data["uuid"]);
             th.path = data.get2<string>("path");
             th.classPath = data.get2<string>("classpath");
             th.functionName = data.get2<string>("function_name");

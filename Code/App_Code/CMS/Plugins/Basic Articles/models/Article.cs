@@ -1,11 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
 using CMS.Base;
+using CMS.BasicSiteAuth.Models;
 using UberLib.Connector;
 
 namespace CMS.BasicArticles
 {
     public class Article
     {
+        // Enums *******************************************************************************************************
+        public enum Sorting
+        {
+            Latest,
+            Oldest,
+            TitleAZ,
+            TitleZA
+        }
         private enum Fields
         {
             None = 0,
@@ -29,6 +39,10 @@ namespace CMS.BasicArticles
         public enum PersistStatus
         {
             Error,
+            Invalid_thread,
+            Invalid_title_length,
+            Invalid_text_length,
+            Invalid_uuid_article,
             Success
         }
         // Fields ******************************************************************************************************
@@ -77,6 +91,44 @@ namespace CMS.BasicArticles
             PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_raw WHERE uuid_article_raw=?uuid;");
             ps["uuid"] = uuidArticle.Bytes;
             return load(conn, ps);
+        }
+        /// <summary>
+        /// Loads multiple rendered articles.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="sorting">The sorting to apply</param>
+        /// <param name="tagKeyword">The keyword for filtering; can be null.</param>
+        /// <param name="articles">The number of articles to fetch.</param>
+        /// <param name="page">The page offset starting at 1.</param>
+        /// <returns>An array of articles.</returns>
+        public Article[] loadRendered(Connector conn, Sorting sorting, string tagKeyword, int articles, int page)
+        {
+            // Build sorting
+            string strOrder;
+            switch (sorting)
+            {
+                case Sorting.Latest:
+                    strOrder = "datetime_created DESC"; break;
+                case Sorting.Oldest:
+                    strOrder = "datetime_created ASC"; break;
+                case Sorting.TitleAZ:
+                    strOrder = "title ASC"; break;
+                case Sorting.TitleZA:
+                    strOrder = "title DESC"; break;
+                default:
+                    return new Article[] { };
+            }
+            // Parse results into models and return the array of models
+            List<Article> buffer = new List<Article>(articles);
+            Result result = conn.queryRead("SELECT * FROM ba_view_load_article_rendered ORDER BY " + strOrder + " LIMIT " + articles + " OFFSET " + (page * articles) + ";");
+            Article a;
+            foreach (ResultRow row in result)
+            {
+                a = load(row);
+                if (a != null)
+                    buffer.Add(a);
+            }
+            return buffer.ToArray();
         }
         /// <summary>
         /// Loads a persisted model from the database; the rendered text is not loaded.
@@ -135,7 +187,12 @@ namespace CMS.BasicArticles
             if (modified == Fields.None)
                 return PersistStatus.Error;
             // Validate model data
-
+            if (uuidThread == null)
+                return PersistStatus.Invalid_thread;
+            else if (title.Length < Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MIN].get<int>() || title.Length > Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MAX].get<int>())
+                return PersistStatus.Invalid_title_length;
+            else if (textRaw.Length < Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MIN].get<int>() || textRaw.Length > Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MAX].get<int>())
+                return PersistStatus.Invalid_text_length;
             // Compile SQL
             SQLCompiler sql = new SQLCompiler();
             if ((modified & Fields.ThreadUUID) == Fields.ThreadUUID)
@@ -163,18 +220,50 @@ namespace CMS.BasicArticles
             if ((modified & Fields.UserIDPublisher) == Fields.UserIDPublisher)
                 sql["userid_publisher"] = useridPublisher;
             // Execute SQL
-            if (persisted)
+            try
             {
-                sql.UpdateAttribute = "uuid_article";
-                sql.UpdateValue = uuidArticle.Bytes;
-                sql.executeUpdate(conn, "ba_article");
+                if (persisted)
+                {
+                    sql.UpdateAttribute = "uuid_article";
+                    sql.UpdateValue = uuidArticle.Bytes;
+                    sql.executeUpdate(conn, "ba_article");
+                }
+                else
+                {
+                    sql["uuid_thread"] = uuidThread.Bytes;
+                    sql.executeInsert(conn, "ba_article");
+                    persisted = true;
+                }
+                modified = Fields.None;
             }
-            else
+            catch (DuplicateEntryException ex)
             {
-                sql["uuid_thread"] = uuidThread.Bytes;
-                sql.executeInsert(conn, "ba_article");
+                switch (ex.Attribute)
+                {
+                    case "uuid_article":
+                        return PersistStatus.Invalid_uuid_article;
+                    default:
+                        return PersistStatus.Error;
+                }
+            }
+            catch (Exception)
+            {
+                return PersistStatus.Error;
             }
             return PersistStatus.Success;
+        }
+        // Methods *****************************************************************************************************
+        /// <summary>
+        /// Indicates if the user is allowed to edit the article.
+        /// 
+        /// Note: all users within a group with the flag(s) for administrator or/and moderator set to true will be able
+        /// to edit the article.
+        /// </summary>
+        /// <param name="u">The user to be tested.</param>
+        /// <returns>True = allowed, false = not allowed.</returns>
+        public bool isAuthorisedEdit(User u)
+        {
+            return u.UserGroup.Administrator || u.UserGroup.Moderator || u.UserID == useridAuthor;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>

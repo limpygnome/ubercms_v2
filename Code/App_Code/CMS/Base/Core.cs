@@ -60,18 +60,18 @@ namespace CMS.Base
 			MySQL
 		}
 		// Fields - Runtime ********************************************************************************************
-		private static string				basePath;							// The base path to the CMS on disk.
-        private static string               tempPath;                           // The path of the temporary folder, created when the core starts and deleted when the core stops.
-		private static CoreState			currentState = CoreState.Stopped;	// The current state of the core.
-		private static DatabaseType			dbType;								// The type of database connector to create (faster than checking config value each time).
-		private static string 				errorMessage;				        // Used to store the exception message when loading the core (if one occurs).
-        private static Version              version;                            // The version of the CMS/base.
+		private static string				basePath        = null;					// The base path to the CMS on disk.
+        private static string               tempPath        = null;                 // The path of the temporary folder, created when the core starts and deleted when the core stops.
+		private static CoreState			currentState    = CoreState.Stopped;	// The current state of the core.
+		private static DatabaseType			dbType			= DatabaseType.None;	// The type of database connector to create (faster than checking config value each time).
+		private static string 				errorMessage    = null;				    // Used to store the exception message when loading the core (if one occurs).
+        private static Version              version         = null;                 // The version of the CMS/base.
 		// Fields - Services/Connections/Data **************************************************************************
-		private static Plugins				plugins;							// Plugin management.
-		private static EmailQueue			emailQueue;							// E-mail queue sending service.
-		private static Templates			templates;							// Template storage and rendering.
-		private static Settings				settingsDisk;						// Disk, read-only, settings.
-		private static Settings				settings;							// The main settings for the CMS, stored in the database.
+		private static Plugins				plugins         = null;					// Plugin management.
+		private static EmailQueue			emailQueue      = null;					// E-mail queue sending service.
+		private static Templates			templates       = null;					// Template storage and rendering.
+		private static Settings				settingsDisk    = null;					// Disk, read-only, settings.
+		private static Settings				settings        = null;					// The main settings for the CMS, stored in the database.
 		// Methods - starting/stopping *********************************************************************************
         /// <summary>
         /// Starts the core; this loads objects shared over requests.

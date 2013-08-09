@@ -78,11 +78,27 @@ namespace CMS.Base
         /// Loads a model from the database.
         /// </summary>
         /// <param name="conn">Database connector.</param>
+        /// <param name="fullPath">The full-path of the model.</param>
+        /// <returns>Model or null.</returns>
+        public static UrlRewriting load(Connector conn, string fullPath)
+        {
+            fullPath = stripFullPath(fullPath);
+            if (fullPath == null)
+                return null;
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM cms_view_urlrewriting WHERE full_path=?full_path;");
+            ps["full_path"] = fullPath;
+            Result r = conn.queryRead(ps);
+            return r.Count == 1 ? load(r[0]) : null;
+        }
+        /// <summary>
+        /// Loads a model from the database.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
         /// <param name="urlID">Identifier of URL rewriting entry.</param>
         /// <returns>Model or null.</returns>
         public static UrlRewriting load(Connector conn, int urlID)
         {
-            Result r = conn.queryRead("SELECT * FROM cms_urlrewriting WHERE urlid='" + SQLUtils.escape(urlID.ToString()) + "';");
+            Result r = conn.queryRead("SELECT * FROM cms_view_urlrewriting WHERE urlid='" + SQLUtils.escape(urlID.ToString()) + "';");
             return r.Count == 1 ? load(r[0]) : null;
         }
         /// <summary>
@@ -124,21 +140,6 @@ namespace CMS.Base
                 // Validate full-path
                 if (fullPath == null || fullPath.Length == 0)
                     return PersistStatus.InvalidPath;
-                // Trim tailing slash's
-                if (fullPath.StartsWith("/"))
-                {
-                    if (fullPath.Length == 1)
-                        return PersistStatus.InvalidPath;
-                    else
-                        fullPath = fullPath.Substring(1);
-                }
-                if (fullPath.EndsWith("/"))
-                {
-                    if (fullPath.Length == 1)
-                        return PersistStatus.InvalidPath;
-                    else
-                        fullPath = fullPath.Substring(0, fullPath.Length - 1);
-                }
                 // Split into groups and validate each one
                 string[] g = fullPath.Split('/');
                 foreach (string s in g)
@@ -169,6 +170,30 @@ namespace CMS.Base
         }
         // Methods - Static ********************************************************************************************
         /// <summary>
+        /// Strips a full-path of tailing forward slash's and any whitespace.
+        /// </summary>
+        /// <param name="fullPath">The full-path to be treated.</param>
+        /// <returns>Either the full-path cleaned-up or null if invalid.</returns>
+        public static string stripFullPath(string fullPath)
+        {
+            fullPath = fullPath.Trim();
+            if (fullPath.StartsWith("/"))
+            {
+                if (fullPath.Length == 1)
+                    return null;
+                else
+                    fullPath = fullPath.Substring(1);
+            }
+            if (fullPath.EndsWith("/"))
+            {
+                if (fullPath.Length == 1)
+                    return null;
+                else
+                    fullPath = fullPath.Substring(0, fullPath.Length - 1);
+            }
+            return fullPath;
+        }
+        /// <summary>
         /// Finds the available plugins to serve a request. Returns an empty array if a consistency issue has occurred
         /// (a plugin cannot be found).
         /// </summary>
@@ -177,9 +202,10 @@ namespace CMS.Base
         /// <param name="conn">Database connector.</param>
         public static Plugin[] findRequestHandlers(PathInfo pathInfo, Connector conn)
         {
+            Result r = conn.queryRead("SELECT uuid FROM cms_view_request_handlers WHERE (full_path='" + SQLUtils.escape(pathInfo.FullPath) + "' OR full_path ='" + SQLUtils.escape(pathInfo.ModuleHandler) + "');");
             List<Plugin> result = new List<Plugin>(r.Count);
             Plugin p;
-            foreach (ResultRow plugin in conn.queryRead("SELECT uuid FROM cms_view_request_handlers WHERE (full_path='" + SQLUtils.escape(pathInfo.FullPath) + "' OR full_path ='" + SQLUtils.escape(pathInfo.ModuleHandler) + "');"))
+            foreach (ResultRow plugin in r)
             {
                 p = Core.Plugins[plugin["uuid"]];
                 if (p != null)
@@ -232,7 +258,7 @@ namespace CMS.Base
             }
             set
             {
-                fullPath = value;
+                fullPath = stripFullPath(value);
                 modified = true;
             }
         }

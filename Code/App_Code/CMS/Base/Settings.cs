@@ -183,7 +183,7 @@ namespace CMS.Base
 				Settings settings = new Settings();
                 Result result = conn.queryRead("SELECT * FROM cms_view_settings_load;");
 				foreach(ResultRow row in result)
-					settings.config.Add(row.get2<string>("path"), new SettingsNode(SettingsNode.parseType(row.get2<string>("type")), row.get2<string>("value"), row.get2<string>("description"), UUID.createFromHex(row.get2<string>("uuid"))));
+					settings.config.Add(row.get2<string>("path"), new SettingsNode(SettingsNode.parseType(row.get2<string>("type")), row.get2<string>("value"), row.get2<string>("description"), UUID.parse(row.get2<string>("uuid"))));
                 return settings;
 			}
 			catch(Exception ex)

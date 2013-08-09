@@ -146,7 +146,7 @@ namespace CMS.Plugins
             }
             else
             {
-                if ((plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]))) == null)
+                if ((plugin = Core.Plugins.getPlugin(UUID.parse(data.PathInfo[2]))) == null)
                     return false;
                 filesList = plugin.Path + "/files.list";
             }
@@ -225,7 +225,7 @@ namespace CMS.Plugins
         }
         public bool pagePackage(Data data)
         {
-            Plugin plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]));
+            Plugin plugin = Core.Plugins.getPlugin(UUID.parse(data.PathInfo[2]));
             if (plugin == null)
                 return false;
             data["Title"] = "Package Developer - Package Plugin";
@@ -265,7 +265,7 @@ namespace CMS.Plugins
                     dumpDest = Core.BasePath + "/installer/templates";
                     break;
                 default:
-                    plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]));
+                    plugin = Core.Plugins.getPlugin(UUID.parse(data.PathInfo[2]));
                     if (plugin == null)
                         return false;
                     dumpDest = plugin.PathTemplates;
@@ -283,7 +283,7 @@ namespace CMS.Plugins
         }
         public bool pageTemplatesUpload(Data data)
         {
-            Plugin plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]));
+            Plugin plugin = Core.Plugins.getPlugin(UUID.parse(data.PathInfo[2]));
             if (plugin == null)
                 return false;
             data["Title"] = "Package Developer - Upload Templates";
@@ -295,7 +295,7 @@ namespace CMS.Plugins
         }
         public bool pagePluginAction(Data data)
         {
-            Plugin plugin = Core.Plugins.getPlugin(UUID.createFromHexHyphens(data.PathInfo[2]));
+            Plugin plugin = Core.Plugins.getPlugin(UUID.parse(data.PathInfo[2]));
             if (plugin == null)
                 return false;
             StringBuilder output = new StringBuilder();

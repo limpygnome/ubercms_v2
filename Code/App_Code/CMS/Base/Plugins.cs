@@ -159,10 +159,10 @@ namespace CMS.Base
                 UUID uuid = UUID.parse(data["uuid"]);
                 if (uuid == null)
                 {
-                    if(coreError)
-                        Core.fail("Failed to parse UUID '" + data["uuid"] + "' for plugin '" + data["title"] + "'!");
                     if (messageOutput != null)
                         messageOutput.Append("Failed to parse UUID '").Append(data["uuid"]).AppendLine("'!");
+                    if (coreError)
+                        Core.fail("Failed to parse UUID '" + data["uuid"] + "' for plugin '" + data["title"] + "'!");
                     return false;
                 }
                 // Check the plugin is not already loaded
@@ -823,8 +823,7 @@ namespace CMS.Base
 		public static Plugins load(Connector conn)
 		{
             Plugins plugins = new Plugins();
-            plugins.reload(conn, true);
-            return plugins;
+            return plugins.reload(conn, true) ? plugins : null;
 		}
         // Methods - Accessors *****************************************************************************************
         /// <summary>
@@ -901,7 +900,7 @@ namespace CMS.Base
                 lock (plugins)
                 {
                     if (plugins.Count == 0) // Skip processing ahead.
-                        return new Plugin[0];
+                        return new Plugin[]{};
                     else
                     {
                         Plugin[] t = new Plugin[plugins.Count];

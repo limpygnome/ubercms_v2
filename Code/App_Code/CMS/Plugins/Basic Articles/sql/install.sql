@@ -18,19 +18,6 @@ CREATE TABLE ba_article_thread_permissions
 	FOREIGN KEY(`groupid`)				REFERENCES bsa_user_groups(`groupid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	PRIMARY KEY(`uuid_thread`, `groupid`)
 );
-CREATE TABLE ba_article_thread_views
-(
-	uuid_thread							CHAR(16) NOT NULL,
-	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE,
-	ipid								INT NOT NULL,
-	FOREIGN KEY(`ipid`)					REFERENCES ba_article_thread_views_ip(`ipid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	PRIMARY KEY(uuid_thread, ipid)
-);
-CREATE TABLE ba_article_thread_views_ip
-(
-	ipid								INT PRIMARY KEY AUTO_INCREMENT,
-	ip									VARCHAR(45) UNIQUE NOT NULL
-);
 CREATE TABLE ba_article
 (
 	uuid_article						CHAR(16) PRIMARY KEY,
@@ -83,3 +70,7 @@ CREATE OR REPLACE VIEW ba_view_load_article_raw AS
 -- -- Should only be used for viewing an article (excludes raw text).
 CREATE OR REPLACE VIEW ba_view_load_article_rendered AS
 	SELECT uuid_article AS uuid_article_raw, HEX(uuid_article) AS uuid_article, HEX(uuid_thread) AS uuid_thread. title, text_cache, datetime_created, datetime_edited, published, comments, html, hide_panel, userid_author, userid_publisher FROM ba_article;
+
+CREATE OR REPLACE VIEW ba_view_tags AS
+	SELECT tt.uuid_thread AS uuid_thread_raw, HEX(tt.uuid_thread) AS uuid_thread, t.tagid, t.keyword FROM bsa_tags_thread AS tt LEFT OUTER JOIN ba_tags AS t ON t.tagid=tt.tagid ORDER BY t.keyword ASC;
+

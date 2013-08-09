@@ -67,24 +67,26 @@ namespace CMS.BasicArticles
                     sql["urlid"] = urlid;
                 sql["uuid_article_current"] = uuidArticleCurrent.Bytes;
                 sql["uuid_thumbnail"] = thumbnail;
-                if (persisted)
+                try
                 {
-                    sql.UpdateAttribute = "uuid_thread";
-                    sql.UpdateValue = uuidThread.Bytes;
-                    sql.executeUpdate(conn, "ba_article_thread");
-                }
-                else
-                {
-                    try
+                    if (persisted)
+                    {
+                        sql.UpdateAttribute = "uuid_thread";
+                        sql.UpdateValue = uuidThread.Bytes;
+                        sql.executeUpdate(conn, "ba_article_thread");
+                    }
+                    else
                     {
                         uuidThread = UUID.generateVersion4();
                         sql["uuid_thread"] = uuidThread.Bytes;
                         sql.executeInsert(conn, "ba_article_thread");
+                        persisted = true;
                     }
-                    catch (Exception)
-                    {
-                        return false;
-                    }
+                    modified = false;
+                }
+                catch (Exception)
+                {
+                    return false;
                 }
                 return true;
             }

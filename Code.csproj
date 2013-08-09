@@ -73,6 +73,7 @@
   </ProjectExtensions>
   <ItemGroup>
     <Content Include="Code\App_Code\CMS\Plugins\Basic Articles\sql\install.sql" />
+    <Content Include="Code\App_Code\CMS\Plugins\Basic Articles\sql\old.sql" />
     <Content Include="Code\App_Code\CMS\Plugins\Basic Articles\sql\uninstall.sql" />
     <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\sql\install.sql" />
     <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\sql\uninstall.sql" />
@@ -91,7 +92,8 @@
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\Article.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\ArticleThread.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\ArticleThreadPermissions.cs" />
-    <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\ArticleThreadViews.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\ArticleThreadTags.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\Tag.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AET_Render.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\AccountEvent.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\AccountEventType.cs" />

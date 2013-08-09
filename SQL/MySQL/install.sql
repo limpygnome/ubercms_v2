@@ -87,6 +87,8 @@ CREATE OR REPLACE VIEW cms_view_email_queue AS
 CREATE OR REPLACE VIEW cms_view_request_handlers AS
 	SELECT DISTINCT ur.urlid, HEX(ur.uuid) AS uuid, ur.full_path, ur.priority FROM cms_urlrewriting AS ur LEFT OUTER JOIN cms_plugins AS p ON p.uuid=ur.uuid WHERE p.state=2 ORDER BY ur.priority DESC;
 
+CREATE OR REPLACE VIEW cms_view_urlrewriting AS
+	SELECT urlid, HEX(uuid) AS uuid, full_path, priority FROM cms_urlrewriting;
 -- Insert core settings
 INSERT INTO cms_settings (path, uuid, type, value, description) VALUES
 ('core/default_handler', NULL, '0', 'home', 'The default module-handler for the home-page/an empty request path.'),

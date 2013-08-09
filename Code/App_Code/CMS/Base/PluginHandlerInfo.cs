@@ -107,7 +107,7 @@ namespace CMS.Base
         {
             PluginHandlerInfo phi = new PluginHandlerInfo();
 
-            phi.uuid = UUID.createFromHex(data["uuid"]);
+            phi.uuid = UUID.parse(data["uuid"]);
             phi.requestStart = data["request_start"] == "1";
             phi.requestEnd = data["request_end"] == "1";
             phi.pageError = data["page_error"] == "1";

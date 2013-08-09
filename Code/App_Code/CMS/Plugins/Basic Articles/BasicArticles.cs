@@ -6,15 +6,6 @@ namespace CMS.BasicArticles
 {
     public partial class BasicArticles : Plugin
     {
-        // Enums *******************************************************************************************************
-        public enum ArticlesView
-        {
-            Latest,
-            Oldest,
-            TitleAZ,
-            TitleZA,
-            Popular
-        }
         // Methods - Constructors **************************************************************************************
         public BasicArticles(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version)
             : base(uuid, title, directory, state, handlerInfo, version)
@@ -89,15 +80,15 @@ namespace CMS.BasicArticles
                         // -- Viewing
                         case null:
                         case "latest":
-                            return pageArticles_browser(data, ArticlesView.Latest, null);
+                            return pageArticles_browser(data, Article.Sorting.Latest, null);
                         case "oldest":
-                            return pageArticles_browser(data, ArticlesView.Oldest, null);
+                            return pageArticles_browser(data, Article.Sorting.Oldest, null);
                         case "title_az":
-                            return pageArticles_browser(data, ArticlesView.TitleAZ, null);
+                            return pageArticles_browser(data, Article.Sorting.TitleAZ, null);
                         case "title_za":
-                            return pageArticles_browser(data, ArticlesView.TitleZA, null);
-                        case "popular":
-                            return pageArticles_browser(data, ArticlesView.Popular, null);
+                            return pageArticles_browser(data, Article.Sorting.TitleZA, null);
+                        //case "popular":
+                        //    return pageArticles_browser(data, Article.Sorting.Popular, null);
                         case "pending":
                             return pageArticles_pendingReview(data);
                         // -- Operations
@@ -113,15 +104,15 @@ namespace CMS.BasicArticles
                                 // -- Viewing
                                 case null:
                                 case "latest":
-                                    return pageArticles_browser(data, ArticlesView.Latest, data.PathInfo[2]);
+                                    return pageArticles_browser(data, Article.Sorting.Latest, data.PathInfo[2]);
                                 case "oldest":
-                                    return pageArticles_browser(data, ArticlesView.Oldest, data.PathInfo[2]);
+                                    return pageArticles_browser(data, Article.Sorting.Oldest, data.PathInfo[2]);
                                 case "title_az":
-                                    return pageArticles_browser(data, ArticlesView.TitleAZ, data.PathInfo[2]);
+                                    return pageArticles_browser(data, Article.Sorting.TitleAZ, data.PathInfo[2]);
                                 case "title_za":
-                                    return pageArticles_browser(data, ArticlesView.TitleZA, data.PathInfo[2]);
-                                case "popular":
-                                    return pageArticles_browser(data, ArticlesView.Popular, data.PathInfo[2]);
+                                    return pageArticles_browser(data, Article.Sorting.TitleZA, data.PathInfo[2]);
+                                //case "popular":
+                                //    return pageArticles_browser(data, Article.Sorting.Popular, data.PathInfo[2]);
                                 // -- Operations
                                 case "rebuild":
                                     return pageArticles_rebuild(data, data.PathInfo[2]);
@@ -130,7 +121,7 @@ namespace CMS.BasicArticles
                     }
                     break;
                 case "articles_home":
-                    return pageArticles_render(data, ArticlesView.Latest, "news");
+                    return pageArticles_render(data, Article.Sorting.Latest, "news");
             }
             return false;
         }
@@ -167,11 +158,11 @@ namespace CMS.BasicArticles
         {
             return true;
         }
-        public bool pageArticles_browser(Data data, ArticlesView sorting, string tagFilter)
+        public bool pageArticles_browser(Data data, Article.Sorting sorting, string tagFilter)
         {
             return true;
         }
-        public bool pageArticles_render(Data data, ArticlesView sorting, string tagFilter)
+        public bool pageArticles_render(Data data, Article.Sorting sorting, string tagFilter)
         {
             return true;
         }

@@ -65,7 +65,7 @@ namespace CMS.Base
         /// <returns>UUID model or null if invalid.</returns>
         public static UUID parse(string hex)
         {
-            return isValid(hex) ? hex.Length == 32 ? new UUID(hex) : new UUID(hex.Replace("-", "")) : null;
+            return isValid(hex) ? (hex.Length == 32 ? new UUID(hex) : new UUID(hex.Replace("-", ""))) : null;
         }
         /// <summary>
         /// Indicates if a UUID is valid.
@@ -75,11 +75,11 @@ namespace CMS.Base
         public static bool isValid(string data)
         {
             // Validate basic structure
-            if (data == null || data.Length != 32 || data.Length != 36)
+            if (data == null || (data.Length != 32 && data.Length != 36))
                 return false;
             // Perform regex pattern test
             // -- Matches hyphens or non-hyhens; chars must be 0-9, a-f or/and A-F.
-            return Regex.IsMatch(data, @"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})|([0-9a-fA-F]{32})");
+            return Regex.IsMatch(data, @"^(([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})|([0-9a-fA-F]{32}))$");
         }
         // Methods - Generation ****************************************************************************************
         static readonly char[] hexchars = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
