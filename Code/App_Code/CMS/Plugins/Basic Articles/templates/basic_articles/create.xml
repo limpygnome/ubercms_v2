@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/create]]></path><description><![CDATA[The page for creating new articles.]]></description><html><![CDATA[<h2>Articles - Create</h2>
+<form method="post" action="/article/create<!--IF:article_uuid-->/<!--article_uuid--><!--ENDIF:article_uuid-->">
+	<div class="TABLE">
+		<div class="ROW">
+			<div class="CELL2">
+				Title:
+			</div>
+			<div class="CELL2">
+				<input type="text" name="article_title" value="<!--:article_title-->" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				URL:
+			</div>
+			<div class="CELL2">
+				<input type="text" name="article_url" value="<!--:article_url-->" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				&nbsp;
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Options:
+			</div>
+			<div class="CELL2">
+				<span class="checkbox">
+						<input type="checkbox" id="article_html" name="article_html" <!--IF:article_html-->checked="checked"<!--ENDIF:article_html-->/>
+						<label for="article_html">Render HTML</label>
+				</span>
+				<span class="checkbox">
+						<input type="checkbox" id="article_hide_panel" name="article_hide_panel" <!--IF:article_hide_panel-->checked="checked"<!--ENDIF:article_hide_panel-->/>
+						<label for="article_hide_panel">Hide Edit Panel</label>
+				</span>
+				<span class="checkbox">
+						<input type="checkbox" id="article_comments" name="article_comments" <!--IF:article_comments-->checked="checked"<!--ENDIF:article_comments-->/>
+						<label for="article_comments">Allow Comments</label>
+				</span>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--IF:article_error-->
+	<div class="ERROR">
+		<!--article_error-->
+	</div>
+	<!--ENDIF:article_error-->
+	<div class="article_editor_toolbar">
+		<input type="submit" name="article_display_raw" value="Source" onclick="return articleSource();" <!--IF:!article_rendered-->class="SELECTED"<!--ENDIF:!article_rendered--> />
+		<input type="submit" name="article_display_rendered" value="Rendered" onclick="return articleRender();" <!--IF:article_rendered-->class="SELECTED"<!--ENDIF:article_rendered--> />
+	</div>
+	<div id="article_raw">
+		<!--IF:!article_rendered-->
+			<textarea cols="100" rows="25" name="article_raw"><!--article_raw--></textarea>
+		<!--ELSE-->
+			<input type="hidden" name="article_raw" value="<!--article_raw-->" />
+		<!--ENDIF:!article_rendered-->
+	</div>
+
+	<div id="article_rendered">
+		<!--IF:article_rendered-->
+			<!--article_rendered-->
+		<!--ENDIF:article_rendered-->
+	</div>
+</form>]]></html></template>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Web;
 using CMS.Base;
 using UberLib.Connector;
 
@@ -136,6 +137,71 @@ namespace CMS.BasicArticles
         /// <returns></returns>
         public bool pageArticle_create(Data data)
         {
+            string error = null;
+            // Check for postback
+            bool displayRendered = data.Request.Form["article_display_rendered"] != null;
+            string title = data.Request.Form["article_title"];
+            string url = data.Request.Form["article_url"];
+            string raw = data.Request.Form["article_raw"];
+            bool html = data.Request.Form["article_html"] != null;
+            bool hidePanel = data.Request.Form["article_hide_panel"] != null;
+            bool comments = data.Request.Form["article_comments"] != null;
+            if (title != null && url != null && raw != null)
+            {
+#if CSRFP
+                if (!CSRFProtection.authenticated(data))
+                    error = "Invalid request; please try again!";
+#endif
+#if CAPTCHA
+                if (error == null && !Captcha.isCaptchaCorrect(data))
+                    error = "Invalid captcha verification code!";
+#endif
+                if (error == null)
+                {
+                    // Validate article and persist initially without thread
+                    Article a = new Article();
+                    a.UUIDArticle = UUID.generateVersion4();
+                    a.Title = title;
+                    a.TextRaw = raw;
+                    a.HTML = html;
+                    a.HidePanel = hidePanel;
+                    a.Comments = comments;
+                    Article.PersistStatus ps = a.save(data.Connector);
+                    switch (ps)
+                    {
+                        case Article.PersistStatus.Invalid_uuid_article:
+                        case Article.PersistStatus.Invalid_thread:
+                        case Article.PersistStatus.Error:
+                            error = "An error occurred creating the article, please try again later!"; break;
+                        case Article.PersistStatus.Invalid_text_length:
+                            error = "Source/raw article must be x to x characters in length!"; break;
+                        case Article.PersistStatus.Invalid_title_length:
+                            error = "Title must be x to x characters in length!"; break;
+                    }
+                    if (error == null)
+                    {
+                        // Fetch/create thread for URL
+                        //ArticleThread at = ArticleThread.
+                        // Assign thread to article and re-persist
+                    }
+                }
+            }
+            // Setup the page
+            BaseUtils.headerAppendCss("/content/css/ba.css", ref data);
+            // Set content
+            data["Title"] = "Articles - Create";
+            data["Content"] = Core.Templates.get(data.Connector, "basic_articles/create");
+            // Set fields
+            data["article_title"] = HttpUtility.HtmlEncode(title);
+            data["article_url"] = HttpUtility.HtmlEncode(url);
+            data["article_raw"] = HttpUtility.HtmlEncode(raw);
+            if (html)       data.setFlag("article_html");
+            if (hidePanel)  data.setFlag("article_hide_panel");
+            if (comments)   data.setFlag("article_comments");
+            if (displayRendered)
+                data["article_rendered"] = "";
+            if (error != null)
+                data["article_error"] = HttpUtility.HtmlEncode(error);
             return true;
         }
         /// <summary>
@@ -181,5 +247,6 @@ namespace CMS.BasicArticles
         {
             return true;
         }
+        // Methods - Static - Rendering ********************************************************************************
     }
 }

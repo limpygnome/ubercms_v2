@@ -187,8 +187,10 @@ namespace CMS.BasicArticles
             if (modified == Fields.None)
                 return PersistStatus.Error;
             // Validate model data
-            if (uuidThread == null)
+            if (persisted && uuidThread == null)
                 return PersistStatus.Invalid_thread;
+            else if (uuidArticle == null)
+                return PersistStatus.Invalid_uuid_article;
             else if (title.Length < Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MIN].get<int>() || title.Length > Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MAX].get<int>())
                 return PersistStatus.Invalid_title_length;
             else if (textRaw.Length < Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MIN].get<int>() || textRaw.Length > Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MAX].get<int>())
@@ -196,7 +198,7 @@ namespace CMS.BasicArticles
             // Compile SQL
             SQLCompiler sql = new SQLCompiler();
             if ((modified & Fields.ThreadUUID) == Fields.ThreadUUID)
-                sql["uuid_thread"] = uuidThread.Bytes;
+                sql["uuid_thread"] = uuidThread != null ? uuidThread.Bytes : null;
             if ((modified & Fields.Title) == Fields.Title)
                 sql["title"] = title;
             if ((modified & Fields.TextRaw) == Fields.TextRaw)
@@ -268,12 +270,19 @@ namespace CMS.BasicArticles
         // Methods - Properties ****************************************************************************************
         /// <summary>
         /// The UUID of this article.
+        /// 
+        /// Note: setting this property on a persisted model will have no effect.
         /// </summary>
         public UUID UUIDArticle
         {
             get
             {
                 return uuidArticle;
+            }
+            set
+            {
+                if (!persisted)
+                    uuidArticle = value;
             }
         }
         /// <summary>
