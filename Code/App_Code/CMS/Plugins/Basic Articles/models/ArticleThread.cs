@@ -6,6 +6,8 @@ namespace CMS.BasicArticles
 {
     public class ArticleThread
     {
+        // Enums *******************************************************************************************************
+
         // Fields ******************************************************************************************************
         private bool            modified,                   // Indicates if the model has been modified.
                                 persisted;                  // Indicates if the model has been persisted.
@@ -22,12 +24,45 @@ namespace CMS.BasicArticles
         }
         // Methods - Database Persistence ******************************************************************************
         /// <summary>
+        /// Either creates or fetches an article thread based on a full-path.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="fullPath">The full path of the desired thread.</param>
+        /// <param name="at">The article thread model output parameter; set to null if unsuccessful.</param>
+        /// <returns>True = successfully fetched article thread model, false = failed to fetch article thread model.</returns>
+        public bool createFetch(Connector conn, string fullPath, out ArticleThread at)
+        {
+            // Ensure the URL is formatted correctly
+            fullPath = UrlRewriting.stripFullPath(fullPath);
+            // Lookup for an existing article at the URL
+            PreparedStatement ps = new PreparedStatement("SELECT uuid_thread FROM ba_article_thread_createfetch WHERE full_path=?full_path");
+            ps["full_path"] = fullPath;
+            Result r = conn.queryRead(ps);
+            // Load, else create, the model for the article
+            ArticleThread temp;
+            if (r.Count == 1)
+                temp = ArticleThread.load(conn, UUID.parse(r[0].get2<string>("uuid_thread")));
+            else if (r.Count > 1)
+                throw new Exception("Multiple article threads exist for the full-path - critical exception!");
+            else
+            {
+                // A thread does not exist at the specified full-path - create it!
+                temp = new ArticleThread();
+                temp.UUIDThread = UUID.generateVersion4();
+                temp.FullPath = fullPath;
+                if (!temp.save(conn))
+                    temp = null;
+            }
+            at = temp;
+            return temp == null;
+        }
+        /// <summary>
         /// Loads a model from the database.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <param name="uuidThread">Identifier of thread.</param>
         /// <returns>Model or null.</returns>
-        public ArticleThread load(Connector conn, UUID uuidThread)
+        public static ArticleThread load(Connector conn, UUID uuidThread)
         {
             PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_thread WHERE uuid_thread=?uuid_thread;");
             ps["uuid_thread"] = uuidThread.Bytes;
@@ -39,7 +74,7 @@ namespace CMS.BasicArticles
         /// </summary>
         /// <param name="data">Database tuple/row.</param>
         /// <returns>Model or null.</returns>
-        public ArticleThread load(ResultRow data)
+        public static ArticleThread load(ResultRow data)
         {
             ArticleThread th = new ArticleThread();
             th.persisted = true;
@@ -66,6 +101,7 @@ namespace CMS.BasicArticles
                 else
                     sql["urlid"] = urlid;
                 sql["uuid_article_current"] = uuidArticleCurrent.Bytes;
+                sql["thumbnail"] = thumbnail ? "1" : "0";
                 sql["uuid_thumbnail"] = thumbnail;
                 try
                 {
@@ -140,12 +176,19 @@ namespace CMS.BasicArticles
         // Methods - Properties ****************************************************************************************
         /// <summary>
         /// The UUID of this article thread.
+        /// 
+        /// This can only be set interally if the model has yet to be persisted!
         /// </summary>
         public UUID UUIDThread
         {
             get
             {
                 return uuidThread;
+            }
+            internal set
+            {
+                if(!persisted)
+                    uuidThread = value;
             }
         }
         /// <summary>
@@ -160,12 +203,19 @@ namespace CMS.BasicArticles
         }
         /// <summary>
         /// The full-path (URL) of this article thread. Refer to UrlRewriting model for format.
+        /// 
+        /// This can only be set interally if the model has yet to be persisted!
         /// </summary>
         public string FullPath
         {
             get
             {
                 return fullPath;
+            }
+            internal set
+            {
+                if (!persisted)
+                    fullPath = value;
             }
         }
         /// <summary>

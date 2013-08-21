@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Web;
 using CMS.Base;
+using CMS.Plugins;
 using UberLib.Connector;
 
 namespace CMS.BasicArticles

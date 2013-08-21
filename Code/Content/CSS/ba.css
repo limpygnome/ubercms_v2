@@ -1,0 +1,40 @@
+.article_editor_toolbar
+{
+	background: #CCC;
+	padding: 0em 1em 0.25em 1em;
+	border: solid 0.1em #999;
+	border-left: none;
+	border-right: none;
+}
+.article_editor_toolbar input[type=submit]
+{
+	border: none;
+	background: #CCC;
+	border: solid 0.1em #999;
+	border-top: none;
+	border-bottom: solid 0.25em #333;
+	margin: 0em 0.25em;
+	padding: 0.2em 0.5em 0.5em 0.5em;
+	background: #FFF;
+	cursor: pointer;
+}
+.article_editor_toolbar input[type=submit].SELECTED, .article_editor_toolbar input[type=submit]:hover, .article_editor_toolbar input[type=submit]:focus
+{
+	border-bottom: solid 0.25em #06C;
+	-webkit-transition:	all .4s ease;
+	-moz-transition: 	all .4s ease;
+	-o-transition:		all .4s ease;
+	-ms-transition:		all .4s ease;
+	transition:			all .4s ease;
+}
+#article_raw textarea
+{
+	width: 100%;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	padding: 0em;
+	margin: 0em;
+	border: none;
+	border-bottom: solid 0.2em #999;
+}

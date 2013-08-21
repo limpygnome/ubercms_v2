@@ -13,7 +13,7 @@ CREATE TABLE ba_article_thread
 CREATE TABLE ba_article_thread_permissions
 (
 	uuid_thread							CHAR(16) NOT NULL,
-	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE RESTRICT,
 	groupid								INT NOT NULL,
 	FOREIGN KEY(`groupid`)				REFERENCES bsa_user_groups(`groupid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	PRIMARY KEY(`uuid_thread`, `groupid`)
@@ -74,3 +74,6 @@ CREATE OR REPLACE VIEW ba_view_load_article_rendered AS
 CREATE OR REPLACE VIEW ba_view_tags AS
 	SELECT tt.uuid_thread AS uuid_thread_raw, HEX(tt.uuid_thread) AS uuid_thread, t.tagid, t.keyword FROM bsa_tags_thread AS tt LEFT OUTER JOIN ba_tags AS t ON t.tagid=tt.tagid ORDER BY t.keyword ASC;
 
+-- -- Used for looking up an existing article thread based on the URL
+CREATE OR REPLACE VIEW ba_article_thread_createfetch AS
+	SELECT HEX(at.uuid_thread) AS uuid_thread, rw.full_path FROM article_threads AS at LEFT OUTER JOIN cms_urlrewriting AS rw ON rw.urlid=at.urlid;
