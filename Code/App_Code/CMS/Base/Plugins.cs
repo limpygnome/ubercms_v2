@@ -26,12 +26,14 @@
  *                                      Added getPlugin methods.
  *                                      Fixed incorrect enum value being set in install method (enabled instead of
  *                                      disabled).
- *                      2013-07-08      Added ability to fetch plugins by unique identifiers.
+ *                      2013-07-08      Added rcability to fetch plugins by unique identifiers.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                                      Added changes to support pluginid to UUID changes.
  *                      2013-07-22      Added and modified plugin loading/unloading; loading plugins can now be done
  *                                      during runtime.
  *                      2013-08-01      UUIDs are now stored as non-hyphen strings for better performance.
+ *                      2013-08-23      Changed the way loading/unloading works with start/stop handlers of plugins, as
+ *                                      well as general improvements.
  * 
  * *********************************************************************************************************************
  * A data-collection for managing and interacting with plugin models.
@@ -56,13 +58,13 @@ namespace CMS.Base
 	public class Plugins
 	{
 		// Fields ******************************************************************************************************
-		private Dictionary<string,Plugin> plugins;			// Map of UUID (string, no hyphen's, upper-case) to plugin.
-        private Thread cycler;                              // The thread used for running cycles of plugins.
+		private Dictionary<string,Plugin>   plugins;			    // Map of UUID (string, no hyphen's, upper-case) to plugin.
+        private Thread                      cycler;                 // The thread used for running cycles of plugins.
         // Fields - Handler List Caching *******************************************************************************
-        private Plugin[] cacheRequestStart;                 // Cache of plugins capable of handling the start of a request.
-        private Plugin[] cacheRequestEnd;                   // Cache of plugins capable of handling the end of a request.
-        private Plugin[] cachePageError;				    // Cache of plugins capable of handling a page error.
-        private Plugin[] cachePageNotFound;			        // Cache of plugins capable of handling a page not found.
+        private Plugin[]                    cacheRequestStart,      // Cache of plugins capable of handling the start of a request.
+                                            cacheRequestEnd,        // Cache of plugins capable of handling the end of a request.
+                                            cachePageError,			// Cache of plugins capable of handling a page error.
+                                            cachePageNotFound;		// Cache of plugins capable of handling a page not found.
 		// Methods - Constructors **************************************************************************************
 		private Plugins()
 		{
@@ -121,7 +123,10 @@ namespace CMS.Base
             }
         }
         /// <summary>
-        /// Dynamically loads a plugin into the CMS's runtime. This does not rebuild the plugin handler cache.
+        /// Dynamically loads a plugin into the CMS's runtime.
+        /// 
+        /// This does not rebuild the plugin handler cache.
+        /// This does not invoke any plugin handlers, including pluginStart.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <param name="uuid">The identifier of the plugin; can be null without core failure occurring.</param>
@@ -156,6 +161,7 @@ namespace CMS.Base
         {
             lock (this)
             {   
+                // Parse UUID into model
                 UUID uuid = UUID.parse(data["uuid"]);
                 if (uuid == null)
                 {
@@ -194,11 +200,12 @@ namespace CMS.Base
                         messageOutput.Append("Failed to load plugin handler information for plugin UUID '" ).Append(uuid.HexHyphens).AppendLine("'!");
                     return false;
                 }
-                // Create an instance of the class and add it
+                // Create an instance of the class
                 try
                 {
                     Plugin plugin = (Plugin)ass.CreateInstance(data["classpath"], false, BindingFlags.CreateInstance, null, new object[] { uuid, data["title"], data["directory"], state, phi, new Version(data.get2<int>("version_major"), data.get2<int>("version_minor"), data.get2<int>("version_build")) }, null, null);
                     if (plugin != null)
+                        // Add to runtime
                         plugins.Add(uuid.Hex.ToUpper(), plugin);
                     else
                     {
@@ -752,6 +759,8 @@ namespace CMS.Base
         // Methods - Reloading *****************************************************************************************
         /// <summary>
         /// Reloads the collection of plugins from the database; dispose will be invoked on the plugin.
+        /// 
+        /// Invokes pluginStop and pluginStart handler.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         public void reload(Connector conn)
@@ -766,15 +775,16 @@ namespace CMS.Base
                 {
                     // Stop cycler
                     cyclerStop();
-                    // Inform each plugin they're being disposed
+                    // Inform each plugin they're being stopped
                     foreach (Plugin p in Fetch)
-                        p.dispose();
+                        if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStart)
+                            p.handler_pluginStop(conn);
                     // Clear old plugins
                     plugins.Clear();
-                    // Load each plugin
+                    // Load each plugin and inform them they've been started
                     Assembly ass = Assembly.GetExecutingAssembly();
                     StringBuilder sb = null;
-                    foreach (ResultRow t in conn.queryRead("SELECT * FROM cms_view_plugins_loadinfo"))
+                    foreach (ResultRow t in conn.queryRead("SELECT * FROM cms_view_plugins_loadinfo;"))
                         pluginLoad(ass, t, true, true, ref sb);
                 }
                 catch (Exception ex)

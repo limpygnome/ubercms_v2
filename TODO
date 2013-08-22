@@ -1,6 +1,16 @@
 > test e-mail queue service.
+-- needs attack testing
 > plugin.refresh -> either conn or resultrow - do we really need this?
 > change plugins.cs findhandlers to be view ?????!!!!!
+> add confirmation of uninstall to package developer.
+
+
+
+remove dispose from plugin??!?
+-- find usage.
+
+
+pluginLoad should not be done by UUID but by plugin model
 
 
 

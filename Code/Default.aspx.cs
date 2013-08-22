@@ -22,6 +22,7 @@
  *                      2013-06-30      Finished initial class.
  *                      2013-08-01      ThreadAbortException ignored due to being thrown by Response.Redirect.
  *                      2013-08-22      Added support for new core state (starting and stopping).
+ *                                      Added quick-install for debug-mode (for development purposes).
  * 
  * *********************************************************************************************************************
  * The entry-point for clients to be served by the main CMS.
@@ -42,6 +43,28 @@ public partial class _Default : System.Web.UI.Page
 {
     protected void Page_Load(object sender, EventArgs e)
     {
+#if DEBUG
+        // Check if we want to fast-install the CMS (using pre-existing settings)
+        PathInfo pi = new PathInfo(Request);
+        if (pi.ModuleHandler == "debug_install")
+        {
+            StringBuilder messageOutput = new StringBuilder();
+            // Load settings from disk
+            Settings settings = Settings.loadFromDisk(Core.CmsConfigPath);
+            // Create connector
+            Connector conn = Core.createConnector(true, ref settings);
+            // Start the core
+            Core.start();
+            // Install CMS database
+            BaseUtils.executeSQL(Core.generateBasePathString(), conn, ref messageOutput);
+            // Install package developer
+            //Plugin p = Core.Plugins.
+            // Output status
+            Response.Write("CMS fast-install called successful! Output:<br />");
+            Response.Write(messageOutput.ToString());
+            Response.End();
+        }
+#endif
 		// Check the status of the core
 		if(Core.State != Core.CoreState.Started)
 		{
@@ -67,15 +90,15 @@ public partial class _Default : System.Web.UI.Page
 		}
 		else
 		{
-			// Setup request data (parse path, database connection, etc)
-			Data data = new Data(Request, Response, Request.QueryString["path"]);
+			// Setup request data model (used for carrying data between plugins)
+			Data data = new Data(Request, Response);
             // Debug-mode options should go here (before timing)
 #if DEBUG
             Core.Templates.reload(data.Connector);  // Reloads all of the cached templates
 #endif
 			// Start recording the time taken to process the request
 			data.timingStart();
-
+            // Begin request
             try
             {
                 // Invoke request-start handlers

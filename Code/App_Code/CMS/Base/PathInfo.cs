@@ -23,6 +23,7 @@
  *                      2013-07-05      Fixed this property bug.
  *                      2013-07-06      Fixed tailing slash bug where it would create an empty token.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
+ *                      2013-08-22      Path parsing can now be carried out by passing the HttpRequest ASP.NET model.
  * 
  * *********************************************************************************************************************
  * Used to parse url-rewriting/request data. Plugins are invoked based on either the first directory in the URL, the
@@ -32,6 +33,7 @@
  */
 using System;
 using System.Text;
+using System.Web;
 
 namespace CMS.Base
 {
@@ -42,10 +44,14 @@ namespace CMS.Base
 		private string[] 	subDirs;                // Subsequent directories of the request, in order from 0 to n.
 		private string 		fullPath;               // The full rebuilt path of the request (excludes query-string data).
 		// Methods - Constructors **************************************************************************************
-		public PathInfo(string pathData)
+		public PathInfo(HttpRequest request)
 		{
-			parse(pathData);
+			parse(request.QueryString["path"]);
 		}
+        public PathInfo(string pathData)
+        {
+            parse(pathData);
+        }
 		// Methods *****************************************************************************************************
         /// <summary>
         /// Parses the current request for its request path.

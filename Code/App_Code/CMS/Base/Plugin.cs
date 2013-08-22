@@ -31,6 +31,7 @@
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-29      Refactored FullPath to Path.
  *                      2013-08-06      Versioning redone to be database based, less effort when updating.
+ *                      2013-08-22      Removed dispose method - superseded by pluginStart handler.
  * 
  * *********************************************************************************************************************
  * Base class for all plugins. This contains information about the plugin and methods to be implemented as handlers.
@@ -106,12 +107,6 @@ namespace CMS.Base
                 conn.queryExecute("UPDATE cms_plugins SET state='" + SQLUtils.escape(((int)state).ToString()) + "' WHERE uuid=" + uuid.NumericHexString + "; ");
         }
         /// <summary>
-        /// Invoked when the plugin is being unloaded; this may not occur only when the CMS ends.
-        /// </summary>
-        public virtual void dispose()
-        {
-        }
-        /// <summary>
 		/// Invoked when the plugin is to be enabled; no checking of the plugin state is required. Return
 		/// true if successful or false if the plugin cannot be enabled.
 		/// </summary>
@@ -158,6 +153,8 @@ namespace CMS.Base
 		// Methods - Abstract - Handlers - Plugins *********************************************************************
         /// <summary>
         /// Invoked when the plugin is loaded.
+        /// 
+        /// Note: this is only invoked if the plugin is enabled.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <returns></returns>
@@ -167,6 +164,8 @@ namespace CMS.Base
 		}
         /// <summary>
         /// Invoked when the plugin is unloaded.
+        /// 
+        /// Note: this is only invoked if the plugin is enabled.
         /// </summary>
         /// <param name="conn">Database connector.</param>
 		public virtual void handler_pluginStop(Connector conn)

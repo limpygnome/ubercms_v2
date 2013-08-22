@@ -18,6 +18,7 @@
  * 
  *      Change-Log:
  *                      2013-08-02      Created initial class.
+ *                      2013-08-22      Changed Data model parameters.
  * 
  * *********************************************************************************************************************
  * A class used for creating and deploying e-mails.
@@ -43,7 +44,7 @@ namespace CMS.BasicSiteAuth
         {
             // Render the template
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "bsa/emails/verify"));
-            Data render = new Data(null, null, null);
+            Data render = new Data(null, null);
             setRenderBaseParams(user, ref render, data);
             render["verify_code"] = HttpUtility.HtmlEncode(verifyCode);
             Core.Templates.render(ref buffer, ref render);
@@ -59,7 +60,7 @@ namespace CMS.BasicSiteAuth
         {
             // Render the template
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "bsa/emails/welcome"));
-            Data render = new Data(null, null, null);
+            Data render = new Data(null, null);
             setRenderBaseParams(user, ref render, data);
             Core.Templates.render(ref buffer, ref render);
             // Add to queue
@@ -74,7 +75,7 @@ namespace CMS.BasicSiteAuth
         {
             // Render the template
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "bsa/emails/recovery_code"));
-            Data render = new Data(null, null, null);
+            Data render = new Data(null, null);
             setRenderBaseParams(user, ref render, data);
             render["recovery_code"] = HttpUtility.HtmlEncode(recoveryCode);
             Core.Templates.render(ref buffer, ref render);

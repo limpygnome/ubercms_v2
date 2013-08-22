@@ -33,6 +33,9 @@
  *                      2013-08-05      Core connector no longer contnued; likely to cause issues.
  *                      2013-08-22      Few core improvements upon existing code (commenting, new-states, better
  *                                      protection against invalid configuration and objects).
+ *                                      Added generateBasePathString method; start now returns a boolean.
+ *                                      Removal of database properties (this should be hidden and treated
+ *                                      abstractly).
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -86,13 +89,14 @@ namespace CMS.Base
         /// <summary>
         /// Starts the core; this loads objects shared over requests.
         /// </summary>
-		public static void start()
+        /// <returns>True = successfully started, false = not started.</returns>
+		public static bool start()
 		{
 			lock(typeof(Core))
 			{
                 // Check the core is not already running
 				if(currentState == CoreState.Started || currentState == CoreState.Starting || currentState == CoreState.Stopping)
-					return;
+					return false;
                 currentState = CoreState.Starting;
                 // Reset error message
                 errorMessage = null;
@@ -100,7 +104,7 @@ namespace CMS.Base
 				try
 				{
 					// Setup the current base-path
-					basePath = AppDomain.CurrentDomain.BaseDirectory;
+                    basePath = generateBasePathString();
 					if (basePath[basePath.Length - 1] == '\\' || basePath[basePath.Length - 1] == '/')
 						basePath = basePath.Remove(basePath.Length - 1, 1);
                     basePath = basePath.Replace("\\", "/");
@@ -115,7 +119,7 @@ namespace CMS.Base
                         catch (Exception ex)
                         {
                             fail("Failed to create temporary folder at '" + tempPath + "'; exception occurred: '" + ex.Message + "'!");
-                            return;
+                            return false;
                         }
                     }
 					// Load the configuration file
@@ -135,14 +139,14 @@ namespace CMS.Base
                                 break;
                             default:
                                 fail("Invalid provider specified in configuration file!");
-                                return;
+                                return false;
                         }
                         // Create database connector for starting services
-                        Connector conn = createConnector(false);
+                        Connector conn = createConnector(true);
                         if (conn == null)
                         {
                             fail("Failed to create connector to database server (connection issue)!");
-                            return;
+                            return false;
                         }
                         else
                         {
@@ -167,6 +171,8 @@ namespace CMS.Base
                             }
                             // Dispose connector
                             conn.disconnect();
+                            // Success!
+                            return true;
                         }
                     }
 				}
@@ -174,6 +180,7 @@ namespace CMS.Base
 				{
 					fail("Exceptiom thrown whilst loading core '" + ex.Message + "' - stack-trace '" + ex.StackTrace + "'! Base exception: '" + ex.GetBaseException().Message + "'; base stack-trace: '" + ex.GetBaseException().StackTrace + "'.");
 				}
+                return false;
 			}
 		}
         /// <summary>
@@ -251,90 +258,49 @@ namespace CMS.Base
         /// <summary>
         /// Creates a database connection.
         /// </summary>
-        /// <param name="persist">Indicates if the connection should be persistent.</param>
+        /// <param name="persist">Indicates if the connection should be persistent/stay-open for longer (protection against time-outs).</param>
         /// <returns>Database connector.</returns>
 		public static Connector createConnector(bool persist)
 		{
-			switch(dbType)
-			{
-			case DatabaseType.MySQL:
-                MySQL m = new MySQL();
-                m.SettingsHost = DatabaseHost;
-                m.SettingsPort = DatabasePort;
-                m.SettingsUser = DatabaseUser;
-                m.SettingsPass = DatabasePass;
-                m.SettingsDatabase = DatabaseSchema;
-                m.SettingsConnectionString += DatabaseConnectionString;
-                if (persist)
-                    m.SettingsTimeoutConnection = 864000; // 10 days
-                m.connect();
-                return m;
-			default:
-				fail("Failed to create a connector - unknown type!");
-				throw new Exception("Could not create connector, core failure!");
-			}
+            return createConnector(persist, ref settingsDisk);
 		}
-        // Methods - Properties - Database *****************************************************************************
         /// <summary>
-        /// The host of the DBMS.
+        /// Creates a database connection.
         /// </summary>
-        public static string DatabaseHost
+        /// <param name="settings">The settings model to use for the database settings.</param>
+        /// <param name="persist">Indicates if the connection should be persistent/stay-open for longer (protection against time-outs).</param>
+        /// <returns>Database connector.</returns>
+        public static Connector createConnector(bool persist, ref Settings settings)
         {
-            get
+            switch (dbType)
             {
-                return settingsDisk["settings/database/host"].get<string>();
+                case DatabaseType.MySQL:
+                    MySQL m = new MySQL();
+                    m.SettingsHost = settings["settings/database/host"].get<string>();
+                    m.SettingsPort = settings["settings/database/port"].get<int>(); ;
+                    m.SettingsUser = settings["settings/database/user"].get<string>();
+                    m.SettingsPass = settings["settings/database/pass"].get<string>(); ;
+                    m.SettingsDatabase = settings["settings/database/db"].get<string>();
+                    m.SettingsConnectionString += settings["settings/database/connection_string"].get<string>();
+                    if (persist)
+                        m.SettingsTimeoutConnection = 864000; // 10 days
+                    m.connect();
+                    return m;
+                default:
+                    fail("Failed to create a connector - unknown type!");
+                    throw new Exception("Could not create connector, core failure!");
             }
         }
         /// <summary>
-        /// The port of the DBMS.
+        /// Generates the base-path string; this should not be used since this is less efficient than the BasePath
+        /// property.
+        /// 
+        /// Usage: for generating a fresh path to the base installation of this CMS.
         /// </summary>
-        public static int DatabasePort
+        /// <returns>Base path.</returns>
+        public static string generateBasePathString()
         {
-            get
-            {
-                return settingsDisk["settings/database/port"].get<int>();
-            }
-        }
-        /// <summary>
-        /// The username for authentication of the DBMS.
-        /// </summary>
-        public static string DatabaseUser
-        {
-            get
-            {
-                return settingsDisk["settings/database/user"].get<string>();
-            }
-        }
-        /// <summary>
-        /// The password for authentication of the DBMS.
-        /// </summary>
-        public static string DatabasePass
-        {
-            get
-            {
-                return settingsDisk["settings/database/pass"].get<string>();
-            }
-        }
-        /// <summary>
-        /// The databse/schema on the DBMS to use.
-        /// </summary>
-        public static string DatabaseSchema
-        {
-            get
-            {
-                return settingsDisk["settings/database/db"].get<string>();
-            }
-        }
-        /// <summary>
-        /// The database connection string, for any additional parameters. This property is used if the DBMS is actually
-        /// a file; in such a situation, this property should contain the file-path.
-        /// </summary>
-        public static string DatabaseConnectionString
-        {
-            get
-            {
-                return settingsDisk["settings/database/connection_string"].get<string>();
-            }
+            return AppDomain.CurrentDomain.BaseDirectory;
         }
 		// Methods - Properties ****************************************************************************************
         /// <summary>

@@ -24,6 +24,8 @@
  *                      2013-07-31      Added flag-setting (sets a key with a null value).
  *                      2013-08-02      Connector is now optional, allowing the class to be used for general exchange
  *                                      of data between plugins.
+ *                      2013-08-22      PathInfo parsing now uses the HttpRequest ASP.NET object in-case of future
+ *                                      changes.
  * 
  * *********************************************************************************************************************
  * Used for passing data between the controller and plugins; this may also be used for non-request exchange of
@@ -63,9 +65,9 @@ namespace CMS.Base
         /// <param name="request"></param>
         /// <param name="response"></param>
         /// <param name="pathData"></param>
-		public Data(HttpRequest request, HttpResponse response, string pathData)
+		public Data(HttpRequest request, HttpResponse response)
 		{
-			this.pathInfo = pathData == null ? null : new PathInfo(pathData);
+			this.pathInfo = Request == null ? null : new PathInfo(Request);
 			this.request = request;
 			this.response = response;
 			this.variables = new Dictionary<string, string>();
