@@ -31,6 +31,8 @@
  *                      2013-08-01      Added DefaultHandler property.
  *                      2013-08-02      Improved error handling.
  *                      2013-08-05      Core connector no longer contnued; likely to cause issues.
+ *                      2013-08-22      Few core improvements upon existing code (commenting, new-states, better
+ *                                      protection against invalid configuration and objects).
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -47,13 +49,21 @@ namespace CMS.Base
 	public static class Core
 	{
 		// Enums *******************************************************************************************************
+        /// <summary>
+        /// The (operational) state type of the core.
+        /// </summary>
 		public enum CoreState
 		{
-			Failed,
-			Running,
-			Stopped,
-			NotInstalled
+			Failed,                 // The state of the core when a critical exception occurs, resulting in the core not being operational.
+			Starting,               // The state of the core when starting.
+            Started,                // The state of the core when nominal/operational.
+            Stopping,               // The state of the core when stopping.
+			Stopped,                // The state of the core when stopped.
+			NotInstalled            // The state of the core when it has not been installed/insufficient configuration exists.
 		}
+        /// <summary>
+        /// The type of database system being used for persisting non-core data.
+        /// </summary>
 		public enum DatabaseType
 		{
             None,
@@ -80,9 +90,13 @@ namespace CMS.Base
 		{
 			lock(typeof(Core))
 			{
-				if(currentState == CoreState.Running || currentState == CoreState.NotInstalled)
+                // Check the core is not already running
+				if(currentState == CoreState.Started || currentState == CoreState.Starting || currentState == CoreState.Stopping)
 					return;
+                currentState = CoreState.Starting;
+                // Reset error message
                 errorMessage = null;
+                // Start the core
 				try
 				{
 					// Setup the current base-path
@@ -107,13 +121,13 @@ namespace CMS.Base
 					// Load the configuration file
 					if(!File.Exists(CmsConfigPath))
 						currentState = CoreState.NotInstalled;
-                    if ((settingsDisk = Settings.loadFromDisk(CmsConfigPath)) == null)
+                    else if ((settingsDisk = Settings.loadFromDisk(CmsConfigPath)) == null)
                         fail(errorMessage ?? "Failed to load disk settings!");
                     else
                     {
                         // Load the version information
                         version = new Version(settingsDisk["settings/version/major"].get<int>(), settingsDisk["settings/version/minor"].get<int>(), settingsDisk["settings/version/build"].get<int>());
-                        // Setup connector
+                        // Setup the database connector
                         switch (settingsDisk["settings/database/provider"].get<string>())
                         {
                             case "mysql":
@@ -121,8 +135,9 @@ namespace CMS.Base
                                 break;
                             default:
                                 fail("Invalid provider specified in configuration file!");
-                                break;
+                                return;
                         }
+                        // Create database connector for starting services
                         Connector conn = createConnector(false);
                         if (conn == null)
                         {
@@ -131,7 +146,7 @@ namespace CMS.Base
                         }
                         else
                         {
-                            // Setup services/data
+                            // Setup services
                             if ((settings = Settings.loadFromDatabase(conn)) == null)
                                 fail(errorMessage ?? "Failed to load the settings stored in the database!");
                             else if ((emailQueue = EmailQueue.create()) == null)
@@ -142,7 +157,7 @@ namespace CMS.Base
                                 fail(errorMessage ?? "Failed to load plugins!");
                             else
                             {
-                                currentState = CoreState.Running;
+                                currentState = CoreState.Started;
                                 // Start any services
                                 emailQueue.start();
                                 // Invoke plugin handlers
@@ -172,6 +187,10 @@ namespace CMS.Base
 		{
 			lock(typeof(Core))
 			{
+                // Check core is not already stopped or stopping
+                if (currentState == CoreState.Stopping || currentState == CoreState.Stopped)
+                    return;
+                currentState = CoreState.Stopping;
                 // Setup connector
                 Connector conn = createConnector(false);
                 // Invoke handlers
@@ -183,13 +202,16 @@ namespace CMS.Base
                     plugins = null;
                 }
                 // Dispose connector
-                conn.disconnect();
-                conn = null;
+                if (conn != null)
+                {
+                    conn.disconnect();
+                    conn = null;
+                }
 				// Dispose services
 				if(emailQueue != null)
 					emailQueue.stop();
-                // Dispose core
-                basePath = null;
+                // Dispose core fields
+                basePath = tempPath = null;
                 dbType = DatabaseType.None;
 				emailQueue = null;
 				templates = null;
@@ -208,11 +230,13 @@ namespace CMS.Base
                     currentState = CoreState.Stopped;
                     errorMessage = null;
                 }
+                else
+                    currentState = CoreState.Failed;
 			}
 		}
         /// <summary>
         /// Safely stops the core with an error-message; this should be used to stop the core when a critical error
-        /// has occurred.
+        /// has occurred. Can be invoked at any point during the CMS's operation.
         /// </summary>
         /// <param name="reason">The error-message/reason for failing/stopping the core.</param>
 		public static void fail(string reason)
@@ -220,7 +244,6 @@ namespace CMS.Base
             lock (typeof(Core))
             {
                 errorMessage = errorMessage != null ? errorMessage + "\n" + reason : reason;
-                currentState = CoreState.Failed;
                 stop(true);
             }
 		}

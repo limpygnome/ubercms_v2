@@ -21,6 +21,7 @@
  *                      2013-06-25      Created initial class.
  *                      2013-06-30      Finished initial class.
  *                      2013-08-01      ThreadAbortException ignored due to being thrown by Response.Redirect.
+ *                      2013-08-22      Added support for new core state (starting and stopping).
  * 
  * *********************************************************************************************************************
  * The entry-point for clients to be served by the main CMS.
@@ -42,21 +43,25 @@ public partial class _Default : System.Web.UI.Page
     protected void Page_Load(object sender, EventArgs e)
     {
 		// Check the status of the core
-		if(Core.State != Core.CoreState.Running)
+		if(Core.State != Core.CoreState.Started)
 		{
 			switch(Core.State)
 			{
 			case Core.CoreState.Failed:
-				Response.Write("Core failure: '" + HttpUtility.HtmlEncode(Core.ErrorMessage) + "'.");
+				Response.Write("The website failed to start; error-message: '" + HttpUtility.HtmlEncode(Core.ErrorMessage) + "'.");
 				break;
 			case Core.CoreState.NotInstalled:
 				Response.Redirect("/install");
 				break;
+            case Core.CoreState.Stopping:
 			case Core.CoreState.Stopped:
-				Response.Write("Core is not running.");
+				Response.Write("The website is currently offline.");
 				break;
+            case Core.CoreState.Starting:
+                Response.Write("The website is still starting, please try your request again shortly...");
+                break;
 			default:
-				Response.Write("Unknown core state; core is not running!");
+				Response.Write("Unknown website/core state; website is not running!");
 				break;
 			}
 		}

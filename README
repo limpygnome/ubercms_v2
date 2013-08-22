@@ -29,6 +29,10 @@ A:	Solution from "https://bugs.archlinux.org/task/6410":
 
 	Appears to be an issue with non-Gnome Arch installations. GConf is basically a key-value, almost registry-like, service; this error means the key at the specified path has not been set, so you can run the above to set it. If that doesn't work, you can install gconf-edit, go to add a new key to / and put the key-name as the full-path above.
 
+Disadvantages
+---------------------------------------------------------------------------------->
+>	Inability to use user controls and master-pages.
+>	Inability to have asynchronous pages.
 
 Authors
 ---------------------------------------------------------------------------------->
