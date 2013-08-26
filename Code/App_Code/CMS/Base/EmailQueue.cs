@@ -49,19 +49,19 @@ namespace CMS.Base
 		// Fields ******************************************************************************************************
 		private Thread  cyclerThread;
 		// Fields - Settings *******************************************************************************************
-		bool	        enabled;			// Indicates if settings have been specified for the e-mail queue service to run.
-		string 	        mailHost,			// The mail-server host.
+		private bool	enabled;			// Indicates if settings have been specified for the e-mail queue service to run.
+		private string 	mailHost,			// The mail-server host.
 				        mailUsername,		// The mail-server username for authentication.
 				        mailPassword,		// The mail-server password for authentication.
 				        mailAddress;		// The e-mail address used in e-mails sent by the mail-server.
-		int		        mailPort,			// The mail-server port.
+		private int		mailPort,			// The mail-server port.
 				        errors;				// The number of errors occurred whilst sending e-mails.
 		// Methods - Constructors **************************************************************************************
 		private EmailQueue()
 		{
-			cyclerThread = null;
-			errors = 0;
-			enabled = false;
+			this.cyclerThread = null;
+            this.errors = 0;
+            this.enabled = false;
 		}
 		// Methods *****************************************************************************************************
 		/// <summary>

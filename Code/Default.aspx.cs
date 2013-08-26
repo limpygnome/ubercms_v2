@@ -53,7 +53,7 @@ public partial class _Default : System.Web.UI.Page
             // Load settings from disk
             Settings settings = Settings.loadFromDisk(Core.CmsConfigPath);
             // Create connector
-            Connector conn = Core.createConnector(true, ref settings);
+            Connector conn = Core.connectorCreate(true, ref settings);
             // Start the core
             Core.start();
             // Install CMS database

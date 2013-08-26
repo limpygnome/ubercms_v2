@@ -80,6 +80,7 @@
     <Content Include="Code\App_Code\CMS\Plugins\Example\Plugin.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Code\App_Code\CMS\Base\Email.cs" />
     <Compile Include="Code\App_Code\CMS\Base\TemplateHandler.cs" />
     <Compile Include="Code\App_Code\CMS\Base\UrlRewriting.cs" />
     <Compile Include="Code\App_Code\CMS\Base\UUID.cs" />

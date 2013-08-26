@@ -51,7 +51,7 @@ namespace CMS.Base
         /// </summary>
         /// <param name="path">The path of the file to execute.</param>
         /// <param name="conn">The connector on-which to execute the file's data/SQL.</param>
-        /// <returns></returns>
+        /// <returns>True = executed without errors, false = not executed or an error occurred durign execution.</returns>
         public static bool executeSQL(string path, Connector conn, ref StringBuilder messageOutput)
         {
             try
@@ -91,11 +91,12 @@ namespace CMS.Base
         /// </summary>
         /// <param name="sourcePath">Path to the source-file/zip-file to extract.</param>
         /// <param name="destinationPath">The destination directory for the contents of the zip.</param>
-        /// <returns></returns>
+        /// <returns>True = zip successfully extracted, false = failed/incomplete.</returns>
         public static bool extractZip(string sourcePath, string destinationPath)
         {
             try
             {
+                // Extract each file within the zip to the destination directory
                 using (ZipFile file = new ZipFile(sourcePath))
                 {
                     foreach (ZipEntry entry in file)
@@ -194,7 +195,7 @@ namespace CMS.Base
         /// </summary>
         /// <param name="symbol">The symbol to be added.</param>
         /// <param name="messageOutput">Message output.</param>
-        /// <returns>True if successful, false if the operation failed.</returns>
+        /// <returns>True = successful, false = the operation failed.</returns>
         public static bool preprocessorDirective_Add(string symbol, ref StringBuilder messageOutput)
         {
             return preprocessorDirective_Modify(symbol, true, ref messageOutput);
@@ -213,10 +214,12 @@ namespace CMS.Base
         {
             try
             {
+                // Open up the web.config file
                 string configPath = Core.WebConfigPath;
                 XmlDocument webConfig = new XmlDocument();
                 webConfig.Load(configPath);
                 XmlNode compiler;
+                // Check the entry for the compiler directives exists
                 if ((compiler = webConfig.SelectSingleNode("configuration/system.codedom/compilers/compiler")) == null)
                 {
                     messageOutput.AppendLine("The web.config is missing the compiler section and hence directives cannot be added! Please modify your web.config...");
@@ -254,6 +257,7 @@ namespace CMS.Base
                         // -- Update the modified flags
                         compiler.Attributes["compilerOptions"].Value = symbols;
                     }
+                    // Push changes to the file
                     webConfig.Save(configPath);
                 }
             }
@@ -480,6 +484,9 @@ namespace CMS.Base
         }
         /// <summary>
         /// Redirects to a URL.
+        /// 
+        /// This should be used, as opposed to the default ASP.NET redirect method, in-case a future plugin or CMS wants
+        /// to modify this action (e.g. due to security, AJAX, etc).
         /// </summary>
         /// <param name="data">Current request data.</param>
         /// <param name="url">The destination URL.</param>

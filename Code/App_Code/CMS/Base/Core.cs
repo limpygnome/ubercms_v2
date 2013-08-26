@@ -262,7 +262,7 @@ namespace CMS.Base
         /// <returns>Database connector.</returns>
 		public static Connector createConnector(bool persist)
 		{
-            return createConnector(persist, ref settingsDisk);
+            return connectorCreate(persist, ref settingsDisk);
 		}
         /// <summary>
         /// Creates a database connection.
@@ -270,7 +270,7 @@ namespace CMS.Base
         /// <param name="settings">The settings model to use for the database settings.</param>
         /// <param name="persist">Indicates if the connection should be persistent/stay-open for longer (protection against time-outs).</param>
         /// <returns>Database connector.</returns>
-        public static Connector createConnector(bool persist, ref Settings settings)
+        public static Connector connectorCreate(bool persist, ref Settings settings)
         {
             switch (dbType)
             {

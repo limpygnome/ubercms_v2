@@ -21,6 +21,8 @@
  * 
  * *********************************************************************************************************************
  * Used for handling URL rewriting.
+ * 
+ * Note: this model has not been used in BaseUtils for inserting multiple URL rewriting paths.
  * *********************************************************************************************************************
  */
 using System;
@@ -33,6 +35,8 @@ namespace CMS.Base
 {
     /// <summary>
     /// Used for handling URL rewriting.
+    /// 
+    /// Note: this model has not been used in BaseUtils for inserting multiple URL rewriting paths.
     /// </summary>
     public class UrlRewriting
     {

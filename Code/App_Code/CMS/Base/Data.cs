@@ -62,9 +62,8 @@ namespace CMS.Base
         /// not null, same for the underlying measurement of the request speed. Path data will not be parsed if also
         /// null.
         /// </summary>
-        /// <param name="request"></param>
-        /// <param name="response"></param>
-        /// <param name="pathData"></param>
+        /// <param name="request">ASP.NET request object.</param>
+        /// <param name="response">ASP.NET response object.</param>
 		public Data(HttpRequest request, HttpResponse response)
 		{
 			this.pathInfo = Request == null ? null : new PathInfo(Request);
@@ -125,10 +124,10 @@ namespace CMS.Base
 		}
 		// Methods - Properties ****************************************************************************************
         /// <summary>
-        /// Set/get a variable.
+        /// Set/get a variable (stored only whilst processing the current request).
         /// </summary>
         /// <param name="key"></param>
-        /// <returns></returns>
+        /// <returns>The data for the specified key.</returns>
 		public string this[string key]
 		{
 			get
