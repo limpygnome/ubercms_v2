@@ -62,7 +62,7 @@ namespace CMS.Base
             AddOrUpdate
         }
 		// Fields ******************************************************************************************************
-		private Dictionary<string, SettingsNode> config;    // Path of setting, setting node
+		private Dictionary<string, SettingsNode>    config;    // Path of setting, setting node
 		// Methods - Constructors **************************************************************************************
 		private Settings()
 		{

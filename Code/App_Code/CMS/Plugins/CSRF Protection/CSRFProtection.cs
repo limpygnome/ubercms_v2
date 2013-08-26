@@ -43,8 +43,8 @@ namespace CMS.Plugins
         public const string CSRF_KEY = "csrfp";         // The key used for storing CSRF tokens for cookies and hidden form data.
         public const int    CSRF_TOKEN_LENGTH = 16;     // The length of the CSRF randomly-generated tokens.
         // Methods - Constructors **************************************************************************************
-        public CSRFProtection(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version)
-            : base(uuid, title, directory, state, handlerInfo, version)
+        public CSRFProtection(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version, int priority, string classPath)
+            : base(uuid, title, directory, state, handlerInfo, version, priority, classPath)
         { }
         // Methods - Overrides *****************************************************************************************
         public override bool install(UberLib.Connector.Connector conn, ref System.Text.StringBuilder messageOutput)

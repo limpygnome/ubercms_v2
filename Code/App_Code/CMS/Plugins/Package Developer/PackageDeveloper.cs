@@ -48,8 +48,9 @@ namespace CMS.Plugins
         // Constants ***************************************************************************************************
         private const string ERROR_BOX_VARIDENT = "PackageDeveloperError";
         private const string SUCCESS_BOX_VARIDENT = "PackageDeveloperSuccess";
-        public PackageDeveloper(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version)
-            : base(uuid, title, directory, state, handlerInfo, version)
+        public PackageDeveloper() { }
+        public PackageDeveloper(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version, int priority, string classPath)
+            : base(uuid, title, directory, state, handlerInfo, version, priority, classPath)
         { }
         public override bool install(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
@@ -103,7 +104,7 @@ namespace CMS.Plugins
                     return false;
             }
         }
-        public bool pageHome(Data data)
+        private bool pageHome(Data data)
         {
             data["Title"] = "Package Developer - Home";
             // Check postback
@@ -115,7 +116,8 @@ namespace CMS.Plugins
                 else
                 {
                     StringBuilder messageOutput = new StringBuilder();
-                    data[Core.Plugins.createFromDirectory(data.Connector, Core.BasePath + "/" + relativePath, ref messageOutput) ? SUCCESS_BOX_VARIDENT : ERROR_BOX_VARIDENT] = messageOutput.Length == 0 ? "No output from the operation." : HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />");
+                    Plugin p = null;
+                    data[Core.Plugins.createFromDirectory(data.Connector, Core.BasePath + "/" + relativePath, ref p, ref messageOutput) ? SUCCESS_BOX_VARIDENT : ERROR_BOX_VARIDENT] = messageOutput.Length == 0 ? "No output from the operation." : HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />");
                 }
             }
             else
@@ -135,7 +137,7 @@ namespace CMS.Plugins
             data["Content"] = Core.Templates.get(data.Connector, "package_developer/home").Replace("%BASE_PATH%", HttpUtility.HtmlEncode(Core.BasePath)).Replace("%RELATIVE_PATH%", HttpUtility.HtmlEncode(relativePath)).Replace("%PLUGINS%", plugins.ToString());
             return true;
         }
-        public bool pageSync(Data data)
+        private bool pageSync(Data data)
         {
             Plugin plugin;
             string filesList;
@@ -146,7 +148,7 @@ namespace CMS.Plugins
             }
             else
             {
-                if ((plugin = Core.Plugins.getPlugin(UUID.parse(data.PathInfo[2]))) == null)
+                if ((plugin = Core.Plugins.get(UUID.parse(data.PathInfo[2]))) == null)
                     return false;
                 filesList = plugin.Path + "/files.list";
             }
@@ -223,9 +225,9 @@ namespace CMS.Plugins
                 filesExcluded.Append("Failed to include <i>").AppendLine(HttpUtility.HtmlEncode(source)).AppendLine("</i> to <i>").Append(HttpUtility.HtmlEncode(destination)).Append("</i> - exception: '").Append(ex.Message).Append("'<br />");
             }
         }
-        public bool pagePackage(Data data)
+        private bool pagePackage(Data data)
         {
-            Plugin plugin = Core.Plugins.getPlugin(UUID.parse(data.PathInfo[2]));
+            Plugin plugin = Core.Plugins.get(UUID.parse(data.PathInfo[2]));
             if (plugin == null)
                 return false;
             data["Title"] = "Package Developer - Package Plugin";
@@ -253,7 +255,7 @@ namespace CMS.Plugins
             data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", output.ToString());
             return true;
         }
-        public bool pageTemplatesDump(Data data)
+        private bool pageTemplatesDump(Data data)
         {
             string dumpDest;
             Plugin plugin;
@@ -265,7 +267,7 @@ namespace CMS.Plugins
                     dumpDest = Core.BasePath + "/installer/templates";
                     break;
                 default:
-                    plugin = Core.Plugins.getPlugin(UUID.parse(data.PathInfo[2]));
+                    plugin = Core.Plugins.get(UUID.parse(data.PathInfo[2]));
                     if (plugin == null)
                         return false;
                     dumpDest = plugin.PathTemplates;
@@ -281,9 +283,9 @@ namespace CMS.Plugins
             data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", messageOutput.ToString());
             return true;
         }
-        public bool pageTemplatesUpload(Data data)
+        private bool pageTemplatesUpload(Data data)
         {
-            Plugin plugin = Core.Plugins.getPlugin(UUID.parse(data.PathInfo[2]));
+            Plugin plugin = Core.Plugins.get(UUID.parse(data.PathInfo[2]));
             if (plugin == null)
                 return false;
             data["Title"] = "Package Developer - Upload Templates";
@@ -293,9 +295,9 @@ namespace CMS.Plugins
             data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(messageOutput.ToString()).Replace("\r", "").Replace("\n", "<br />"));
             return true;
         }
-        public bool pagePluginAction(Data data)
+        private bool pagePluginAction(Data data)
         {
-            Plugin plugin = Core.Plugins.getPlugin(UUID.parse(data.PathInfo[2]));
+            Plugin plugin = Core.Plugins.get(UUID.parse(data.PathInfo[2]));
             if (plugin == null)
                 return false;
             StringBuilder output = new StringBuilder();
@@ -317,7 +319,7 @@ namespace CMS.Plugins
                     Core.Plugins.remove(data.Connector, plugin, false, ref output);
                     break;
                 case "unload":
-                    Core.Plugins.pluginUnload(plugin);
+                    Core.Plugins.unload(plugin);
                     output.Append("Unloaded plugin '").Append(plugin.Title).Append("' (UUID: '").Append(plugin.UUID.HexHyphens).AppendLine("') from virtual runtime!");
                     break;
                 default:
@@ -327,7 +329,7 @@ namespace CMS.Plugins
             data["Content"] = Core.Templates.get(data.Connector, "package_developer/output").Replace("%OUTPUT%", HttpUtility.HtmlEncode(output.ToString()).Replace("\r", "").Replace("\n", "<br />"));
             return true;
         }
-        public bool pageCore(Data data)
+        private bool pageCore(Data data)
         {
             StringBuilder messageOutput = new StringBuilder();
             switch (data.PathInfo[2])

@@ -165,8 +165,8 @@ namespace CMS.BasicSiteAuth
         private UserGroups                      groups;                 // A collection of all the user-groups.
         private AccountEventTypes               accountEventTypes;      // A collection of all the account event types.
         // Methods - Constructors **************************************************************************************
-        public BasicSiteAuth(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version)
-            : base(uuid, title, directory, state, handlerInfo, version)
+        public BasicSiteAuth(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version, int priority, string classPath)
+            : base(uuid, title, directory, state, handlerInfo, version, priority, classPath)
         {
             groups = null;
             accountEventTypes = null;

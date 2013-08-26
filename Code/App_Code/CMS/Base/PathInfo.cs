@@ -102,7 +102,7 @@ namespace CMS.Base
         /// <summary>
         /// Returns debug information about the current path.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Debug information about the current path.</returns>
 		public string getPathInfo()
 		{
 			StringBuilder sb = new StringBuilder();

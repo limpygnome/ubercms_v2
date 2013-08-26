@@ -34,6 +34,8 @@
  *                      2013-08-01      UUIDs are now stored as non-hyphen strings for better performance.
  *                      2013-08-23      Changed the way loading/unloading works with start/stop handlers of plugins, as
  *                                      well as general improvements.
+ *                                      Plugins are now stored based on UUID hex, rather than hex-with-hyphens, for less
+ *                                      space complexity.
  * 
  * *********************************************************************************************************************
  * A data-collection for managing and interacting with plugin models.
@@ -59,7 +61,7 @@ namespace CMS.Base
 	{
 		// Fields ******************************************************************************************************
 		private Dictionary<string,Plugin>   plugins;			    // Map of UUID (string, no hyphen's, upper-case) to plugin.
-        private Thread                      cycler;                 // The thread used for running cycles of plugins.
+        private Thread                      cycler;                 // The thread used for running periodic cycles of plugins.
         // Fields - Handler List Caching *******************************************************************************
         private Plugin[]                    cacheRequestStart,      // Cache of plugins capable of handling the start of a request.
                                             cacheRequestEnd,        // Cache of plugins capable of handling the end of a request.
@@ -69,15 +71,15 @@ namespace CMS.Base
 		private Plugins()
 		{
 			this.plugins = new Dictionary<string, Plugin>();
-            cycler = null;
-            cacheRequestStart = cacheRequestEnd = cachePageError = cachePageNotFound = new Plugin[0];
+            this.cycler = null;
+            this.cacheRequestStart = this.cacheRequestEnd = this.cachePageError = this.cachePageNotFound = new Plugin[0];
 		}
 		// Methods *****************************************************************************************************
         /// <summary>
-        /// Invoked when a page exception occurs.
+        /// Invoked when a page exception occurs; this method will find a plugin which can handle the exception.
         /// </summary>
         /// <param name="data">The data of the request.</param>
-        public void handlePageError(Data data, Exception ex)
+        public void handlePageException(Data data, Exception ex)
         {
             bool handled = false;
             foreach (Plugin p in cachePageError)
@@ -95,7 +97,8 @@ namespace CMS.Base
         }
         /// <summary>
         /// Rebuilds the internal handler-caches. This is used to speedup invoking handlers, rather than iterating
-        /// every plugin (constant as opposed to N complexity).
+        /// every plugin (constant as opposed to N complexity) or querying the database (since this data will not change
+        /// often).
         /// </summary>
         public void rebuildHandlerCaches()
         {
@@ -123,125 +126,44 @@ namespace CMS.Base
             }
         }
         /// <summary>
-        /// Dynamically loads a plugin into the CMS's runtime.
+        /// Loads a plugin into the CMS's runtime.
         /// 
         /// This does not rebuild the plugin handler cache.
-        /// This does not invoke any plugin handlers, including pluginStart.
+        /// This will invoke any handlers, such as pluginStart.
         /// </summary>
-        /// <param name="conn">Database connector.</param>
-        /// <param name="uuid">The identifier of the plugin; can be null without core failure occurring.</param>
-        /// <param name="coreError">Indicates if the core should be stopped if the plugin fails to load.</param>
-        /// <param name="messageOutput">A place for outputting errors and warnings; can be null.</param>
-        /// <returns>True if successful, false if the operation failed.</returns>
-        public bool pluginLoad(Connector conn, UUID uuid, bool coreError, ref StringBuilder messageOutput)
-        {
-            if (uuid == null)
-                return false;
-            try
-            {
-                // Retrieve the plugin's data from the database
-                Result result = conn.queryRead("SELECT * FROM cms_view_plugins_loadinfo WHERE uuid_raw=" + uuid.NumericHexString + ";");
-                if (result.Count != 1)
-                {
-                    if(coreError)
-                        Core.fail("Data for plugin with UUID '" + uuid.HexHyphens + "' could not be retrieved! Critical consistency failure!");
-                    if(messageOutput != null)
-                        messageOutput.AppendLine("Could not retrieve the data for plugin with UUID '" + uuid.HexHyphens + "'!");
-                    return false;
-                }
-                // Invoke base method for this operation
-                return pluginLoad(Assembly.GetExecutingAssembly(), result[0], false, coreError, ref messageOutput);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        private bool pluginLoad(Assembly ass, ResultRow data, bool callByFactoryCreator, bool coreError, ref StringBuilder messageOutput)
+        /// <param name="plugin">The plugin to be loaded into the runtime.</param>
+        /// <param name="coreError">Indicates if to hault the CMS/throw a core exception if the plugin cannot be loaded into the runtime.</param>
+        /// <param name="messageOutput">Message output.</param>
+        /// <returns>True = plugin loaded into runtime, false = plugin not loaded into the runtime.</returns>
+        public bool load(Plugin plugin, bool coreError, ref StringBuilder messageOutput)
         {
             lock (this)
-            {   
-                // Parse UUID into model
-                UUID uuid = UUID.parse(data["uuid"]);
-                if (uuid == null)
+            {
+                lock (plugin)
                 {
-                    if (messageOutput != null)
-                        messageOutput.Append("Failed to parse UUID '").Append(data["uuid"]).AppendLine("'!");
-                    if (coreError)
-                        Core.fail("Failed to parse UUID '" + data["uuid"] + "' for plugin '" + data["title"] + "'!");
-                    return false;
-                }
-                // Check the plugin is not already loaded
-                if (plugins.ContainsKey(uuid.HexHyphens))
-                {
-                    if(coreError)
-                        Core.fail("Plugin '" + uuid.HexHyphens + "' is already loaded in the runtime! Critical consistency failure!");
-                    if (messageOutput != null)
-                        messageOutput.Append("Plugin with UUID '").Append(uuid.HexHyphens).AppendLine("' is already loaded in the runtime!");
-                    return false;
-                }
-                // Parse plugin params
-                Plugin.PluginState state = (Plugin.PluginState)Enum.Parse(typeof(Plugin.PluginState), data["state"]);
-                PluginHandlerInfo phi;
-                try
-                {
-                    phi = PluginHandlerInfo.load(data);
-                }
-                catch (Exception ex)
-                {
-                    if (coreError)
+                    // Check the model is valid
+                    if (plugin == null)
                     {
-                        if (callByFactoryCreator)
-                            Core.ErrorMessage = "Failed to load plugin handler information for plugin UUID: '" + uuid.HexHyphens + "' (" + data["title"] + ") - '" + ex.Message + "'!";
-                        else
-                            Core.fail("Failed to load plugin handler information for plugin UUID: '" + uuid.HexHyphens + "' (" + data["title"] + ") - '" + ex.Message + "'!");
-                    }
-                    if (messageOutput != null)
-                        messageOutput.Append("Failed to load plugin handler information for plugin UUID '" ).Append(uuid.HexHyphens).AppendLine("'!");
-                    return false;
-                }
-                // Create an instance of the class
-                try
-                {
-                    Plugin plugin = (Plugin)ass.CreateInstance(data["classpath"], false, BindingFlags.CreateInstance, null, new object[] { uuid, data["title"], data["directory"], state, phi, new Version(data.get2<int>("version_major"), data.get2<int>("version_minor"), data.get2<int>("version_build")) }, null, null);
-                    if (plugin != null)
-                        // Add to runtime
-                        plugins.Add(uuid.Hex.ToUpper(), plugin);
-                    else
-                    {
-                        if (coreError)
-                        {
-                            if (callByFactoryCreator)
-                                Core.ErrorMessage = "Failed to load plugin UUID: '" + uuid.HexHyphens + "' (" + data["title"] + ") - could not find class-path or an issue occurred creating an instance!";
-                            else
-                                Core.fail("Failed to load plugin UUID: '" + uuid.HexHyphens + "' (" + data["title"] + ") - could not find class-path or an issue occurred creating an instance!");
-                        }
-                        if (messageOutput != null)
-                            messageOutput.Append("Failed to load plugin with UUID '").Append(uuid.HexHyphens).Append("'; could not find class-path '").Append(data["classpath"]).AppendLine("'!");
+                        messageOutput.Append("Failed to load plugin into runtime: model is null/failed to load!");
                         return false;
                     }
-                }
-                catch (Exception ex)
-                {
-                    if (coreError)
+                    // Check the plugin, based on the UUID, is not already loaded into the runtime
+                    else if (plugins.ContainsKey(plugin.UUID.Hex))
                     {
-                        if (callByFactoryCreator)
-                            Core.ErrorMessage = "Could not load plugin UUID: '" + uuid.HexHyphens + "' (" + data["title"] + ") - '" + ex.Message + "'!";
-                        else
-                            Core.fail("Could not load plugin UUID: '" + uuid.HexHyphens + "' (" + data["title"] + ") - '" + ex.Message + "'!");
+                        messageOutput.Append("Failed to load plugin (UUID: " + (plugin.UUID != null ? plugin.UUID.HexHyphens : "invalid/null UUID") + ") into runtime: already loaded in runtime!");
+                        return false;
                     }
-                    if (messageOutput != null)
-                        messageOutput.Append("Could not load plugin with UUID '").Append(uuid.HexHyphens).Append("'; unknown exception: '").Append(ex.Message).AppendLine("'!");
-                    return false;
+                    // Add the plugin
+                    plugins.Add(plugin.UUID.Hex, plugin);
+                    return true;
                 }
-                return true;
             }
         }
         /// <summary>
         /// Unloads a plugin from the runtime; this does not affect the plugin's state.
         /// </summary>
         /// <param name="plugin"></param>
-        public void pluginUnload(Plugin plugin)
+        public void unload(Plugin plugin)
         {
             lock (this)
             {
@@ -253,9 +175,10 @@ namespace CMS.Base
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <param name="pathToZip">The path to the zip file.</param>
+        /// <param name="plugin">If a plugin is created successfully, it's outputted to this parameter.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation failed.</returns>
-        public bool createFromZip(Connector conn, string pathToZip, ref StringBuilder messageOutput)
+        public bool createFromZip(Connector conn, string pathToZip, ref Plugin plugin, ref StringBuilder messageOutput)
         {
             lock(this)
             {
@@ -317,7 +240,7 @@ namespace CMS.Base
                 }
                 // Create a new plugin from the directory
                 if (success)
-                    success = createFromDirectory(conn, directory, ref messageOutput);
+                    success = createFromDirectory(conn, directory, ref plugin, ref messageOutput);
                 // If the installation failed, remove the directory
                 if (!success)
                 {
@@ -337,12 +260,15 @@ namespace CMS.Base
         /// You should invoke the method 'reload' to reload all the plugins after a call to this method, unless
         /// the plugin files have only been recently added (the class won't exist in the runtime and the core will
         /// fail).
+        /// 
+        /// Note: this will rebuild the handler cache if the plugin is successfully created and loaded into the runtime.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <param name="directoryPath">The directory of the new plugin.</param>
+        /// <param name="plugin">If a plugin is created successfully, it's outputted to this parameter.</param>
         /// <param name="messageOutput">Message output.</param>
         /// <returns>True if successful, false if the operation failed.</returns>
-        public bool createFromDirectory(Connector conn, string directoryPath, ref StringBuilder messageOutput)
+        public bool createFromDirectory(Connector conn, string directoryPath, ref Plugin plugin, ref StringBuilder messageOutput)
         {
             lock (this)
             {
@@ -391,39 +317,45 @@ namespace CMS.Base
                     messageOutput.AppendLine("Incorrect directory location! Should be at '" + Core.BasePath + "/" + directory + "', however directory is at '" + directoryPath + "'! If you need to change the install location of a plugin, modify its 'Plugin.config' file, however the new path MUST be relative.");
                     return false;
                 }
-                // Insert the plugin into the database
+                // Create and persist model
                 try
                 {
-                    PreparedStatement ps = new PreparedStatement("INSERT INTO cms_plugins (uuid, title, directory, classpath, priority, version_major, version_minor, version_build) VALUES(?uuid, ?title, ?directory, ?classpath, ?priority, ?version_major, ?version_minor, ?version_build); INSERT INTO cms_plugin_handlers (uuid) VALUES(?uuid);");
-                    ps["uuid"] = uuid.Bytes;
-                    ps["title"] = title;
-                    ps["directory"] = directory;
-                    ps["classpath"] = classPath;
-                    ps["priority"] = ((int)priority).ToString();
-                    ps["version_major"] = versionMajor;
-                    ps["version_minor"] = versionMinor;
-                    ps["version_build"] = versionBuild;
-                    conn.queryExecute(ps);
+                    Plugin p = new PackageDeveloper();
+                    p.UUID = uuid;
+                    p.Title = title;
+                    p.RelativeDirectory = directory;
+                    p.ClassPath = classPath;
+                    p.Priority = priority;
+                    p.Version = new Version(versionMajor, versionMinor, versionBuild);
+                    if (!p.save(conn))
+                    {
+                        messageOutput.Append("Failed to persist plugin model!");
+                        return false;
+                    }
+                    // Successfully persisted - set the plugin parameter
+                    plugin = p;
+                    // Load the plugin into the runtime (non-critical operation - may require app-pool restart)
+                    if (!load(p, false, ref messageOutput))
+                        messageOutput.AppendLine("Warning: could not load a new plugin (UUID: " + (uuid != null ? uuid.HexHyphens : "invalid/null UUID") + ") into the virtual runtime of the CMS. If the plugin files have been added during this operation, ignore this message; else restart the application pool!");
+                    else
+                    {
+                        // Success - rebuild the handler cache!
+                        try
+                        {
+                            rebuildHandlerCaches();
+                        }
+                        catch (Exception ex)
+                        {
+                            messageOutput.Append("Warning: failed to reload plugin handler cache for pluginUUID '").Append(uuid.HexHyphens).Append("'; exception: '").Append(ex.Message).AppendLine("'!");
+                        }
+                        return true;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    messageOutput.AppendLine("Failed to insert the plugin into the database: '" + ex.Message + "'!");
-                    return false;
+                    messageOutput.Append("Failed to persist the plugin model due to an exception: '" + ex.Message + "'");
                 }
-                // Load the plugin into the runtime, if the class is available (non-critical operation)
-                if (!pluginLoad(conn, uuid, false, ref messageOutput))
-                    messageOutput.AppendLine("Warning: could not load the new plugin into the virtual runtime of the CMS. If the plugin files have been added during this operation, ignore this message; else restart the application pool!");
-                else
-                    try
-                    {
-                        // Success - rebuild the handler cache!
-                        rebuildHandlerCaches();
-                    }
-                    catch (Exception ex)
-                    {
-                        messageOutput.Append("Warning: failed to reload plugin handler cache for pluginUUID '").Append(uuid.HexHyphens).Append("'; exception: '").Append(ex.Message).AppendLine("'!");
-                    }
-                return true;
+                return false;
             }
         }
         /// <summary>
@@ -472,11 +404,18 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.Disabled;
-                    plugin.save(conn);
-                    // Invoke post-action handlers
-                    foreach (Plugin p in Fetch)
-                        if (plugin != p && p.HandlerInfo.PluginAction)
-                            p.handler_pluginAction(conn, Plugin.PluginAction.PostInstall, plugin);
+                    if (plugin.save(conn))
+                    {
+                        // Invoke post-action handlers
+                        foreach (Plugin p in Fetch)
+                            if (plugin != p && p.HandlerInfo.PluginAction)
+                                p.handler_pluginAction(conn, Plugin.PluginAction.PostInstall, plugin);
+                    }
+                    else
+                    {
+                        messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - install - failed to persist new state!");
+                        return false;
+                    }
                 }
             }
             return true;
@@ -531,11 +470,16 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.NotInstalled;
-                    plugin.save(conn);
-                    // Invoke post-action handlers
-                    foreach (Plugin p in Fetch)
-                        if (plugin != p && p.HandlerInfo.PluginAction)
-                            p.handler_pluginAction(conn, Plugin.PluginAction.PostUninstall, plugin);
+                    if(plugin.save(conn))
+                        // Invoke post-action handlers
+                        foreach (Plugin p in Fetch)
+                            if (plugin != p && p.HandlerInfo.PluginAction)
+                                p.handler_pluginAction(conn, Plugin.PluginAction.PostUninstall, plugin);
+                    else
+                    {
+                        messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - uninstall - failed to persist new state!");
+                        return false;
+                    }
                 }
             }
             return true;
@@ -590,11 +534,16 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.Enabled;
-                    plugin.save(conn);
-                    // Invoke post-action handlers
-                    foreach (Plugin p in Fetch)
-                        if (plugin != p && p.HandlerInfo.PluginAction)
-                            p.handler_pluginAction(conn, Plugin.PluginAction.PostEnable, plugin);
+                    if(plugin.save(conn))
+                        // Invoke post-action handlers
+                        foreach (Plugin p in Fetch)
+                            if (plugin != p && p.HandlerInfo.PluginAction)
+                                p.handler_pluginAction(conn, Plugin.PluginAction.PostEnable, plugin);
+                    else
+                    {
+                        messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - enable - failed to persist new state!");
+                        return false;
+                    }
                 }
             }
             return true;
@@ -649,11 +598,16 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.Disabled;
-                    plugin.save(conn);
-                    // Invoke post-action handlers
-                    foreach (Plugin p in Fetch)
-                        if (plugin != p && p.HandlerInfo.PluginAction)
-                            p.handler_pluginAction(conn, Plugin.PluginAction.PostDisable, plugin);
+                    if(plugin.save(conn))
+                        // Invoke post-action handlers
+                        foreach (Plugin p in Fetch)
+                            if (plugin != p && p.HandlerInfo.PluginAction)
+                                p.handler_pluginAction(conn, Plugin.PluginAction.PostDisable, plugin);
+                    else
+                    {
+                        messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - failed to persist new state!");
+                        return false;
+                    }
                 }
             }
             return true;
@@ -672,22 +626,21 @@ namespace CMS.Base
             {
                 if (plugin == null)
                 {
-                    messageOutput.Append("Plugins.remove - invalid plugin specified!");
+                    messageOutput.Append("Plugins removal- invalid plugin specified!");
                     return false;
                 }
                 lock (plugin)
                 {
                     // Remove from runtime
-                    pluginUnload(plugin);
-                    // Remove from the database
+                    unload(plugin);
+                    // Unpersist
                     try
                     {
-                        conn.queryExecute("DELETE FROM cms_plugins WHERE uuid=" + plugin.UUID.NumericHexString + ";");
+                        plugin.remove(conn);
                     }
                     catch (Exception ex)
                     {
-                        messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - failed to execute SQL to remove the plugin from the database: '" + SQLUtils.escape(ex.Message) + "'!");
-                        return false;
+                        messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - failed to unpersist from database - exception: '" + ex.Message + "'!");
                     }
                     // Attempt to delete the files; if it fails, we can continue since the plugin has been removed (just inform the user)
                     if (removeDirectory)
@@ -698,7 +651,7 @@ namespace CMS.Base
                         }
                         catch (Exception ex)
                         {
-                            messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - warning - exception occurred removing the directory ('" + plugin.Path + "'): '" + ex.Message + "'; you will need to remove the directory manually!");
+                            messageOutput.AppendLine("Warning: plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - exception occurred removing the directory ('" + plugin.Path + "'): '" + ex.Message + "'; you will need to remove the directory manually!");
                         }
                     }
                 }
@@ -709,29 +662,34 @@ namespace CMS.Base
         /// <summary>
         /// Starts the internal thread for invoking the cycle handler of plugins periodically.
         /// </summary>
-        public void cyclerStart()
+        /// <returns>True = cycler started, false = cycler not started.</returns>
+        public bool cyclerStart()
         {
             lock (this)
             {
                 if (cycler != null)
-                    return;
+                    return false;
                 cycler = new Thread(delegate()
                     {
                         cyclePlugins();
                     });
+                cycler.Start();
+                return true;
             }
         }
         /// <summary>
         /// Stops the internal thread for invoking the cycle handler of plugins.
         /// </summary>
-        public void cyclerStop()
+        /// <returns>True = cycler stopped, false = cycler not stopped.</returns>
+        public bool cyclerStop()
         {
             lock (this)
             {
-                if (cycler == null)
-                    return;
-                cycler.Abort();
-                cycler = null;
+                if (this.cycler == null)
+                    return false;
+                this.cycler.Abort();
+                this.cycler = null;
+                return true;
             }
         }
         private void cyclePlugins()
@@ -783,9 +741,19 @@ namespace CMS.Base
                     plugins.Clear();
                     // Load each plugin and inform them they've been started
                     Assembly ass = Assembly.GetExecutingAssembly();
-                    StringBuilder sb = null;
-                    foreach (ResultRow t in conn.queryRead("SELECT * FROM cms_view_plugins_loadinfo;"))
-                        pluginLoad(ass, t, true, true, ref sb);
+                    {
+                        StringBuilder sb = new StringBuilder(); // Not actually needed.
+                        foreach (ResultRow t in conn.queryRead("SELECT * FROM cms_view_plugins_loadinfo;"))
+                        {
+                            // Load plugin model
+                            Plugin p = Plugin.load(t);
+                            if (p == null)
+                                throw new Exception("Failed to load model for plugin (title: '" + t["title"] + "', UUID: '" + t["uuid"] + "')!");
+                            // Load into runtime
+                            if (!load(p, true, ref sb))
+                                throw new Exception("Failed to load plugin into runtime (title: '" + t["title"] + "', UUID: '" + t["uuid"] + "')!");
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -841,23 +809,74 @@ namespace CMS.Base
         /// </summary>
         /// <param name="uuid">The UUID of the plugin.</param>
         /// <returns>A plugin with the specified identifier or null.</returns>
-        public Plugin getPlugin(UUID uuid)
+        public Plugin get(UUID uuid)
         {
             lock(this)
-                return uuid != null && plugins.ContainsKey(uuid.Hex) ? plugins[uuid.Hex] : null;
+                return uuid != null && contains(uuid) ? plugins[uuid.Hex] : null;
+        }
+        /// <summary>
+        /// Gets a plugin by its identifier.
+        /// </summary>
+        /// <param name="uuid">The UUID of the plugin as a string without hyphens.</param>
+        /// <returns>A plugin with the specified identifier or null.</returns>
+        public Plugin get(string uuid)
+        {
+            lock (this)
+                return uuid != null && contains(uuid) ? plugins[uuid] : null;
+        }
+        // Methods - Accessors *****************************************************************************************
+        /// <summary>
+        /// Indicates if a plugin is currently loaded into the runtime.
+        /// </summary>
+        /// <param name="plugin">The plugin to check.</param>
+        /// <returns>True = loaded in runtime, false = not loaded in runtime.</returns>
+        public bool contains(Plugin plugin)
+        {
+            return contains(plugin.UUID);
+        }
+        /// <summary>
+        /// Indicates if a plugin is currently loaded into the runtime.
+        /// </summary>
+        /// <param name="uuid">The identifier of the plugin to check.</param>
+        /// <returns>True = loaded in runtime, false = not loaded in runtime.</returns>
+        public bool contains(UUID uuid)
+        {
+            return plugins.ContainsKey(uuid.Hex);
+        }
+        /// <summary>
+        /// Indicates if a plugin is currently loaded into the runtime.
+        /// </summary>
+        /// <param name="uuid">The identifier of the plugin, as a string without hyphens, to check.</param>
+        /// <returns>True = loaded in runtime, false = not loaded in runtime.</returns>
+        public bool contains(string uuid)
+        {
+            return plugins.ContainsKey(uuid);
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>
-        /// Returns a plugin by its UUID, else null if a plugin with the specified ID cannot be found.
+        /// Returns a plugin by its UUID, else null if a plugin with the specified identifier cannot be found.
         /// </summary>
-        /// <param name="uuid">The plugin's identifier, as a string with no hyphen's and upper-case.</param>
-        /// <returns>The plugin associated with the identifier, else null if not found.</returns>
+        /// <param name="uuid">The plugin's universally unique identifier.</param>
+        /// <returns>Model or null.</returns>
+        public Plugin this[UUID uuid]
+        {
+            get
+            {
+                lock (this)
+                    return get(uuid);
+            }
+        }
+        /// <summary>
+        /// Returns a plugin by its UUID, else null if a plugin with the specified identifier cannot be found.
+        /// </summary>
+        /// <param name="uuid">The plugin's universally unique identifier as a string without hyphens.</param>
+        /// <returns>Model or null.</returns>
         public Plugin this[string uuid]
         {
             get
             {
-                lock(this)
-                    return uuid != null && plugins.ContainsKey(uuid) ? plugins[uuid] : null;
+                lock (this)
+                    return get(uuid);
             }
         }
         /// <summary>

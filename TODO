@@ -3,7 +3,8 @@
 > plugin.refresh -> either conn or resultrow - do we really need this?
 > change plugins.cs findhandlers to be view ?????!!!!!
 > add confirmation of uninstall to package developer.
-
+-- warn data loss users etc
+> cycler needs restarting when enable/disable/uni/inst/load/unload etc due to caching...
 
 
 remove dispose from plugin??!?

@@ -36,7 +36,8 @@ namespace CMS.Plugins
 {
     public class Example : Plugin
     {
-        public Example(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version) : base(uuid, title, directory, state, handlerInfo, version)
+        public Example(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version, int priority, string classPath)
+            : base(uuid, title, directory, state, handlerInfo, version, priority, classPath)
         { }
         public override bool handler_handleRequest(Base.Data data)
         {

@@ -9,8 +9,8 @@ namespace CMS.BasicArticles
     public partial class BasicArticles : Plugin
     {
         // Methods - Constructors **************************************************************************************
-        public BasicArticles(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version)
-            : base(uuid, title, directory, state, handlerInfo, version)
+        public BasicArticles(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version, int priority, string classPath)
+            : base(uuid, title, directory, state, handlerInfo, version, priority, classPath)
         { }
         // Methods - Handlers ******************************************************************************************
         public override bool install(Connector conn, ref System.Text.StringBuilder messageOutput)

@@ -49,6 +49,7 @@ public partial class _Default : System.Web.UI.Page
         if (pi.ModuleHandler == "debug_install")
         {
             StringBuilder messageOutput = new StringBuilder();
+            string basePath = Core.generateBasePathString();
             // Load settings from disk
             Settings settings = Settings.loadFromDisk(Core.CmsConfigPath);
             // Create connector
@@ -56,9 +57,14 @@ public partial class _Default : System.Web.UI.Page
             // Start the core
             Core.start();
             // Install CMS database
-            BaseUtils.executeSQL(Core.generateBasePathString(), conn, ref messageOutput);
+            BaseUtils.executeSQL(basePath + "/SQL/MySQL/install.sql", conn, ref messageOutput);
             // Install package developer
-            //Plugin p = Core.Plugins.
+            Plugin p = null;
+            if (Core.Plugins.createFromDirectory(conn, Core.generateBasePathString() + "/App_Code/CMS/Plugins/Package Developer", ref p, ref messageOutput) && p != null)
+            {
+                if(p.install(conn, ref messageOutput))
+                    p.enable(conn, ref messageOutput);
+            }
             // Output status
             Response.Write("CMS fast-install called successful! Output:<br />");
             Response.Write(messageOutput.ToString());
@@ -141,7 +147,7 @@ public partial class _Default : System.Web.UI.Page
             catch (Exception ex)
             {
                 if (Core.Plugins != null)
-                    Core.Plugins.handlePageError(data, ex);
+                    Core.Plugins.handlePageException(data, ex);
                 else
                 {
                     Response.Write("Core failure occurred during request; refresh for message.");

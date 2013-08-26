@@ -32,12 +32,15 @@
  *                      2013-07-29      Refactored FullPath to Path.
  *                      2013-08-06      Versioning redone to be database based, less effort when updating.
  *                      2013-08-22      Removed dispose method - superseded by pluginStart handler.
+ *                                      More fields are now modifiable with bitwise for efficient updating.
+ *                                      Added thread safety.
  * 
  * *********************************************************************************************************************
  * Base class for all plugins. This contains information about the plugin and methods to be implemented as handlers.
  * *********************************************************************************************************************
  */
 using System;
+using System.Reflection;
 using System.Text;
 using CMS.Base;
 using UberLib.Connector;
@@ -56,12 +59,12 @@ namespace CMS.Base
         /// 
         /// Warning: the integer values of this enum are hard-written in the database.
         /// </summary>
-		public enum PluginState
-		{
-			NotInstalled = 0,
-			Disabled = 1,
-			Enabled = 2
-		}
+        public enum PluginState
+        {
+            NotInstalled = 0,
+            Disabled = 1,
+            Enabled = 2
+        };
         /// <summary>
         /// The type of action performed on a plugin.
         /// </summary>
@@ -75,9 +78,20 @@ namespace CMS.Base
             PostDisable,
             PreEnable,
             PostEnable
-        }
+        };
+        private enum Fields
+        {
+            None = 0,
+            State = 1,
+            Title = 2,
+            Directory = 4,
+            Version = 8,
+            Priority = 16,
+            ClassPath = 32
+        };
 		// Fields ******************************************************************************************************
-        private bool                    stateChanged;       // Indicates if the state of the plugin has changed.
+        private bool                    persisted;          // Indicates if this model has been persisted.
+        private Fields                  modified;           // Indicates if any fields have been modified.
         private UUID                    uuid;               // The universally unique identifier of the plugin.
 		private PluginState             state;              // The state of the plugin.
         private PluginHandlerInfo       handlerInfo;        // The handler information of the plugin.
@@ -85,8 +99,10 @@ namespace CMS.Base
         private string                  title;              // The title of the plugin.
         private string                  directory;          // The relative path of the plugin's base directory.
         private Version                 version;            // The current version of the plugin.
+        private int                     priority;           // The priority of this plugin; the higher, the more 
+        private string                  classPath;          // The class-path of the plugin; this is only needed as an entry point to this very class when loading via the database.
         // Methods - Constructors **************************************************************************************
-        public Plugin(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Version version)
+        public Plugin(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Version version, int priority, string classPath)
         {
             this.uuid = uuid;
             this.title = title;
@@ -95,16 +111,126 @@ namespace CMS.Base
             this.handlerInfo = handlerInfo;
             this.lastCycled = DateTime.MinValue;
             this.version = version;
+            this.priority = priority;
+            this.classPath = classPath;
+            this.modified = Fields.None;
         }
-		// Methods - Abstract - State **********************************************************************************
+        public Plugin() { }
+		// Methods - Database Persistence ******************************************************************************
+        /// <summary>
+        /// Loads a plugin based on its identifier.
+        /// </summary>
+        /// <param name="uuid">The identifier of the plugin.</param>
+        /// <param name="conn">Database connector.</param>
+        /// <returns>Model or null.</returns>
+        public static Plugin load(UUID uuid, Connector conn)
+        {
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM cms_view_plugins_loadinfo WHERE uuid_raw=?uuid;");
+            ps["uuid"] = uuid.Bytes;
+            Result r = conn.queryRead(ps);
+            return r.Count == 1 ? load(r[0]) : null;
+        }
+        /// <summary>
+        /// Loads a plugin from database data.
+        /// </summary>
+        /// <param name="data">The persisted data of the plugin.</param>
+        /// <returns>Model or null.</returns>
+        public static Plugin load(ResultRow data)
+        {
+            return load(Assembly.GetExecutingAssembly(), data);
+        }
+        /// <summary>
+        /// Loads a plugin from database data.
+        /// </summary>
+        /// <param name="ass">The assembly of where the class of the plugin resides.</param>
+        /// <param name="data">The persisted data of the plugin.</param>
+        /// <returns>Model or null.</returns>
+        public static Plugin load(Assembly ass, ResultRow data)
+        {
+            UUID uuid = UUID.parse(data["uuid"]);
+            if (ass == null || data == null || uuid == null)
+                return null;
+            return load(ass, data, uuid);
+        }
+        /// <summary>
+        /// Loads a plugin from database data.
+        /// </summary>
+        /// <param name="ass">The assembly of where the class of the plugin resides.</param>
+        /// <param name="data">The persisted data of the plugin.</param>
+        /// <param name="uuid">The plugin's identifier; this is to avoid reprocessing the uUID if we already have it.</param>
+        /// <returns>Model or null.</returns>
+        public static Plugin load(Assembly ass, ResultRow data, UUID uuid)
+        {
+            if (ass == null || data == null || uuid == null)
+                return null;
+            // Parse plugin parameters from data
+            Plugin.PluginState state = (Plugin.PluginState)Enum.Parse(typeof(Plugin.PluginState), data["state"]);
+            PluginHandlerInfo phi = PluginHandlerInfo.load(data);
+            if (phi == null)
+                return null;
+            // Create an instance of the plugin
+            try
+            {
+                return (Plugin)ass.CreateInstance(data["classpath"], false, BindingFlags.CreateInstance, null, new object[] { uuid, data["title"], data["directory"], state, phi, new Version(data.get2<int>("version_major"), data.get2<int>("version_minor"), data.get2<int>("version_build")), data.get2<int>("priority"), data.get2<string>("classpath") }, null, null);
+            }
+            catch (ArgumentException) { }
+            catch (MissingMethodException) { }
+            catch (NotSupportedException) { }
+            catch (System.IO.FileNotFoundException) { }
+            catch (BadImageFormatException) { }
+            return null;
+        }
         /// <summary>
         /// Invoked when the plugin should persist its data to the database.
         /// </summary>
-        /// <param name="conn"></param>
-        public virtual void save(Connector conn)
+        /// <param name="conn">Database connector.</param>
+        /// <returns>True = persisted, false = nkt persisted.</returns>
+        public virtual bool save(Connector conn)
         {
-            if(stateChanged)
-                conn.queryExecute("UPDATE cms_plugins SET state='" + SQLUtils.escape(((int)state).ToString()) + "' WHERE uuid=" + uuid.NumericHexString + "; ");
+            lock (this)
+            {
+                if (modified == Fields.None)
+                    return false;
+                // Compile SQL
+                SQLCompiler sql = new SQLCompiler();
+                if ((modified & Fields.State) == Fields.State)          sql["state"] = (int)state;
+                if ((modified & Fields.Title) == Fields.Title)          sql["title"] = title;
+                if ((modified & Fields.Directory) == Fields.Directory)  sql["directory"] = directory;
+                if ((modified & Fields.Version) == Fields.Version)
+                {
+                    sql["version_major"] = version.Major;
+                    sql["version_minor"] = version.Minor;
+                    sql["version_build"] = version.Build;
+                }
+                if ((modified & Fields.Priority) == Fields.Priority)    sql["priority"] = priority;
+                if ((modified & Fields.ClassPath) == Fields.ClassPath)  sql["classpath"] = classPath;
+                sql["directory"] = directory;
+                // Add specific fields based on persistence and execute
+                if (persisted)
+                {
+                    sql.UpdateAttribute = "uuid";
+                    sql.UpdateValue = uuid.Bytes;
+                    sql.executeUpdate(conn, "cms_plugins");
+                }
+                else
+                {
+                    sql["uuid"] = uuid.Bytes;
+                    sql.executeInsert(conn, "cms_plugins");
+                    persisted = true;
+                }
+                modified = Fields.None;
+                return true;
+            }
+        }
+        /// <summary>
+        /// Unpersists the plugin from the database.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        public virtual void remove(Connector conn)
+        {
+            PreparedStatement ps = new PreparedStatement("DELETE FROM cms_plugins WHERE uuid=?uuid;");
+            ps["uuid"] = uuid.Bytes;
+            conn.queryExecute(ps);
         }
         /// <summary>
 		/// Invoked when the plugin is to be enabled; no checking of the plugin state is required. Return
@@ -179,6 +305,8 @@ namespace CMS.Base
 		}
         /// <summary>
         /// Invoked before/post enable/disable/install/uninstall of any plugin apart of the CMS.
+        /// 
+        /// Note: this will be invoked on all (uninstalled/installed/enabled/disabled) plugins.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <param name="action">The action being, or has been, performed.</param>
@@ -233,6 +361,8 @@ namespace CMS.Base
 		// Methods - Properties ****************************************************************************************
         /// <summary>
         /// The identifier of the plugin.
+        /// 
+        /// Note: if this model has already been persisted, setting this property will have no effect.
         /// </summary>
 		public UUID UUID
 		{
@@ -240,37 +370,15 @@ namespace CMS.Base
 			{
                 return uuid;
 			}
+            set
+            {
+                lock (this)
+                {
+                    if (!persisted)
+                        uuid = value;
+                }
+            }
 		}
-        /// <summary>
-        /// The version of this plugin.
-        /// </summary>
-        public Version Version
-        {
-            get
-            {
-                return version;
-            }
-        }
-        /// <summary>
-        /// The plugin's title.
-        /// </summary>
-        public string Title
-        {
-            get
-            {
-                return title;
-            }
-        }
-        /// <summary>
-        /// The relative path of the plugin's base-directory.
-        /// </summary>
-        public string RelativeDirectory
-        {
-            get
-            {
-                return directory;
-            }
-        }
         /// <summary>
         /// Returns the full path to the plugin's base-directory.
         /// </summary>
@@ -322,10 +430,104 @@ namespace CMS.Base
 			}
             set
             {
-                state = value;
-                stateChanged = true;
+                lock (this)
+                {
+                    state = value;
+                    modified |= Fields.State;
+                }
             }
 		}
+        /// <summary>
+        /// The display title of the plugin.
+        /// </summary>
+        public string Title
+        {
+            get
+            {
+                return title;
+            }
+            set
+            {
+                lock (this)
+                {
+                    title = value;
+                    modified |= Fields.Title;
+                }
+            }
+        }
+        /// <summary>
+        /// The relative path of the plugin's base-directory.
+        /// </summary>
+        public string RelativeDirectory
+        {
+            get
+            {
+                return directory;
+            }
+            set
+            {
+                lock (this)
+                {
+                    directory = value;
+                    modified |= Fields.Directory;
+                }
+            }
+        }
+        /// <summary>
+        /// THe version of the plugin.
+        /// </summary>
+        public Version Version
+        {
+            get
+            {
+                return version;
+            }
+            set
+            {
+                lock (this)
+                {
+                    version = value;
+                    modified |= Fields.Version;
+                }
+            }
+        }
+        /// <summary>
+        /// The priority of the plugin over other plugins for handlers;
+        /// the higher the value, the higher priority.
+        /// </summary>
+        public int Priority
+        {
+            get
+            {
+                return priority;
+            }
+            set
+            {
+                lock (this)
+                {
+                    this.priority = value;
+                    modified |= Fields.Priority;
+                }
+            }
+        }
+        /// <summary>
+        /// The class-path of the plugin.
+        /// </summary>
+        public string ClassPath
+        {
+            get
+            {
+                return classPath;
+            }
+            set
+            {
+                lock (this)
+                {
+                    this.classPath = value;
+                    modified |= Fields.ClassPath;
+                }
+            }
+        }
         /// <summary>
         /// The handler information about the plugin.
         /// </summary>
