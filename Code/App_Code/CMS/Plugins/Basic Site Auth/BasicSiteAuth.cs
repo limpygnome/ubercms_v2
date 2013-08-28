@@ -387,7 +387,7 @@ namespace CMS.BasicSiteAuth
             // Setup connector
             Connector conn = Core.createConnector(false);
             // Clean old recovery codes
-            RecoveryCode.removeExpired(conn);
+            AccountCode.removeExpired(conn);
             // Delete old failed authentication attempts
             AuthFailedAttempt.remove(conn);
             // Dispose connector
@@ -526,7 +526,7 @@ namespace CMS.BasicSiteAuth
                                 error = "Your IP has been temporarily banned for too many incorrect attempts, try again later!"; break;
                             case User.AuthenticationStatus.Success:
                                 FormsAuthentication.SetAuthCookie(username, keepLoggedIn);
-                                BaseUtils.redirect(data, data.Request.UrlReferrer != null && data.Request.UrlReferrer.AbsolutePath != "/login" ? data.Request.UrlReferrer.AbsoluteUri : BaseUtils.getAbsoluteURL(data, "/" + Core.DefaultHandler));
+                                BaseUtils.redirect(data, data.Request.UrlReferrer != null && data.Request.UrlReferrer.AbsolutePath != "/login" ? data.Request.UrlReferrer.AbsoluteUri : BaseUtils.getAbsoluteURL(data, "/" + Core.DefaultURL));
                                 break;
                         }
                     }
@@ -561,12 +561,14 @@ namespace CMS.BasicSiteAuth
         private bool pageRegisterSuccess(Data data)
         {
             // Fetch data
-            string rawEmail = data.PathInfo[3];
+            string rawEmail = data.PathInfo[2];
             int ind;
             if (rawEmail == null || rawEmail.Length == 0 || (ind = rawEmail.IndexOf('@')) == -1 || ind >= rawEmail.Length || !Utils.validEmail(rawEmail))
                 return false;
             // Set content
-            data["bsa_register_success_email"] = "http://www." + rawEmail.Substring(ind + 1);
+            string url = rawEmail[ind + 1].ToString().ToUpper() + rawEmail.Substring(ind + 2);
+            data["bsa_register_success_email"] = url;
+            data["bsa_register_success_email_url"] = "http://www." + url;
             data["Content"] = Core.Templates.get(data.Connector, "bsa/register/success_verify");
             data["Title"] = "Register - Success!";
             return true;
@@ -597,7 +599,7 @@ namespace CMS.BasicSiteAuth
                 if (error == null && !Captcha.isCaptchaCorrect(data))
                     error = "Incorrect captcha verification code!";
 #endif
-                if (error != null)
+                if (error == null)
                 {
                     if (password != passwordConfirm)
                         error = "Passwords do not match!";
@@ -616,7 +618,7 @@ namespace CMS.BasicSiteAuth
                                 UserBan ub = null;
                                 if (u.authenticate(this, password, data, ref ub) == User.AuthenticationStatus.Success)
                                     // Redirect to the main page
-                                    BaseUtils.redirectAbs(data, "/" + Core.DefaultHandler);
+                                    BaseUtils.redirectAbs(data, "/" + Core.DefaultURL);
                                 else
                                     // Redirect to login page
                                     BaseUtils.redirectAbs(data, "/login");
@@ -652,7 +654,7 @@ namespace CMS.BasicSiteAuth
                             case User.UserCreateSaveStatus.InvalidUserGroup:
                             case User.UserCreateSaveStatus.Error_Regisration:
                             default:
-                                error = "An unknown error occurred; please try again!" + s.ToString();
+                                error = "An unknown error occurred; please try again!";
                                 break;
                         }
                     }
@@ -1033,7 +1035,7 @@ namespace CMS.BasicSiteAuth
                     {
                         // Destroy the session and redirect to the default handler
                         invalidateCurrentUserSession();
-                        BaseUtils.redirectAbs(data, "/" + Core.DefaultHandler);
+                        BaseUtils.redirectAbs(data, "/" + Core.DefaultURL);
                     }
                 }
             }

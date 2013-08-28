@@ -6,5 +6,5 @@
 	Check your e-mail's inbox or spam folder for further instructions:
 </p>
 <p>
-	<a href="<!--bsa_register_success_email-->"><!--bsa_register_success_email--></a>
+	<a class="BUTTON" href="<!--bsa_register_success_email_url-->"><!--bsa_register_success_email--></a>
 </p>]]></html></template>

@@ -75,7 +75,7 @@ CREATE TABLE bsa_account_events
 	param2 TEXT,
 	param2_datatype VARCHAR(1) NOT NULL
 );
-CREATE TABLE bsa_recovery_codes
+CREATE TABLE bsa_account_codes
 (
 	code VARCHAR(16) PRIMARY KEY,
 	userid INT NOT NULL,

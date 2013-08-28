@@ -171,7 +171,9 @@ namespace CMS.Base
             // Create an instance of the plugin
             try
             {
-                return (Plugin)ass.CreateInstance(data["classpath"], false, BindingFlags.CreateInstance, null, new object[] { uuid, data["title"], data["directory"], state, phi, new Version(data.get2<int>("version_major"), data.get2<int>("version_minor"), data.get2<int>("version_build")), data.get2<int>("priority"), data.get2<string>("classpath") }, null, null);
+                Plugin p = (Plugin)ass.CreateInstance(data["classpath"], false, BindingFlags.CreateInstance, null, new object[] { uuid, data["title"], data["directory"], state, phi, new Version(data.get2<int>("version_major"), data.get2<int>("version_minor"), data.get2<int>("version_build")), data.get2<int>("priority"), data.get2<string>("classpath") }, null, null);
+                p.persisted = true;
+                return p;
             }
             catch (ArgumentException) { }
             catch (MissingMethodException) { }
@@ -182,6 +184,8 @@ namespace CMS.Base
         }
         /// <summary>
         /// Invoked when the plugin should persist its data to the database.
+        /// 
+        /// Note: this will not persist the plugin handler information/data.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <returns>True = persisted, false = nkt persisted.</returns>
@@ -193,17 +197,22 @@ namespace CMS.Base
                     return false;
                 // Compile SQL
                 SQLCompiler sql = new SQLCompiler();
-                if ((modified & Fields.State) == Fields.State)          sql["state"] = (int)state;
-                if ((modified & Fields.Title) == Fields.Title)          sql["title"] = title;
-                if ((modified & Fields.Directory) == Fields.Directory)  sql["directory"] = directory;
+                if ((modified & Fields.State) == Fields.State)
+                    sql["state"] = (int)state;
+                if ((modified & Fields.Title) == Fields.Title)
+                    sql["title"] = title;
+                if ((modified & Fields.Directory) == Fields.Directory)
+                    sql["directory"] = directory;
                 if ((modified & Fields.Version) == Fields.Version)
                 {
                     sql["version_major"] = version.Major;
                     sql["version_minor"] = version.Minor;
                     sql["version_build"] = version.Build;
                 }
-                if ((modified & Fields.Priority) == Fields.Priority)    sql["priority"] = priority;
-                if ((modified & Fields.ClassPath) == Fields.ClassPath)  sql["classpath"] = classPath;
+                if ((modified & Fields.Priority) == Fields.Priority)
+                    sql["priority"] = priority;
+                if ((modified & Fields.ClassPath) == Fields.ClassPath)
+                    sql["classpath"] = classPath;
                 sql["directory"] = directory;
                 // Add specific fields based on persistence and execute
                 if (persisted)
@@ -530,12 +539,19 @@ namespace CMS.Base
         }
         /// <summary>
         /// The handler information about the plugin.
+        /// 
+        /// Note: this is a seperate model; calling persist on this plugin model will not persist the plugin handler
+        /// data!
         /// </summary>
         public PluginHandlerInfo HandlerInfo
         {
             get
             {
                 return handlerInfo;
+            }
+            set
+            {
+                handlerInfo = value;
             }
         }
         /// <summary>

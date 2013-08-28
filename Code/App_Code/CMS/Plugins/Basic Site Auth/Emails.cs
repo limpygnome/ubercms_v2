@@ -38,9 +38,10 @@ namespace CMS.BasicSiteAuth
         /// <summary>
         /// Sends an account verification e-mail.
         /// </summary>
-        /// <param name="conn"></param>
-        /// <param name="user"></param>
-        public static void sendVerify(Data data, User user, string verifyCode)
+        /// <param name="conn">Database connector.</param>
+        /// <param name="user">The user account to be verified.</param>
+        /// <returns>True = added to e-mail queue, false = failed to add to queue.</returns>
+        public static bool sendVerify(Data data, User user, string verifyCode)
         {
             // Render the template
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "bsa/emails/verify"));
@@ -49,14 +50,16 @@ namespace CMS.BasicSiteAuth
             render["verify_code"] = HttpUtility.HtmlEncode(verifyCode);
             Core.Templates.render(ref buffer, ref render);
             // Add to queue
-            Core.EmailQueue.addMessage(data.Connector, user.Email, Core.Title + " - Verify Account", buffer.ToString(), true);
+            Email e = new Email(user.Email, Core.Title + " - Verify Account", buffer.ToString(), true);
+            return e.save(data.Connector);
         }
         /// <summary>
         /// Sends a welcome e-mail.
         /// </summary>
-        /// <param name="conn"></param>
-        /// <param name="user"></param>
-        public static void sendWelcome(Data data, User user)
+        /// <param name="conn">Database connector.</param>
+        /// <param name="user">The user account to be welcomed.</param>
+        /// <returns>True = added to e-mail queue, false = failed to add to queue.</returns>
+        public static bool sendWelcome(Data data, User user)
         {
             // Render the template
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "bsa/emails/welcome"));
@@ -64,14 +67,16 @@ namespace CMS.BasicSiteAuth
             setRenderBaseParams(user, ref render, data);
             Core.Templates.render(ref buffer, ref render);
             // Add to queue
-            Core.EmailQueue.addMessage(data.Connector, user.Email, Core.Title + " - Welcome!", buffer.ToString(), true);
+            Email e = new Email(user.Email, Core.Title + " - Welcome!", buffer.ToString(), true);
+            return e.save(data.Connector);
         }
         /// <summary>
         /// Sends a recovery code for account recovery of a user.
         /// </summary>
-        /// <param name="conn"></param>
-        /// <param name="user"></param>
-        public static void sendRecoveryCode(Data data, User user, string recoveryCode)
+        /// <param name="conn">Database connector.</param>
+        /// <param name="user">The user account to be recovered.</param>
+        /// <returns>True = added to e-mail queue, false = failed to add to queue.</returns>
+        public static bool sendRecoveryCode(Data data, User user, string recoveryCode)
         {
             // Render the template
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "bsa/emails/recovery_code"));
@@ -80,7 +85,8 @@ namespace CMS.BasicSiteAuth
             render["recovery_code"] = HttpUtility.HtmlEncode(recoveryCode);
             Core.Templates.render(ref buffer, ref render);
             // Add to queue
-            Core.EmailQueue.addMessage(data.Connector, user.Email, Core.Title + " - Account Recovery - Code", buffer.ToString(), true);
+            Email e = new Email(user.Email, Core.Title + " - Account Recovery - Code", buffer.ToString(), true);
+            return e.save(data.Connector);
         }
         private static void setRenderBaseParams(User user, ref Data render, Data request)
         {

@@ -132,7 +132,7 @@ namespace CMS.BasicSiteAuth
             if (AuthFailedAttempt.isIpBanned(data.Connector, data.Request.UserHostAddress))
                 return false;
             // Lookup the code
-            RecoveryCode c = RecoveryCode.load(code, email, RecoveryCode.CodeType.Recovery, data.Connector);
+            AccountCode c = AccountCode.load(code, email, AccountCode.CodeType.Recovery, data.Connector);
             if (c != null)
             {
                 User usr = User.load(bsa, data.Connector, c.UserID);
@@ -170,7 +170,7 @@ namespace CMS.BasicSiteAuth
             if (u != null)
             {
                 // Create a new recovery code
-                RecoveryCode rc = RecoveryCode.create(data.Connector, RecoveryCode.CodeType.Recovery, u);
+                AccountCode rc = AccountCode.create(data.Connector, AccountCode.CodeType.Recovery, u);
                 // E-mail the user
                 Emails.sendRecoveryCode(data, u, rc.Code);
                 // Log the event
@@ -202,7 +202,7 @@ namespace CMS.BasicSiteAuth
             if (AuthFailedAttempt.isIpBanned(data.Connector, data.Request.UserHostAddress))
                 return RecoveryCodeEmail.FailedBanned;
             // Lookup the code
-            RecoveryCode c = RecoveryCode.load(code, RecoveryCode.CodeType.Recovery, data.Connector);
+            AccountCode c = AccountCode.load(code, AccountCode.CodeType.Recovery, data.Connector);
             if (c != null)
             {
                 // Check if to just confirm the code exists
@@ -224,7 +224,7 @@ namespace CMS.BasicSiteAuth
                     return RecoveryCodeEmail.FailedUserPersist;
                 }
                 // Remove all codes owned by the user (no need for them any longer)
-                RecoveryCode.remove(data.Connector, usr);
+                AccountCode.remove(data.Connector, usr);
                 c.remove(data.Connector);
                 // Log the event
                 AccountEvent.create(data.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__CHANGEDSETTINGS__UUID, DateTime.Now, usr.UserID, data.Request.UserHostAddress, SettingsNode.DataType.String, data.Request.UserAgent, SettingsNode.DataType.String);

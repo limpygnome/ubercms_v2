@@ -58,16 +58,7 @@ namespace CMS.Base
         }
         public Email(string emailDestination, string subject, string content, bool isHtml)
         {
-            this.modified = Fields.None;
-            this.emailDestination = emailDestination;
-            this.subject = subject;
-            this.content = content;
-            this.isHtml = isHtml;
-        }
-        public Email(int emailid, string emailDestination, string subject, string content, bool isHtml)
-        {
-            this.modified = Fields.None;
-            this.emailid = emailid;
+            this.modified = Fields.EmailDestination | Fields.Subject | Fields.Content | Fields.IsHtml;
             this.emailDestination = emailDestination;
             this.subject = subject;
             this.content = content;
@@ -94,7 +85,15 @@ namespace CMS.Base
         /// <returns>Model or null.</returns>
         public Email load(ResultRow data)
         {
-            return new Email(data.get2<int>("emailid"), data.get2<string>("email"), data.get2<string>("subject"), data.get2<string>("content"), data["html"] == "1");
+            Email e = new Email();
+            e.persisted = true;
+            // Set model data
+            e.emailid = data.get2<int>("emailid");
+            e.emailDestination = data.get2<string>("email");
+            e.subject = data.get2<string>("subject");
+            e.content = data.get2<string>("content");
+            e.isHtml = data["html"] == "1";
+            return e;
         }
         /// <summary>
         /// Loads a specified amount of e-mails, with an offset.
@@ -143,7 +142,7 @@ namespace CMS.Base
                     sql.executeUpdate(conn, "cms_email_queue");
                 }
                 else
-                    emailid = (int)sql.executeInsert(conn, "cms_email_queue", "emailid")[0].get2<long>("emailid");
+                    emailid = int.Parse(sql.executeInsert(conn, "cms_email_queue", "emailid")[0]["emailid"]);
                 return true;
             }
         }

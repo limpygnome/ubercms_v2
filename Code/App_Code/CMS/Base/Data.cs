@@ -66,7 +66,7 @@ namespace CMS.Base
         /// <param name="response">ASP.NET response object.</param>
 		public Data(HttpRequest request, HttpResponse response)
 		{
-			this.pathInfo = Request == null ? null : new PathInfo(Request);
+            this.pathInfo = request == null ? null : new PathInfo(request);
 			this.request = request;
 			this.response = response;
 			this.variables = new Dictionary<string, string>();

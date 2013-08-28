@@ -133,28 +133,32 @@ namespace CMS.BasicSiteAuth.Models
         /// <returns>True if persisted, false if failed.</returns>
         public bool save(BasicSiteAuth bsa, Connector conn)
         {
-            if (!modified)
-                return false;
-            // Persist the data
-            SQLCompiler c = new SQLCompiler();
-            c["title"] = title;
-            c["description"] = description;
-            c["render_classpath"] = renderClasspath;
-            c["render_function"] = renderFunction;
-            if (persisted)
+            lock (this)
             {
-                c.UpdateAttribute = "type_uuid";
-                c.UpdateValue = typeUUID.Bytes;
-                c.executeUpdate(conn, "bsa_account_event_types");
+                if (!modified)
+                    return false;
+                // Compile SQL
+                SQLCompiler c = new SQLCompiler();
+                c["title"] = title;
+                c["description"] = description;
+                c["render_classpath"] = renderClasspath;
+                c["render_function"] = renderFunction;
+                // Execute
+                if (persisted)
+                {
+                    c.UpdateAttribute = "type_uuid";
+                    c.UpdateValue = typeUUID.Bytes;
+                    c.executeUpdate(conn, "bsa_account_event_types");
+                }
+                else
+                {
+                    c["type_uuid"] = typeUUID.Bytes;
+                    c.executeInsert(conn, "bsa_account_event_types");
+                    persisted = true;
+                }
+                modified = false;
+                return true;
             }
-            else
-            {
-                c["type_uuid"] = typeUUID.Bytes;
-                c.executeInsert(conn, "bsa_account_event_types");
-                persisted = true;
-            }
-            modified = false;
-            return true;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>

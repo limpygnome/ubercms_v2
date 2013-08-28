@@ -87,10 +87,20 @@ namespace CMS.Base
 		private static Settings				settings        = null;					// The main settings for the CMS, stored in the database.
 		// Methods - starting/stopping *********************************************************************************
         /// <summary>
-        /// Starts the core; this loads objects shared over requests.
+        /// Starts the core of the CMS.
         /// </summary>
         /// <returns>True = successfully started, false = not started.</returns>
-		public static bool start()
+        public static bool start()
+        {
+            return start(false);
+        }
+        /// <summary>
+        /// Starts the core of the CMS.
+        /// </summary>
+        /// <param name="baseOnly">If true, services and data will not be loaded (only the absolute core of the CMS will
+        /// start). This is useful for CMS installation scenarios where the actual database has yet to be setup.</param>
+        /// <returns>True = successfully started, false = not started.</returns>
+		public static bool start(bool baseOnly)
 		{
 			lock(typeof(Core))
 			{
@@ -123,8 +133,8 @@ namespace CMS.Base
                         }
                     }
 					// Load the configuration file
-					if(!File.Exists(CmsConfigPath))
-						currentState = CoreState.NotInstalled;
+                    if (!File.Exists(CmsConfigPath))
+                        currentState = CoreState.NotInstalled;
                     else if ((settingsDisk = Settings.loadFromDisk(CmsConfigPath)) == null)
                         fail(errorMessage ?? "Failed to load disk settings!");
                     else
@@ -141,38 +151,45 @@ namespace CMS.Base
                                 fail("Invalid provider specified in configuration file!");
                                 return false;
                         }
-                        // Create database connector for starting services
-                        Connector conn = createConnector(true);
-                        if (conn == null)
-                        {
-                            fail("Failed to create connector to database server (connection issue)!");
-                            return false;
-                        }
+                        // Check if to start services and load data
+                        if (baseOnly)
+                            // We have finished loading the core
+                            return true;
                         else
                         {
-                            // Setup services
-                            if ((settings = Settings.loadFromDatabase(conn)) == null)
-                                fail(errorMessage ?? "Failed to load the settings stored in the database!");
-                            else if ((emailQueue = EmailQueue.create()) == null)
-                                fail("Failed to start e-mail queue service!");
-                            else if ((templates = Templates.create(conn)) == null)
-                                fail("Failed to load templates!");
-                            else if ((plugins = Plugins.load(conn)) == null)
-                                fail(errorMessage ?? "Failed to load plugins!");
+                            // Create database connector for starting services
+                            Connector conn = createConnector(true);
+                            if (conn == null)
+                            {
+                                fail("Failed to create connector to database server (connection issue)!");
+                                return false;
+                            }
                             else
                             {
-                                currentState = CoreState.Started;
-                                // Start any services
-                                emailQueue.start();
-                                // Invoke plugin handlers
-                                foreach (Plugin p in plugins.Fetch)
-                                    if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStart && !p.handler_pluginStart(conn))
-                                        plugins.unload(p);
+                                // Setup services
+                                if ((settings = Settings.loadFromDatabase(conn)) == null)
+                                    fail(errorMessage ?? "Failed to load the settings stored in the database!");
+                                else if ((emailQueue = EmailQueue.create()) == null)
+                                    fail("Failed to start e-mail queue service!");
+                                else if ((templates = Templates.create(conn)) == null)
+                                    fail("Failed to load templates!");
+                                else if ((plugins = Plugins.load(conn)) == null)
+                                    fail(errorMessage ?? "Failed to load plugins!");
+                                else
+                                {
+                                    currentState = CoreState.Started;
+                                    // Start any services
+                                    emailQueue.start();
+                                    // Invoke plugin handlers
+                                    foreach (Plugin p in plugins.Fetch)
+                                        if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStart && !p.handler_pluginStart(conn))
+                                            plugins.unload(p);
+                                }
+                                // Dispose connector
+                                conn.disconnect();
+                                // Success!
+                                return true;
                             }
-                            // Dispose connector
-                            conn.disconnect();
-                            // Success!
-                            return true;
                         }
                     }
 				}
@@ -286,9 +303,12 @@ namespace CMS.Base
                         m.SettingsTimeoutConnection = 864000; // 10 days
                     m.connect();
                     return m;
+                case DatabaseType.None:
+                    fail("Invalid CMS database configuration!");
+                    throw new Exception("Invalid CMS database configuration!");
                 default:
                     fail("Failed to create a connector - unknown type!");
-                    throw new Exception("Could not create connector, core failure!");
+                    throw new Exception("Could not create connector, core failure (unknown connector type '" + dbType.ToString() + "')!");
             }
         }
         /// <summary>
@@ -454,13 +474,14 @@ namespace CMS.Base
 			}
 		}
         /// <summary>
-        /// The default handler when no URL has been provided.
+        /// The default relative URL when an invalid or empty relative URL has been supplied (the default page
+        /// displayed).
         /// </summary>
-        public static string DefaultHandler
+        public static string DefaultURL
         {
             get
             {
-                return Core.SettingsDisk["settings/core/default_handler"].get<string>();
+                return Core.Settings["core/default_url"].get<string>();
             }
         }
         /// <summary>

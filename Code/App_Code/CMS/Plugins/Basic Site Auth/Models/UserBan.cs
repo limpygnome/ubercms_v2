@@ -122,24 +122,27 @@ namespace CMS.BasicSiteAuth.Models
         /// <param name="conn">Database connector.</param>
         public void save(Connector conn)
         {
-            SQLCompiler sql = new SQLCompiler();
-            sql["userid"] = userid.ToString();
-            sql["banned_by"] = bannedBy == -1 ? null : bannedBy.ToString();
-            sql["reason"] = reason.Length == 0 ? null : reason;
-            sql["datetime_start"] = datetimeStart.ToString("YYYY-MM-dd HH:mm:ss");
-            sql["datetime_end"] = datetimeEnd == DateTime.MaxValue ? null : datetimeEnd.ToString("YYYY-MM-dd HH:mm:ss");
-            if (persisted)
+            lock (this)
             {
-                sql.UpdateAttribute = "banid";
-                sql.UpdateValue = banid;
-                sql.executeUpdate(conn, "bsa_user_bans");
+                SQLCompiler sql = new SQLCompiler();
+                sql["userid"] = userid.ToString();
+                sql["banned_by"] = bannedBy == -1 ? null : bannedBy.ToString();
+                sql["reason"] = reason.Length == 0 ? null : reason;
+                sql["datetime_start"] = datetimeStart.ToString("YYYY-MM-dd HH:mm:ss");
+                sql["datetime_end"] = datetimeEnd == DateTime.MaxValue ? null : datetimeEnd.ToString("YYYY-MM-dd HH:mm:ss");
+                if (persisted)
+                {
+                    sql.UpdateAttribute = "banid";
+                    sql.UpdateValue = banid;
+                    sql.executeUpdate(conn, "bsa_user_bans");
+                }
+                else
+                {
+                    banid = int.Parse(sql.executeInsert(conn, "bsa_user_bans", "banid")[0]["banid"]);
+                    persisted = true;
+                }
+                modified = false;
             }
-            else
-            {
-                banid = (int)sql.executeInsert(conn, "bsa_user_bans", "banid")[0].get2<long>("banid");
-                persisted = true;
-            }
-            modified = false;
         }
         // <summary>
         /// Fetches the last ban applied to the user.

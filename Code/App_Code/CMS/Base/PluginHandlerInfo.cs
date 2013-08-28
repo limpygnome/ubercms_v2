@@ -25,6 +25,8 @@
  *                      2013-07-30      Changed handler properties to reflect changes in plugin class (CMS to plguin
  *                                      handler changes).
  *                                      General major overhaul of class.
+ *                      2013-08-27      Improved efficiency of persisting data, introduced fields enum, save now returns
+ *                                      a boolean, added remove, now thread-safe.
  * 
  * *********************************************************************************************************************
  * Stores information about a plugin's handler's, indicating if they should invoked and any parameters.
@@ -42,10 +44,24 @@ namespace CMS.Base
     /// </summary>
     public class PluginHandlerInfo
     {
+        // Enums *******************************************************************************************************
+        private enum Fields
+        {
+            None = 0,
+            UUID = 1,
+            RequestStart = 2,
+            RequestEnd = 4,
+            PageError = 8,
+            PageNotFound = 16,
+            PluginStart = 32,
+            PluginStop = 64,
+            PluginAction = 128,
+            CycleInterval = 256
+        };
         // Fields ******************************************************************************************************
         private UUID    uuid;               // The identifier of the plugin; used internally only.
-        private bool    persisted,          // Indicates if the model has been persisted to the database.
-                        modified;           // Indicates if the model has been modified.
+        private bool    persisted;          // Indicates if the model has been persisted to the database.
+        private Fields  modified;           // Indicates if the model has been modified.
         private bool    requestStart,
                         requestEnd,
                         pageError,
@@ -55,7 +71,24 @@ namespace CMS.Base
                         pluginAction;
         int             cycleInterval;
         // Methods - Constructors **************************************************************************************
-        public PluginHandlerInfo() { }
+        /// <summary>
+        /// Creates a new model to represent a plugin's handler information.
+        /// </summary>
+        public PluginHandlerInfo()
+        {
+            this.modified = Fields.None;
+            this.persisted = false;
+        }
+        /// <summary>
+        /// Creates a new model to represent a plugin's handler information.
+        /// </summary>
+        /// <param name="uuid">Universally unqiue identifier (UUID) of the plugin.</param>
+        public PluginHandlerInfo(UUID uuid)
+        {
+            this.modified = Fields.UUID;
+            this.persisted = false;
+            this.uuid = uuid;
+        }
         /// <summary>
         /// Creates a new model to represent a plugin's handler information.
         /// </summary>
@@ -70,7 +103,8 @@ namespace CMS.Base
         /// <param name="cycleInterval">Indicates if the cycle handler is invoked if greater than zero; the amount greater than zero is the delay in milliseconds between invoking the handler.</param>
         public PluginHandlerInfo(UUID uuid, bool requestStart, bool requestEnd, bool pageError, bool pageNotFound, bool pluginStart, bool pluginStop, bool pluginAction, int cycleInterval)
         {
-            this.modified = this.persisted = false;
+            this.modified = Fields.None;
+            this.persisted = false;
             this.uuid = uuid;
             this.requestStart = requestStart;
             this.requestEnd = requestEnd;
@@ -124,30 +158,33 @@ namespace CMS.Base
         /// Persists the model to the database.
         /// </summary>
         /// <param name="conn">Database connector.</param>
-        public void save(Connector conn)
-        {
-            save(conn, false);
-        }
-        /// <summary>
-        /// Persists the model to the database.
-        /// </summary>
-        /// <param name="conn">Database connector.</param>
         /// <param name="forcePersist">Indicates if the model should be forcibly persisted, regardless of being modified. </param>
-        public void save(Connector conn, bool forcePersist)
+        /// <returns>True = persisted, false = not persisted.</returns>
+        public bool save(Connector conn)
         {
             lock (this)
             {
-                if (!modified && !forcePersist)
-                    return;
+                if (modified == Fields.None)
+                    return false;
+                // COmpile SQL
                 SQLCompiler sql = new SQLCompiler();
-                sql["request_start"] = requestStart ? "1" : "0";
-                sql["request_end"] = requestEnd ? "1" : "0";
-                sql["page_error"] = pageError ? "1" : "0";
-                sql["page_not_found"] = pageNotFound ? "1" : "0";
-                sql["plugin_start"] = pluginStart ? "1" : "0";
-                sql["plugin_stop"] = pluginStop ? "1" : "0";
-                sql["plugin_action"] = pluginAction ? "1" : "0";
-                sql["cycle_interval"] = cycleInterval;
+                if((modified & Fields.RequestStart) == Fields.RequestStart)
+                    sql["request_start"] = requestStart ? "1" : "0";
+                if ((modified & Fields.RequestEnd) == Fields.RequestEnd)
+                    sql["request_end"] = requestEnd ? "1" : "0";
+                if ((modified & Fields.PageError) == Fields.PageError)
+                    sql["page_error"] = pageError ? "1" : "0";
+                if ((modified & Fields.PageNotFound) == Fields.PageNotFound)
+                    sql["page_not_found"] = pageNotFound ? "1" : "0";
+                if ((modified & Fields.PluginStart) == Fields.PluginStart)
+                    sql["plugin_start"] = pluginStart ? "1" : "0";
+                if ((modified & Fields.PluginStop) == Fields.PluginStop)
+                    sql["plugin_stop"] = pluginStop ? "1" : "0";
+                if ((modified & Fields.PluginAction) == Fields.PluginAction)
+                    sql["plugin_action"] = pluginAction ? "1" : "0";
+                if ((modified & Fields.CycleInterval) == Fields.CycleInterval)
+                    sql["cycle_interval"] = cycleInterval;
+                // Execute SQL
                 if (persisted)
                 {
                     sql.UpdateAttribute = "uuid";
@@ -160,10 +197,48 @@ namespace CMS.Base
                     sql.executeInsert(conn, "cms_plugin_handlers");
                     persisted = true;
                 }
-                modified = false;
+                modified = Fields.None;
+                return true;
+            }
+        }
+        /// <summary>
+        /// Unpersists the model from the database.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        public void remove(Connector conn)
+        {
+            lock (this)
+            {
+                PreparedStatement ps = new PreparedStatement("DELETE FROM cms_plugin_handlers WHERE uuid=?uuid;");
+                ps["uuid"] = uuid.Bytes;
+                conn.queryExecute(ps);
+                persisted = false;
             }
         }
         // Methods - Properties ****************************************************************************************
+        /// <summary>
+        /// The UUID of the plugin of this handler information.
+        /// 
+        /// Note: setting this property when the model has been persisted will have no effect.
+        /// </summary>
+        public UUID UUID
+        {
+            get
+            {
+                return uuid;
+            }
+            set
+            {
+                lock (this)
+                {
+                    if (!persisted)
+                    {
+                        uuid = value;
+                        modified |= Fields.UUID;
+                    }
+                }
+            }
+        }
         /// <summary>
         /// Indicates if the plugin's request-start handler should be invoked for every request.
         /// </summary>
@@ -175,8 +250,11 @@ namespace CMS.Base
             }
             set
             {
-                requestStart = value;
-                modified = true;
+                lock (this)
+                {
+                    requestStart = value;
+                    modified |= Fields.RequestStart;
+                }
             }
         }
         /// <summary>
@@ -190,8 +268,11 @@ namespace CMS.Base
             }
             set
             {
-                requestEnd = value;
-                modified = true;
+                lock (this)
+                {
+                    requestEnd = value;
+                    modified |= Fields.RequestEnd;
+                }
             }
         }
         /// <summary>
@@ -206,8 +287,11 @@ namespace CMS.Base
             }
             set
             {
-                pageError = value;
-                modified = true;
+                lock (this)
+                {
+                    pageError = value;
+                    modified |= Fields.PageError;
+                }
             }
         }
         /// <summary>
@@ -222,8 +306,11 @@ namespace CMS.Base
             }
             set
             {
-                pageNotFound = value;
-                modified = true;
+                lock (this)
+                {
+                    pageNotFound = value;
+                    modified |= Fields.PageNotFound;
+                }
             }
         }
         /// <summary>
@@ -237,8 +324,11 @@ namespace CMS.Base
             }
             set
             {
-                pluginStart = value;
-                modified = true;
+                lock (this)
+                {
+                    pluginStart = value;
+                    modified |= Fields.PluginStart;
+                }
             }
         }
         /// <summary>
@@ -252,8 +342,11 @@ namespace CMS.Base
             }
             set
             {
-                pluginStop = value;
-                modified = true;
+                lock (this)
+                {
+                    pluginStop = value;
+                    modified |= Fields.PluginStop;
+                }
             }
         }
         /// <summary>
@@ -268,8 +361,11 @@ namespace CMS.Base
             }
             set
             {
-                pluginAction = value;
-                modified = true;
+                lock (this)
+                {
+                    pluginAction = value;
+                    modified |= Fields.PluginAction;
+                }
             }
         }
         /// <summary>
@@ -284,8 +380,11 @@ namespace CMS.Base
             }
             set
             {
-                cycleInterval = value;
-                modified = true;
+                lock (this)
+                {
+                    cycleInterval = value;
+                    modified |= Fields.CycleInterval;
+                }
             }
         }
         /// <summary>
@@ -295,7 +394,7 @@ namespace CMS.Base
         {
             get
             {
-                return modified;
+                return modified != Fields.None;
             }
         }
         /// <summary>

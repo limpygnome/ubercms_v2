@@ -55,49 +55,54 @@ namespace CMS.Base
 		// Methods *****************************************************************************************************
         /// <summary>
         /// Parses the current request for its request path.
+        /// 
+        /// Note: if the current path is not suitable/empty, it will be changed to the default url (refer to CMS
+        /// configuration).
         /// </summary>
         /// <param name="pathData">The data for the current request path.</param>
 		public void parse(string pathData)
 		{
+            parse(pathData, false);
+		}
+        private void parse(string pathData, bool usingDefaultUrl)
+        {
             // Check against null reference
             if (pathData == null)
             {
-                moduleHandler = Core.DefaultHandler;
-                subDirs = new string[0];
+                pathData = Core.DefaultURL;
+                usingDefaultUrl = true;
+            }
+            // Remove starting /
+            if (pathData.Length > 0 && pathData[0] == '/')
+                pathData = pathData.Substring(1);
+            // Process tokens
+            string[] exp = pathData.Split('/');
+            if (exp.Length > 0)
+            {
+                int totaltokens = exp.Length == 0 ? 0 : exp[exp.Length - 1].Length > 0 ? exp.Length : exp.Length - 1; // Tailing slash empty token protection
+                moduleHandler = totaltokens == 0 ? string.Empty : exp[0];
+                subDirs = new string[totaltokens > 0 ? totaltokens - 1 : 0];
+                for (int i = 1; i < totaltokens; i++)
+                    subDirs[i - 1] = exp[i];
+                // Check against empty paths
+                if (moduleHandler.Length == 0)
+                {
+                    if (usingDefaultUrl)
+                        throw new Exception("Invalid default URL '" + pathData + "' specified for CMS!");
+                    else
+                        parse(Core.DefaultURL, true);
+                }
             }
             else
-            {
-                // Remove starting /
-                if (pathData.Length > 0 && pathData[0] == '/')
-                    pathData = pathData.Substring(1);
-                // Process tokens
-                string[] exp = pathData.Split('/');
-                if (exp.Length > 0)
-                {
-                    int totaltokens = exp.Length == 0 ? 0 : exp[exp.Length - 1].Length > 0 ? exp.Length : exp.Length - 1; // Tailing slash empty token protection
-                    moduleHandler = totaltokens == 0 ? string.Empty : exp[0];
-                    subDirs = new string[totaltokens > 0 ? totaltokens - 1 : 0];
-                    for (int i = 1; i < totaltokens; i++)
-                        subDirs[i - 1] = exp[i];
-                    // Check against empty paths
-                    if (moduleHandler.Length == 0)
-                    {
-                        moduleHandler = Core.SettingsDisk["settings/core/default_handler"].get<string>();
-                        if(subDirs.Length != 0) // Protection against invalid paths
-                            subDirs = new string[0];
-                    }
-                }
-                else
-                    moduleHandler = Core.SettingsDisk["settings/core/default_handler"].get<string>();
-            }
-			// Build full-path
-			StringBuilder sb = new StringBuilder();
-			sb.Append(moduleHandler).Append("/");
-			foreach(string s in subDirs)
-				sb.Append(s).Append("/");
-			sb.Remove(sb.Length - 1, 1);
-			fullPath = sb.ToString();
-		}
+                parse(Core.DefaultURL, true);
+            // Build full-path
+            StringBuilder sb = new StringBuilder();
+            sb.Append(moduleHandler).Append("/");
+            foreach (string s in subDirs)
+                sb.Append(s).Append("/");
+            sb.Remove(sb.Length - 1, 1);
+            fullPath = sb.ToString();
+        }
 		// Methods - Accessors *****************************************************************************************
         /// <summary>
         /// Returns debug information about the current path.

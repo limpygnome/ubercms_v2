@@ -145,6 +145,7 @@ namespace CMS.BasicSiteAuth.Models
         {
             lock(this)
             {
+                // Compile SQL
                 SQLCompiler sql = new SQLCompiler();
                 sql["title"] = title;
                 sql["description"] = description.Length == 0 ? null : description;
@@ -171,7 +172,7 @@ namespace CMS.BasicSiteAuth.Models
                 sql["moderator"] = moderator ? "1" : "0";
                 sql["administrator"] = administrator ? "1" : "0";
                 sql["login"] = login ? "1" : "0";
-
+                // Execute SQL
                 if (!forceInsert && persisted)
                 {
                     sql.UpdateAttribute = "groupid";
@@ -180,7 +181,7 @@ namespace CMS.BasicSiteAuth.Models
                 }
                 else
                 {
-                    groupID = (int)sql.executeInsert(conn, "bsa_user_groups", "groupid")[0].get2<long>("groupid");
+                    groupID = int.Parse(sql.executeInsert(conn, "bsa_user_groups", "groupid")[0]["groupid"]);
                     persisted = true;
                 }
                 modified = false;

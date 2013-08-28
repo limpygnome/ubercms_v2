@@ -213,14 +213,14 @@ namespace CMS.BasicSiteAuth.Models
         /// <param name="email">The e-mail of the new user.</param>
         /// <param name="secretQuestion">The secret question (account recovery) for the new user.</param>
         /// <param name="secretAnswer">The secret answer (account recovery) for the new user.</param>
-        /// <param name="outputUser">The new user will be outputted to this reference if successfully created, else it will be set to null.</param>
+        /// <param name="outputUser">The new user will be outputted to this reference if successfully created.</param>
         /// <returns>The creation status.</returns>
         public static UserCreateSaveStatus create(BasicSiteAuth bsa, Data data, string username, string password, string email, string secretQuestion, string secretAnswer, ref User outputUser)
         {
+            User u = new User();
             try
             {
-                bool emailVerification = Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_VERIFICATION].get<bool>();
-                User u = new User();
+                // Set the data of the user
                 u.Username = username;
                 UserCreateSaveStatus t = u.setPassword(bsa, password);
                 if (t != UserCreateSaveStatus.Success)
@@ -231,28 +231,23 @@ namespace CMS.BasicSiteAuth.Models
                 u.SecretAnswer = secretAnswer;
                 u.Registered = DateTime.Now;
                 // Set the default group
+                bool emailVerification = Core.Settings[BasicSiteAuth.SETTINGS_EMAIL_VERIFICATION].get<bool>();
                 u.UserGroup = bsa.UserGroups[emailVerification ? Core.Settings[BasicSiteAuth.SETTINGS_GROUP_UNVERIFIED_GROUPID].get<int>() : Core.Settings[BasicSiteAuth.SETTINGS_GROUP_USER_GROUPID].get<int>()];
-                // Attempt to persist
+                // Attempt to persist the new user
                 t = u.save(bsa, data.Connector);
                 if (t == UserCreateSaveStatus.Success)
                 {
                     // Deploy either a welcome or verification e-mail
                     if (emailVerification)
                     {
-                        // Create an e-mail verification recovery code and check we created it
-                        RecoveryCode code = RecoveryCode.create(data.Connector, RecoveryCode.CodeType.AccountVerification, u);
+                        // Create an e-mail verification code and check we created it
+                        AccountCode code = AccountCode.create(data.Connector, AccountCode.CodeType.AccountVerification, u);
                         if (code == null)
                         {
                             // Fall-back to a verified account
                             u.UserGroup = bsa.UserGroups[Core.Settings[BasicSiteAuth.SETTINGS_GROUP_USER_GROUPID].get<int>()];
                             // Check the verified user-group persisted
-                            if (u.save(bsa, data.Connector) != UserCreateSaveStatus.Success)
-                            { // Critical failure: abort  the registration process!
-                                outputUser = null;
-                                u.remove(data.Connector);
-                                return UserCreateSaveStatus.Error_Regisration;
-                            }
-                            else
+                            if (u.save(bsa, data.Connector) == UserCreateSaveStatus.Success)
                             {
                                 // Partial success (set from unverified to verified as fallback) - user is verified and setup!
                                 Emails.sendWelcome(data, u);
@@ -260,13 +255,15 @@ namespace CMS.BasicSiteAuth.Models
                                 return UserCreateSaveStatus.Success;
                             }
                         }
-                        else
+                        else if (Emails.sendVerify(data, u, code.Code))
                         {
                             // Success - user requires verification!
-                            Emails.sendVerify(data, u, code.Code);
                             outputUser = u;
                             return UserCreateSaveStatus.SuccessVerify;
                         }
+                        else
+                            // Critical failure, unpersist the code...
+                            code.remove(data.Connector);
                     }
                     else
                     {
@@ -277,16 +274,13 @@ namespace CMS.BasicSiteAuth.Models
                     }
                 }
                 else
-                {
-                    // Failure occurred...
-                    outputUser = null;
+                    // Failure occurred persisting user data...
                     return t;
-                }
             }
-            catch
-            {
-                return UserCreateSaveStatus.Error_Regisration;
-            }
+            catch { }
+            // An error has occurred...unpersist the new user and return error
+            u.remove(data.Connector);
+            return UserCreateSaveStatus.Error_Regisration;
         }
         /// <summary>
         /// Loads a user from the database by e-mail.
@@ -399,7 +393,7 @@ namespace CMS.BasicSiteAuth.Models
                         else if (!Utils.validEmail(email))
                             return UserCreateSaveStatus.InvalidEmail_Format;
                     }
-                    // Persist the data
+                    // Compile SQL
                     SQLCompiler sql = new SQLCompiler();
                     sql["username"] = username;
                     sql["password"] = password;
@@ -410,6 +404,7 @@ namespace CMS.BasicSiteAuth.Models
                     sql["groupid"] = userGroup.GroupID.ToString();
                     sql["datetime_register"] = registered;
                     sql["pending_deletion"] = pendingDeletion ? "1" : "0";
+                    // Execute SQL
                     if (persisted)
                     {
                         sql.UpdateAttribute = "userid";
@@ -418,7 +413,7 @@ namespace CMS.BasicSiteAuth.Models
                     }
                     else
                     {
-                        userID = (int)sql.executeInsert(conn, "bsa_users", "userid")[0].get2<long>("userid");
+                        userID = int.Parse(sql.executeInsert(conn, "bsa_users", "userid")[0]["userid"]);
                         persisted = true;
                     }
                     // Success! Reset flags and return status

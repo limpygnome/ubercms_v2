@@ -36,6 +36,7 @@
  *                                      well as general improvements.
  *                                      Plugins are now stored based on UUID hex, rather than hex-with-hyphens, for less
  *                                      space complexity.
+ *                      2013-08-27      Bug-fixes, general improvements.
  * 
  * *********************************************************************************************************************
  * A data-collection for managing and interacting with plugin models.
@@ -75,6 +76,15 @@ namespace CMS.Base
             this.cacheRequestStart = this.cacheRequestEnd = this.cachePageError = this.cachePageNotFound = new Plugin[0];
 		}
 		// Methods *****************************************************************************************************
+        /// <summary>
+        /// Used to determine and possibly rebuild the handler cache.
+        /// </summary>
+        /// <param name="plugin">The plugin which has been changed.</param>
+        private void pluginActionRebuildCache(Plugin plugin)
+        {
+            if (plugin.HandlerInfo.RequestStart || plugin.HandlerInfo.RequestEnd || plugin.HandlerInfo.PageError || plugin.HandlerInfo.PageNotFound)
+                rebuildHandlerCaches();
+        }
         /// <summary>
         /// Invoked when a page exception occurs; this method will find a plugin which can handle the exception.
         /// </summary>
@@ -327,9 +337,11 @@ namespace CMS.Base
                     p.ClassPath = classPath;
                     p.Priority = priority;
                     p.Version = new Version(versionMajor, versionMinor, versionBuild);
-                    if (!p.save(conn))
+                    p.HandlerInfo = new PluginHandlerInfo(uuid);
+                    if (!p.save(conn) || !p.HandlerInfo.save(conn))
                     {
-                        messageOutput.Append("Failed to persist plugin model!");
+                        p.remove(conn);
+                        messageOutput.Append("Failed to persist plugin (UUID: '" + uuid.HexHyphens + "') or plugin handler model!");
                         return false;
                     }
                     // Successfully persisted - set the plugin parameter
@@ -346,7 +358,7 @@ namespace CMS.Base
                         }
                         catch (Exception ex)
                         {
-                            messageOutput.Append("Warning: failed to reload plugin handler cache for pluginUUID '").Append(uuid.HexHyphens).Append("'; exception: '").Append(ex.Message).AppendLine("'!");
+                            messageOutput.Append("Warning: failed to reload plugin handler cache for pluginUUID '").Append(uuid.HexHyphens).Append("'; exception: '").Append(ex.Message).Append("; stack-trace: '").Append(ex.StackTrace).Append("'").AppendLine("'!");
                         }
                         return true;
                     }
@@ -384,7 +396,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(conn, Plugin.PluginAction.PreInstall, plugin))
+                        if (plugin.UUID != p.UUID && p.HandlerInfo.PluginAction && !p.handler_pluginAction(conn, Plugin.PluginAction.PreInstall, plugin))
                         {
                             messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -408,7 +420,7 @@ namespace CMS.Base
                     {
                         // Invoke post-action handlers
                         foreach (Plugin p in Fetch)
-                            if (plugin != p && p.HandlerInfo.PluginAction)
+                            if (plugin.UUID != p.UUID && p.HandlerInfo.PluginAction)
                                 p.handler_pluginAction(conn, Plugin.PluginAction.PostInstall, plugin);
                     }
                     else
@@ -470,11 +482,13 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.NotInstalled;
-                    if(plugin.save(conn))
+                    if (plugin.save(conn))
+                    {
                         // Invoke post-action handlers
                         foreach (Plugin p in Fetch)
-                            if (plugin != p && p.HandlerInfo.PluginAction)
+                            if (plugin.UUID != p.UUID && p.HandlerInfo.PluginAction)
                                 p.handler_pluginAction(conn, Plugin.PluginAction.PostUninstall, plugin);
+                    }
                     else
                     {
                         messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - uninstall - failed to persist new state!");
@@ -486,6 +500,8 @@ namespace CMS.Base
         }
         /// <summary>
         /// Enables a plugin.
+        /// 
+        /// Note: this may rebuild the handler cache.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <param name="plugin">The plugin to be enabled.</param>
@@ -515,7 +531,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(conn, Plugin.PluginAction.PreEnable, plugin))
+                        if (plugin.UUID != p.UUID && p.HandlerInfo.PluginAction && !p.handler_pluginAction(conn, Plugin.PluginAction.PreEnable, plugin))
                         {
                             messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -534,17 +550,21 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.Enabled;
-                    if(plugin.save(conn))
+                    if (plugin.save(conn))
+                    {
                         // Invoke post-action handlers
                         foreach (Plugin p in Fetch)
-                            if (plugin != p && p.HandlerInfo.PluginAction)
+                            if (plugin.UUID != p.UUID && p.HandlerInfo.PluginAction)
                                 p.handler_pluginAction(conn, Plugin.PluginAction.PostEnable, plugin);
+                    }
                     else
                     {
                         messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - enable - failed to persist new state!");
                         return false;
                     }
                 }
+                // Rebuild handler cache (if needed)
+                pluginActionRebuildCache(plugin);
             }
             return true;
         }
@@ -579,7 +599,7 @@ namespace CMS.Base
                     // Invoke pre-action handlers
                     foreach (Plugin p in Fetch)
                     {
-                        if (plugin != p && p.HandlerInfo.PluginAction && !p.handler_pluginAction(conn, Plugin.PluginAction.PreDisable, plugin))
+                        if (plugin.UUID != p.UUID && p.HandlerInfo.PluginAction && !p.handler_pluginAction(conn, Plugin.PluginAction.PreDisable, plugin))
                         {
                             messageOutput.Append("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - aborted by plugin '" + p.Title + "' (UUID: '" + p.UUID.HexHyphens + "')!");
                             return false;
@@ -598,11 +618,13 @@ namespace CMS.Base
                     }
                     // Update the database
                     plugin.State = Plugin.PluginState.Disabled;
-                    if(plugin.save(conn))
+                    if (plugin.save(conn))
+                    {
                         // Invoke post-action handlers
                         foreach (Plugin p in Fetch)
-                            if (plugin != p && p.HandlerInfo.PluginAction)
+                            if (plugin.UUID != p.UUID && p.HandlerInfo.PluginAction)
                                 p.handler_pluginAction(conn, Plugin.PluginAction.PostDisable, plugin);
+                    }
                     else
                     {
                         messageOutput.AppendLine("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - failed to persist new state!");

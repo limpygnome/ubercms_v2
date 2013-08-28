@@ -183,29 +183,33 @@ namespace CMS.BasicSiteAuth.Models
         /// <returns>True if persisted, false if failed.</returns>
         public bool save(Connector conn)
         {
-            if (!modified)
-                return false;
-            SQLCompiler c = new SQLCompiler();
-            c["userid"] = userid.ToString();
-            c["type_uuid"] = eventType.TypeUUID.Bytes;
-            c["datetime"] = datetime;
-            c["param1"] = param1 == null ? null : param1.ToString();
-            c["param2"] = param2 == null ? null : param2.ToString();
-            c["param1_datatype"] = ((int)param1DataType).ToString();
-            c["param2_datatype"] = ((int)param2DataType).ToString();
-            if (persisted)
+            lock (this)
             {
-                c.UpdateAttribute = "eventid";
-                c.UpdateValue = eventid;
-                c.executeUpdate(conn, "bsa_account_events");
+                if (!modified)
+                    return false;
+                // Compile SQL
+                SQLCompiler c = new SQLCompiler();
+                c["userid"] = userid.ToString();
+                c["type_uuid"] = eventType.TypeUUID.Bytes;
+                c["datetime"] = datetime;
+                c["param1"] = param1 == null ? null : param1.ToString();
+                c["param2"] = param2 == null ? null : param2.ToString();
+                c["param1_datatype"] = ((int)param1DataType).ToString();
+                c["param2_datatype"] = ((int)param2DataType).ToString();
+                if (persisted)
+                {
+                    c.UpdateAttribute = "eventid";
+                    c.UpdateValue = eventid;
+                    c.executeUpdate(conn, "bsa_account_events");
+                }
+                else
+                {
+                    eventid = int.Parse(c.executeInsert(conn, "bsa_account_events", "eventid")[0]["eventid"]);
+                    persisted = true;
+                }
+                modified = false;
+                return true;
             }
-            else
-            {
-                eventid = (int)c.executeInsert(conn, "bsa_account_events", "eventid")[0].get2<long>("eventid");
-                persisted = true;
-            }
-            modified = false;
-            return true;
         }
         /// <summary>
         /// Unpersists the model from the database.

@@ -104,7 +104,7 @@
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\Emails.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\AccountActions.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\Utils.cs" />
-    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\RecoveryCode.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\AccountCode.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\User.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\UserBan.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\UserGroup.cs" />
@@ -135,8 +135,8 @@
     <Content Include="Code\CMS.config">
       <SubType>Designer</SubType>
     </Content>
-    <Content Include="SQL\MySQL\install.sql" />
-    <Content Include="SQL\MySQL\uninstall.sql" />
+    <Content Include="Code\installer\SQL\MySQL\install.sql" />
+    <Content Include="Code\installer\SQL\MySQL\uninstall.sql" />
     <Content Include="README" />
     <Content Include="TODO" />
     <Content Include="LICENSE" />
