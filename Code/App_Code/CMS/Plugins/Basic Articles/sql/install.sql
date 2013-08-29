@@ -3,25 +3,25 @@ SET FOREIGN_KEY_CHECKS=0;
 
 CREATE TABLE ba_article_thread
 (
-	uuid_thread							CHAR(16) PRIMARY KEY,
+	uuid_thread							BINARY(16) PRIMARY KEY,
 	urlid								INT UNIQUE,
 	FOREIGN KEY(`urlid`)				REFERENCES cms_urlrewriting(`urlid`) ON UPDATE CASCADE ON DELETE SET NULL,
-	uuid_article_current				CHAR(16),
+	uuid_article_current				BINARY(16),
 	FOREIGN KEY(`uuid_article_current`)	REFERENCES ba_article(`uuid_article`) ON UPDATE CASCADE ON DELETE SET NULL,
 	thumbnail							VARCHAR(1) DEFAULT 0
 );
 CREATE TABLE ba_article_thread_permissions
 (
-	uuid_thread							CHAR(16) NOT NULL,
-	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE RESTRICT,
+	uuid_thread							BINARY(16) NOT NULL,
+	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE,
 	groupid								INT NOT NULL,
 	FOREIGN KEY(`groupid`)				REFERENCES bsa_user_groups(`groupid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	PRIMARY KEY(`uuid_thread`, `groupid`)
 );
 CREATE TABLE ba_article
 (
-	uuid_article						CHAR(16) PRIMARY KEY,
-	uuid_thread							CHAR(16),
+	uuid_article						BINARY(16) PRIMARY KEY,
+	uuid_thread							BINARY(16),
 	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE,
 
 	title								VARCHAR(128),
@@ -51,7 +51,7 @@ CREATE TABLE bsa_tags_thread
 (
 	tagid								INT NOT NULL,
 	FOREIGN KEY(`tagid`)				REFERENCES ba_tags(`tagid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	uuid_thread							CHAR(16) NOT NULL,
+	uuid_thread							BINARY(16) NOT NULL,
 	FOREIGN KEY(`uuid_thread`)			REFERENCES ba_article_thread(`uuid_thread`) ON UPDATE CASCADE ON DELETE CASCADE,
 	PRIMARY KEY(`tagid`, `uuid_thread`)
 );
@@ -76,4 +76,4 @@ CREATE OR REPLACE VIEW ba_view_tags AS
 
 -- -- Used for looking up an existing article thread based on the URL
 CREATE OR REPLACE VIEW ba_article_thread_createfetch AS
-	SELECT HEX(at.uuid_thread) AS uuid_thread, rw.full_path FROM article_threads AS at LEFT OUTER JOIN cms_urlrewriting AS rw ON rw.urlid=at.urlid;
+	SELECT HEX(at.uuid_thread) AS uuid_thread, rw.urlid, rw.uuid, rw.full_path, rw.priority FROM ba_article_thread AS at LEFT OUTER JOIN cms_urlrewriting AS rw ON rw.urlid=at.urlid;

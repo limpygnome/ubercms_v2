@@ -8,6 +8,14 @@ namespace CMS.BasicArticles
 {
     public partial class BasicArticles : Plugin
     {
+        // Enums *******************************************************************************************************
+        public enum ArticleCreatePostback
+        {
+            None,
+            Source,
+            Render,
+            CreateEdit
+        };
         // Methods - Constructors **************************************************************************************
         public BasicArticles(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version, int priority, string classPath)
             : base(uuid, title, directory, state, handlerInfo, version, priority, classPath)
@@ -140,51 +148,113 @@ namespace CMS.BasicArticles
         {
             string error = null;
             // Check for postback
-            bool displayRendered = data.Request.Form["article_display_rendered"] != null;
+            ArticleCreatePostback postback;
+            if (data.Request.Form["article_display_raw"] != null)
+                postback = ArticleCreatePostback.Source;
+            else if (data.Request.Form["article_display_rendered"] != null)
+                postback = ArticleCreatePostback.Render;
+            else if (data.Request.Form["article_create"] != null)
+                postback = ArticleCreatePostback.CreateEdit;
+            else
+                postback = ArticleCreatePostback.None;
+            // Fetch postback values
             string title = data.Request.Form["article_title"];
             string url = data.Request.Form["article_url"];
             string raw = data.Request.Form["article_raw"];
             bool html = data.Request.Form["article_html"] != null;
             bool hidePanel = data.Request.Form["article_hide_panel"] != null;
             bool comments = data.Request.Form["article_comments"] != null;
-            if (title != null && url != null && raw != null)
+            // Handle (possible) postback data
+            if (postback != ArticleCreatePostback.None && title != null && url != null && raw != null)
             {
+                switch (postback)
+                {
+                    case ArticleCreatePostback.CreateEdit:
 #if CSRFP
-                if (!CSRFProtection.authenticated(data))
-                    error = "Invalid request; please try again!";
+                        if (!CSRFProtection.authenticated(data))
+                            error = "Invalid request; please try again!";
 #endif
 #if CAPTCHA
-                if (error == null && !Captcha.isCaptchaCorrect(data))
-                    error = "Invalid captcha verification code!";
+                        if (error != null && !Captcha.isCaptchaCorrect(data))
+                            error = "Invalid captcha verification code!";
 #endif
-                if (error == null)
-                {
-                    // Validate article and persist initially without thread
-                    Article a = new Article();
-                    a.UUIDArticle = UUID.generateVersion4();
-                    a.Title = title;
-                    a.TextRaw = raw;
-                    a.HTML = html;
-                    a.HidePanel = hidePanel;
-                    a.Comments = comments;
-                    Article.PersistStatus ps = a.save(data.Connector);
-                    switch (ps)
-                    {
-                        case Article.PersistStatus.Invalid_uuid_article:
-                        case Article.PersistStatus.Invalid_thread:
-                        case Article.PersistStatus.Error:
-                            error = "An error occurred creating the article, please try again later!"; break;
-                        case Article.PersistStatus.Invalid_text_length:
-                            error = "Source/raw article must be x to x characters in length!"; break;
-                        case Article.PersistStatus.Invalid_title_length:
-                            error = "Title must be x to x characters in length!"; break;
-                    }
-                    if (error == null)
-                    {
-                        // Fetch/create thread for URL
-                        //ArticleThread at = ArticleThread.
-                        // Assign thread to article and re-persist
-                    }
+                        if (error == null)
+                        {
+                            // Create a new article
+                            Article a = new Article();
+                            a.Title = title;
+                            a.TextRaw = raw;
+                            a.HTML = html;
+                            a.HidePanel = hidePanel;
+                            a.Comments = comments;
+                            // Attempt to persist the model
+                            Article.PersistStatus ps = a.save(data.Connector);
+                            if (ps != Article.PersistStatus.Success)
+                            { // Failed to persist...check why...
+                                switch (ps)
+                                {
+                                    case Article.PersistStatus.Invalid_uuid_article:
+                                    case Article.PersistStatus.Invalid_thread:
+                                    case Article.PersistStatus.Error:
+                                        error = "An error occurred creating the article, please try again later!"; break;
+                                    case Article.PersistStatus.Invalid_text_length:
+                                        error = "Source/raw article must be x to x characters in length!"; break;
+                                    case Article.PersistStatus.Invalid_title_length:
+                                        error = "Title must be x to x characters in length!"; break;
+                                    default:
+                                        error = "Unknown issue occurred persisting the article!"; break;
+                                }
+                            }
+                            else
+                            {
+                                // Fetch/create article thread based on the URL
+                                ArticleThread at = null;
+                                ArticleThread.CreateThread ct = ArticleThread.createFetch(data.Connector, this, url, out at);
+                                // Check we have fetched/created a thread
+                                if(ct != ArticleThread.CreateThread.Success)
+                                { // Failed...
+                                    switch(ct)
+                                    {
+                                        case ArticleThread.CreateThread.UrlUsed:
+                                            error = "URL already in-use!"; break;
+                                        case ArticleThread.CreateThread.UrlInvalid:
+                                            error = "Invalid URL!"; break;
+                                        case ArticleThread.CreateThread.Error:
+                                            error = "Unknown error fetching the thread!"; break;
+                                    }
+                                    a.remove(data.Connector);
+                                }
+                                else
+                                {
+                                    // Assign thread to the article and set the article as the current article for the thread
+                                    a.UUIDThread = at.UUIDThread;
+                                    at.UUIDArticleCurrent = a.UUIDArticle;
+                                    // Persist the model data
+                                    if (a.save(data.Connector) != Article.PersistStatus.Success)
+                                    {
+                                        a.remove(data.Connector);
+                                        at.remove(data.Connector);
+                                        error = "Unknown error occurred (article persistence)!";
+                                    }
+                                    else if (!at.save(data.Connector))
+                                    {
+                                        a.remove(data.Connector);
+                                        at.remove(data.Connector);
+                                        error = "Unknown error occurred (thread persistence)!";
+                                    }
+                                    else
+                                    {
+                                        // Redirect to the article
+                                        BaseUtils.redirectAbs(data, "/article/" + a.UUIDArticle.Hex);
+                                    }
+                                }
+
+                            }
+                        }
+                        break;
+                    case ArticleCreatePostback.Render:
+
+                        break;
                 }
             }
             // Setup the page
@@ -196,11 +266,16 @@ namespace CMS.BasicArticles
             data["article_title"] = HttpUtility.HtmlEncode(title);
             data["article_url"] = HttpUtility.HtmlEncode(url);
             data["article_raw"] = HttpUtility.HtmlEncode(raw);
-            if (html)       data.setFlag("article_html");
-            if (hidePanel)  data.setFlag("article_hide_panel");
-            if (comments)   data.setFlag("article_comments");
-            if (displayRendered)
-                data["article_rendered"] = "";
+            if (postback == ArticleCreatePostback.Render)
+                data["article_rendered"] = "rendered";
+            // Set flags
+            if (html)
+                data.setFlag("article_html");
+            if (hidePanel)
+                data.setFlag("article_hide_panel");
+            if (comments)
+                data.setFlag("article_comments");
+            // Set error message
             if (error != null)
                 data["article_error"] = HttpUtility.HtmlEncode(error);
             return true;

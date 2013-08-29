@@ -45,6 +45,29 @@
 			</div>
 			<div class="clear"></div>
 		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				&nbsp;
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				Captcha:
+			</div>
+			<div class="CELL2">
+				<!--include(captcha/embed)-->
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" name="article_create" value="Create" />
+			</div>
+		</div>
 		<div class="clear"></div>
 	</div>
 	<!--IF:article_error-->
@@ -69,4 +92,5 @@
 			<!--article_rendered-->
 		<!--ENDIF:article_rendered-->
 	</div>
+	<!--csrf()-->
 </form>]]></html></template>

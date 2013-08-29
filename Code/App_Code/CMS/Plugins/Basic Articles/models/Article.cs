@@ -31,7 +31,7 @@ namespace CMS.BasicArticles
             HidePanel = 512,
             UserIDAuthor = 1024,
             UserIDPublisher = 2048,
-            All = 4095
+            All = 4095 // This should always be: [the next power of 2] - 1
         }
         /// <summary>
         /// The status of the persistence of the model.
@@ -66,6 +66,10 @@ namespace CMS.BasicArticles
         {
             this.persisted = false;
             this.modified = Fields.None;
+            this.uuidArticle = null;
+            this.uuidThread = null;
+            this.title = this.textRaw = this.textCache = null;
+            this.useridAuthor = this.useridPublisher = -1;
         }
         // Methods - Database Persistence ******************************************************************************
         /// <summary>
@@ -178,81 +182,104 @@ namespace CMS.BasicArticles
         }
         /// <summary>
         /// Persists the model.
+        /// 
+        /// Note: if the article's UUID has not been set and the model has not been persisted, a version 4 UUID will
+        /// be generated.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <returns>The status of persisting the model.</returns>
         public PersistStatus save(Connector conn)
         {
-            // Check some fields have been modified
-            if (modified == Fields.None)
-                return PersistStatus.Error;
-            // Validate model data
-            if (persisted && uuidThread == null)
-                return PersistStatus.Invalid_thread;
-            else if (uuidArticle == null)
-                return PersistStatus.Invalid_uuid_article;
-            else if (title.Length < Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MIN].get<int>() || title.Length > Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MAX].get<int>())
-                return PersistStatus.Invalid_title_length;
-            else if (textRaw.Length < Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MIN].get<int>() || textRaw.Length > Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MAX].get<int>())
-                return PersistStatus.Invalid_text_length;
-            // Compile SQL
-            SQLCompiler sql = new SQLCompiler();
-            if ((modified & Fields.ThreadUUID) == Fields.ThreadUUID)
-                sql["uuid_thread"] = uuidThread != null ? uuidThread.Bytes : null;
-            if ((modified & Fields.Title) == Fields.Title)
-                sql["title"] = title;
-            if ((modified & Fields.TextRaw) == Fields.TextRaw)
-                sql["text_raw"] = textRaw;
-            if ((modified & Fields.TextCache) == Fields.TextCache)
-                sql["text_cache"] = textCache;
-            if ((modified & Fields.DateTimeCreated) == Fields.DateTimeCreated)
-                sql["datetime_created"] = datetimeCreated;
-            if ((modified & Fields.DateTimeModified) == Fields.DateTimeModified)
-                sql["datetime_modified"] = datetimeModified;
-            if ((modified & Fields.Published) == Fields.Published)
-                sql["published"] = published ? "1" : "0";
-            if ((modified & Fields.Comments) == Fields.Comments)
-                sql["comments"] = comments ? "1" : "0";
-            if ((modified & Fields.HTML) == Fields.HTML)
-                sql["html"] = html ? "1" : "0";
-            if ((modified & Fields.HidePanel) == Fields.HidePanel)
-                sql["hide_panel"] = hidePanel ? "1" : "0";
-            if ((modified & Fields.UserIDAuthor) == Fields.UserIDAuthor)
-                sql["userid_author"] = useridAuthor;
-            if ((modified & Fields.UserIDPublisher) == Fields.UserIDPublisher)
-                sql["userid_publisher"] = useridPublisher;
-            // Execute SQL
-            try
+            lock (this)
             {
-                if (persisted)
-                {
-                    sql.UpdateAttribute = "uuid_article";
-                    sql.UpdateValue = uuidArticle.Bytes;
-                    sql.executeUpdate(conn, "ba_article");
-                }
-                else
-                {
-                    sql["uuid_thread"] = uuidThread.Bytes;
-                    sql.executeInsert(conn, "ba_article");
-                    persisted = true;
-                }
-                modified = Fields.None;
+                // Check some fields have been modified
+                if (modified == Fields.None)
+                    return PersistStatus.Error;
+                // Validate model data
+                if (persisted && uuidThread == null)
+                    return PersistStatus.Invalid_thread;
+                else if (persisted && uuidArticle == null)
+                    return PersistStatus.Invalid_uuid_article;
+                else if (title.Length < Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MIN].get<int>() || title.Length > Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MAX].get<int>())
+                    return PersistStatus.Invalid_title_length;
+                else if (textRaw.Length < Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MIN].get<int>() || textRaw.Length > Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MAX].get<int>())
+                    return PersistStatus.Invalid_text_length;
+                // Compile SQL
+                SQLCompiler sql = new SQLCompiler();
+                if ((modified & Fields.ThreadUUID) == Fields.ThreadUUID)
+                    sql["uuid_thread"] = uuidThread != null ? uuidThread.Bytes : null;
+                if ((modified & Fields.Title) == Fields.Title)
+                    sql["title"] = title;
+                if ((modified & Fields.TextRaw) == Fields.TextRaw)
+                    sql["text_raw"] = textRaw;
+                if ((modified & Fields.TextCache) == Fields.TextCache)
+                    sql["text_cache"] = textCache;
+                if ((modified & Fields.DateTimeCreated) == Fields.DateTimeCreated)
+                    sql["datetime_created"] = datetimeCreated;
+                if ((modified & Fields.DateTimeModified) == Fields.DateTimeModified)
+                    sql["datetime_modified"] = datetimeModified;
+                if ((modified & Fields.Published) == Fields.Published)
+                    sql["published"] = published ? "1" : "0";
+                if ((modified & Fields.Comments) == Fields.Comments)
+                    sql["comments"] = comments ? "1" : "0";
+                if ((modified & Fields.HTML) == Fields.HTML)
+                    sql["html"] = html ? "1" : "0";
+                if ((modified & Fields.HidePanel) == Fields.HidePanel)
+                    sql["hide_panel"] = hidePanel ? "1" : "0";
+                if ((modified & Fields.UserIDAuthor) == Fields.UserIDAuthor)
+                    sql["userid_author"] = useridAuthor;
+                if ((modified & Fields.UserIDPublisher) == Fields.UserIDPublisher)
+                    sql["userid_publisher"] = useridPublisher;
+                // Execute SQL
+                //try
+                //{
+                //    if (persisted)
+                //    {
+                //        sql.UpdateAttribute = "uuid_article";
+                //        sql.UpdateValue = uuidArticle.Bytes;
+                //        sql.executeUpdate(conn, "ba_article");
+                //    }
+                //    else
+                //    {
+                        //if(uuidArticle == null)
+                            uuidArticle = UUID.generateVersion4();
+                        sql["uuid_article"] = uuidArticle.Bytes;
+                        sql.executeInsert(conn, "ba_article");
+                        persisted = true;
+                    //}
+                    modified = Fields.None;
+                    return PersistStatus.Success;
+                //}
+                //catch (DuplicateEntryException ex)
+                //{
+                //    switch (ex.Attribute)
+                //    {
+                //        case "uuid_article":
+                //            return PersistStatus.Invalid_uuid_article;
+                //        default:
+                //            return PersistStatus.Error;
+                //    }
+                //}
+                //catch (Exception)
+                //{
+                //    return PersistStatus.Error;
+                //}
             }
-            catch (DuplicateEntryException ex)
+        }
+        /// <summary>
+        /// Unpersists this model from the database.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        public void remove(Connector conn)
+        {
+            lock (this)
             {
-                switch (ex.Attribute)
-                {
-                    case "uuid_article":
-                        return PersistStatus.Invalid_uuid_article;
-                    default:
-                        return PersistStatus.Error;
-                }
+                if (uuidArticle == null)
+                    return;
+                PreparedStatement ps = new PreparedStatement("DELETE FROM ba_article WHERE uuid_article=?uuid_article;");
+                ps["uuid_article"] = uuidArticle;
+                conn.queryExecute(ps);
             }
-            catch (Exception)
-            {
-                return PersistStatus.Error;
-            }
-            return PersistStatus.Success;
         }
         // Methods *****************************************************************************************************
         /// <summary>
@@ -293,6 +320,11 @@ namespace CMS.BasicArticles
             get
             {
                 return uuidThread;
+            }
+            set
+            {
+                uuidThread = value;
+                modified |= Fields.ThreadUUID;
             }
         }
         /// <summary>

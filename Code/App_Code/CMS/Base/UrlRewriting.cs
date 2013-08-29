@@ -163,7 +163,7 @@ namespace CMS.Base
                         sql.executeUpdate(conn, "cms_urlrewriting");
                     }
                     else
-                        urlid = (int)sql.executeInsert(conn, "cms_urlrewriting", "urlid")[0].get2<long>("urlid");
+                        urlid = int.Parse(sql.executeInsert(conn, "cms_urlrewriting", "urlid")[0]["urlid"]);
                 }
                 catch (DuplicateEntryException)
                 {

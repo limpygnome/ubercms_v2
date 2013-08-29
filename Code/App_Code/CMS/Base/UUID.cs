@@ -20,6 +20,9 @@
  *                      2013-07-21      Created initial class.
  *                      2013-07-30      Added Bytes property and changed the SQLValue property to NumericHexString.
  *                      2013-08-08      Added improved validation and replaced fatory methods with parse.
+ *                      2013-08-29      Hex representation as bytes is now cached when read once via the Bytes property,
+ *                                      this is since it's an expensive operation and used often throughout the Core
+ *                                      and Plugins (especially when persisting model data).
  * 
  * *********************************************************************************************************************
  * A model for representing a universally unique identifier, following the RFC 4122 standard:
@@ -40,7 +43,8 @@ namespace CMS.Base
     {
         // Fields ******************************************************************************************************
         private string  hex;        // The internal hex string of the UUID; this should be 32 characters (no hyphen's).
-        private int     hashcode;   // The hash value of this object based on the hex-string. 
+        private int     hashcode;   // The hash value of this object based on the hex-string.
+        private byte[]  bytes;      // The hex value represented as 32 bytes; used for caching when the Bytes property is invoked.
         // Methods - Constructors **************************************************************************************
         private UUID(string hex)
         {
@@ -132,16 +136,22 @@ namespace CMS.Base
             }
         }
         /// <summary>
-        /// The bytes of the hex string. Fetching this value will regenerate the bytes each time (expensive).
+        /// The bytes of the hex string.
         /// </summary>
         public byte[] Bytes
         {
             get
             {
-                byte[] buffer = new byte[16];
-                for(int i = 0; i < 32; i +=2)
-                    buffer[i / 2] = (byte)int.Parse(hex.Substring(i, 2), System.Globalization.NumberStyles.HexNumber);
-                return buffer;
+                lock (this)
+                {
+                    if (bytes == null)
+                    {
+                        bytes = new byte[16];
+                        for (int i = 0; i < 32; i += 2)
+                            bytes[i / 2] = (byte)int.Parse(hex.Substring(i, 2), System.Globalization.NumberStyles.HexNumber);
+                    }
+                    return bytes;
+                }
             }
         }
     }

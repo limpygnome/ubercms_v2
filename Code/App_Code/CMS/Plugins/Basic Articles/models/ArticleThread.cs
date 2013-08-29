@@ -7,35 +7,52 @@ namespace CMS.BasicArticles
     public class ArticleThread
     {
         // Enums *******************************************************************************************************
-
+        private enum Fields
+        {
+            None = 0,
+            Url = 1,
+            Thumbnail = 2,
+            ArticleCurrent = 4
+        };
+        public enum CreateThread
+        {
+            Error,
+            UrlInvalid,
+            UrlUsed,
+            Success
+        };
         // Fields ******************************************************************************************************
-        private bool            modified,                   // Indicates if the model has been modified.
-                                persisted;                  // Indicates if the model has been persisted.
+        private Fields          modified;                   // Indicates if the model has been modified.
+        private bool            persisted;                  // Indicates if the model has been persisted.
         private UUID            uuidThread;                 // The UUID/identifier of this article thread.
-        private int             urlid;                      // The URL rewriting ID belonging to this thread.
-        private string          fullPath;                   // The full URL path of the article thread.
+        private UrlRewriting    url;                        // The URL rewriting model.
         private UUID            uuidArticleCurrent;         // The UUID of the article currently displayed for the thread.
         private bool            thumbnail;                  // Indicates if the article has a thumbnail uploaded.
         // Methods - Constructors **************************************************************************************
         public ArticleThread()
         {
-            this.modified = this.persisted = false;
-            this.urlid = -1;
+            this.modified = Fields.None;
+            this.persisted = false;
+            this.uuidThread = null;
+            this.url = null;
+            this.uuidArticleCurrent = null;
+            this.thumbnail = false;
         }
         // Methods - Database Persistence ******************************************************************************
         /// <summary>
         /// Either creates or fetches an article thread based on a full-path.
         /// </summary>
         /// <param name="conn">Database connector.</param>
+        /// <param name="ba">Basic Articles.</param>
         /// <param name="fullPath">The full path of the desired thread.</param>
         /// <param name="at">The article thread model output parameter; set to null if unsuccessful.</param>
         /// <returns>True = successfully fetched article thread model, false = failed to fetch article thread model.</returns>
-        public bool createFetch(Connector conn, string fullPath, out ArticleThread at)
+        public static CreateThread createFetch(Connector conn, BasicArticles ba, string fullPath, out ArticleThread at)
         {
             // Ensure the URL is formatted correctly
             fullPath = UrlRewriting.stripFullPath(fullPath);
             // Lookup for an existing article at the URL
-            PreparedStatement ps = new PreparedStatement("SELECT uuid_thread FROM ba_article_thread_createfetch WHERE full_path=?full_path");
+            PreparedStatement ps = new PreparedStatement("SELECT uuid_thread FROM ba_article_thread_createfetch WHERE full_path=?full_path;");
             ps["full_path"] = fullPath;
             Result r = conn.queryRead(ps);
             // Load, else create, the model for the article
@@ -47,14 +64,35 @@ namespace CMS.BasicArticles
             else
             {
                 // A thread does not exist at the specified full-path - create it!
+                // -- Create URL
+                UrlRewriting rw = new UrlRewriting();
+                rw.FullPath = fullPath;
+                rw.PluginOwner = ba.UUID;
+                UrlRewriting.PersistStatus s = rw.save(conn);
+                if(s != UrlRewriting.PersistStatus.Success)
+                {
+                    at = null;
+                    switch(s)
+                    {
+                        case UrlRewriting.PersistStatus.Error:
+                            return CreateThread.Error;
+                        case UrlRewriting.PersistStatus.InvalidPath:
+                            return CreateThread.UrlInvalid;
+                        case UrlRewriting.PersistStatus.InUse:
+                            return CreateThread.UrlUsed;
+                    }
+                }
+                // -- Create thread
                 temp = new ArticleThread();
-                temp.UUIDThread = UUID.generateVersion4();
-                temp.FullPath = fullPath;
+                temp.Url = rw;
                 if (!temp.save(conn))
-                    temp = null;
+                {
+                    at = null;
+                    return CreateThread.Error;
+                }
             }
             at = temp;
-            return temp == null;
+            return CreateThread.Success;
         }
         /// <summary>
         /// Loads a model from the database.
@@ -79,13 +117,16 @@ namespace CMS.BasicArticles
             ArticleThread th = new ArticleThread();
             th.persisted = true;
             th.uuidThread = UUID.parse(data["uuid_thread"]);
-            th.fullPath = data["full_path"];
+            th.url = UrlRewriting.load(data);
             th.uuidArticleCurrent = UUID.parse(data["uuid_article_current"]);
             th.thumbnail = data["thumbnail"].Equals("1");
             return th;
         }
         /// <summary>
         /// Persists the model to the database.
+        /// 
+        /// Note: if a UUID for the thread has not been specified and the model has not been persisted, a version 4 UUID
+        /// will be generated.
         /// </summary>
         /// <param name="conn">Database connecotor.</param>
         /// <returns>True = persisted, false = no change.</returns>
@@ -93,16 +134,22 @@ namespace CMS.BasicArticles
         {
             lock (this)
             {
-                if (!modified)
+                if (modified == Fields.None)
                     return false;
+                // Compile SQL
                 SQLCompiler sql = new SQLCompiler();
-                if(urlid < 0)
-                    sql["urlid"] = null;
-                else
-                    sql["urlid"] = urlid;
-                sql["uuid_article_current"] = uuidArticleCurrent.Bytes;
-                sql["thumbnail"] = thumbnail ? "1" : "0";
-                sql["uuid_thumbnail"] = thumbnail;
+                if ((modified & Fields.Url) == Fields.Url)
+                {
+                    if (url == null)
+                        sql["urlid"] = null;
+                    else
+                        sql["urlid"] = url.UrlID;
+                }
+                if((modified & Fields.ArticleCurrent) == Fields.ArticleCurrent)
+                    sql["uuid_article_current"] = uuidArticleCurrent != null ? uuidArticleCurrent.Bytes : null;
+                if((modified & Fields.Thumbnail) == Fields.Thumbnail)
+                    sql["thumbnail"] = thumbnail ? "1" : "0";
+                // Execute SQL
                 try
                 {
                     if (persisted)
@@ -113,12 +160,13 @@ namespace CMS.BasicArticles
                     }
                     else
                     {
-                        uuidThread = UUID.generateVersion4();
+                        if(uuidThread == null)
+                            uuidThread = UUID.generateVersion4();
                         sql["uuid_thread"] = uuidThread.Bytes;
                         sql.executeInsert(conn, "ba_article_thread");
                         persisted = true;
                     }
-                    modified = false;
+                    modified = Fields.None;
                 }
                 catch (Exception)
                 {
@@ -128,51 +176,77 @@ namespace CMS.BasicArticles
             }
         }
         /// <summary>
-        /// Unpersists the model from the database.
+        /// Unpersists the model from the database, but only if the article has no articles.
         /// </summary>
         /// <param name="conn">Database connector.</param>
         public void remove(Connector conn)
         {
+            conn.queryExecute("BEGIN;");
+            bool delete = conn.queryCount("SELECT COUNT('') FROM ba_article WHERE uuid_thread=" + uuidThread.NumericHexString) == 0;
+            if (delete)
+            {
+                try
+                {
+                    conn.queryExecute("DELETE FROM ba_article_thread WHERE uuid_thread=" + uuidThread.NumericHexString);
+                    if(url != null)
+                        url.remove(conn);
+                    persisted = false;
+                }
+                catch { }
+            }
+            conn.queryExecute("COMMIT;");
+        }
+        /// <summary>
+        /// Unpersists the model from the database.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        public void removeForce(Connector conn)
+        {
             PreparedStatement ps = new PreparedStatement("DELETE FROM ba_article_thread WHERE uuid_thread=?uuid_thread;");
             ps["uuid_thread"] = uuidThread.Bytes;
-            conn.queryExecute(ps);
+            try
+            {
+                conn.queryExecute(ps);
+                url.remove(conn);
+            }
+            catch { }
             persisted = false;
         }
         // Methods *****************************************************************************************************
-        /// <summary>
-        /// Changes the URL rewriting path of the thread.
-        /// </summary>
-        /// <param name="conn">Database connector.</param>
-        /// <param name="ba">BA plugin.</param>
-        /// <param name="fullPath">The new URL for the article thread.</param>
-        /// <returnsTrue = success, false = path invalid/in-use.></returns>
-        public UrlRewriting.PersistStatus setPath(Connector conn, BasicArticles ba, string fullPath)
-        {
-            if (urlid < -1)
-            {
-                // Create new URL path
-                UrlRewriting.PersistStatus ps = UrlRewriting.PersistStatus.Error;
-                UrlRewriting rw = UrlRewriting.create(conn, ba, fullPath, out ps);
-                if (rw != null)
-                    urlid = rw.UrlID;
-                return ps;
-            }
-            else
-            {
-                // Load existing URL path and switch it
-                UrlRewriting rw = UrlRewriting.load(conn, urlid);
-                if (rw == null)
-                {
-                    urlid = -1;
-                    return UrlRewriting.PersistStatus.Error;
-                }
-                else
-                {
-                    rw.FullPath = fullPath;
-                    return rw.save(conn);
-                }
-            }
-        }
+        ///// <summary>
+        ///// Changes the URL rewriting path of the thread.
+        ///// </summary>
+        ///// <param name="conn">Database connector.</param>
+        ///// <param name="ba">BA plugin.</param>
+        ///// <param name="fullPath">The new URL for the article thread.</param>
+        ///// <returnsTrue = success, false = path invalid/in-use.></returns>
+        //public UrlRewriting.PersistStatus setPath(Connector conn, BasicArticles ba, string fullPath)
+        //{
+        //    if (urlid < -1)
+        //    {
+        //        // Create new URL path
+        //        UrlRewriting.PersistStatus ps = UrlRewriting.PersistStatus.Error;
+        //        UrlRewriting rw = UrlRewriting.create(conn, ba, fullPath, out ps);
+        //        if (rw != null)
+        //            urlid = rw.UrlID;
+        //        return ps;
+        //    }
+        //    else
+        //    {
+        //        // Load existing URL path and switch it
+        //        UrlRewriting rw = UrlRewriting.load(conn, urlid);
+        //        if (rw == null)
+        //        {
+        //            urlid = -1;
+        //            return UrlRewriting.PersistStatus.Error;
+        //        }
+        //        else
+        //        {
+        //            rw.FullPath = fullPath;
+        //            return rw.save(conn);
+        //        }
+        //    }
+        //}
         // Methods - Properties ****************************************************************************************
         /// <summary>
         /// The UUID of this article thread.
@@ -192,30 +266,18 @@ namespace CMS.BasicArticles
             }
         }
         /// <summary>
-        /// The identifier of the url-rewriting model used by this thread.
+        /// The URL rewriting model associated with this thread; can be null.
         /// </summary>
-        public int UrlID
+        public UrlRewriting Url
         {
             get
             {
-                return urlid;
+                return url;
             }
-        }
-        /// <summary>
-        /// The full-path (URL) of this article thread. Refer to UrlRewriting model for format.
-        /// 
-        /// This can only be set interally if the model has yet to be persisted!
-        /// </summary>
-        public string FullPath
-        {
-            get
+            set
             {
-                return fullPath;
-            }
-            internal set
-            {
-                if (!persisted)
-                    fullPath = value;
+                url = value;
+                modified |= Fields.Url;
             }
         }
         /// <summary>
@@ -230,7 +292,7 @@ namespace CMS.BasicArticles
             set
             {
                 uuidArticleCurrent = value;
-                modified = true;
+                modified |= Fields.ArticleCurrent;
             }
         }
         /// <summary>
@@ -245,7 +307,7 @@ namespace CMS.BasicArticles
             set
             {
                 thumbnail = value;
-                modified = true;
+                modified |= Fields.Thumbnail;
             }
         }
         /// <summary>
