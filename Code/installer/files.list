@@ -1,0 +1,3 @@
+# Sync layout files
+%GLOBAL%/content/css/layout.css		,	%LOCAL%/content/css
+%GLOBAL%/content/images/layout/*	,	%LOCAL%/content/images/layout
