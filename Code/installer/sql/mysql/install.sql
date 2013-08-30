@@ -1,7 +1,7 @@
 -- Create tables
 CREATE TABLE cms_plugins
 (
-	uuid									CHAR(16) PRIMARY KEY,
+	uuid									BINARY(16) PRIMARY KEY,
 	title									TEXT NOT NULL,
 	directory								TEXT NOT NULL,
 	classpath								TEXT NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE cms_plugins
 );
 CREATE TABLE cms_plugin_handlers
 (
-	uuid									CHAR(16) PRIMARY KEY,
+	uuid									BINARY(16) PRIMARY KEY,
 	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	request_start							VARCHAR(1) DEFAULT 0,
 	request_end								VARCHAR(1) DEFAULT 0,
@@ -27,7 +27,7 @@ CREATE TABLE cms_plugin_handlers
 CREATE TABLE cms_settings
 (
 	path									VARCHAR(128) PRIMARY KEY,
-	uuid									CHAR(16),
+	uuid									BINARY(16),
 	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	type									VARCHAR(1) NOT NULL,
 	value									TEXT,
@@ -36,7 +36,7 @@ CREATE TABLE cms_settings
 CREATE TABLE cms_urlrewriting
 (
 	urlid									INT PRIMARY KEY AUTO_INCREMENT,
-	uuid									CHAR(16),
+	uuid									BINARY(16),
 	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	full_path								VARCHAR(128) UNIQUE,
 	priority								INT DEFAULT 0
@@ -44,7 +44,7 @@ CREATE TABLE cms_urlrewriting
 CREATE TABLE cms_templates
 (
 	path									VARCHAR(128) PRIMARY KEY,
-	uuid									CHAR(16),
+	uuid									BINARY(16),
 	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	description								TEXT,
 	html									TEXT
@@ -55,7 +55,7 @@ CREATE TABLE cms_template_handlers
 	-- classpath: the location of the class in the assembly e.g. CMS.Base.Templates
 	-- function_name: the name of the function within the class to be invoked.
 	path									VARCHAR(128) PRIMARY KEY,
-	uuid									CHAR(16),
+	uuid									BINARY(16),
 	FOREIGN KEY(`uuid`)						REFERENCES `cms_plugins`(`uuid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	classpath								VARCHAR(128) NOT NULL,
 	function_name							VARCHAR(128) NOT NULL
