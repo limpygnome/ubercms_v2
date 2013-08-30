@@ -114,6 +114,7 @@
     <Compile Include="Code\App_Code\CMS\Plugins\Package Developer\PackageDeveloper.cs" />
     <Compile Include="Code\App_Code\CMS\Base\PluginHandlerInfo.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Example\Example.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\TextRenderer.cs" />
     <Compile Include="Code\Default.aspx.cs">
       <DependentUpon>Code\Default.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

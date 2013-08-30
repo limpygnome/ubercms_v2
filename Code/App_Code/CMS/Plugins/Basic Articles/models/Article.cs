@@ -231,39 +231,39 @@ namespace CMS.BasicArticles
                 if ((modified & Fields.UserIDPublisher) == Fields.UserIDPublisher)
                     sql["userid_publisher"] = useridPublisher;
                 // Execute SQL
-                //try
-                //{
-                //    if (persisted)
-                //    {
-                //        sql.UpdateAttribute = "uuid_article";
-                //        sql.UpdateValue = uuidArticle.Bytes;
-                //        sql.executeUpdate(conn, "ba_article");
-                //    }
-                //    else
-                //    {
-                        //if(uuidArticle == null)
+                try
+                {
+                    if (persisted)
+                    {
+                        sql.UpdateAttribute = "uuid_article";
+                        sql.UpdateValue = uuidArticle.Bytes;
+                        sql.executeUpdate(conn, "ba_article");
+                    }
+                    else
+                    {
+                        if(uuidArticle == null)
                             uuidArticle = UUID.generateVersion4();
                         sql["uuid_article"] = uuidArticle.Bytes;
                         sql.executeInsert(conn, "ba_article");
                         persisted = true;
-                    //}
+                    }
                     modified = Fields.None;
                     return PersistStatus.Success;
-                //}
-                //catch (DuplicateEntryException ex)
-                //{
-                //    switch (ex.Attribute)
-                //    {
-                //        case "uuid_article":
-                //            return PersistStatus.Invalid_uuid_article;
-                //        default:
-                //            return PersistStatus.Error;
-                //    }
-                //}
-                //catch (Exception)
-                //{
-                //    return PersistStatus.Error;
-                //}
+                }
+                catch (DuplicateEntryException ex)
+                {
+                    switch (ex.Attribute)
+                    {
+                        case "uuid_article":
+                            return PersistStatus.Invalid_uuid_article;
+                        default:
+                            return PersistStatus.Error;
+                    }
+                }
+                catch (Exception)
+                {
+                    return PersistStatus.Error;
+                }
             }
         }
         /// <summary>
@@ -277,7 +277,7 @@ namespace CMS.BasicArticles
                 if (uuidArticle == null)
                     return;
                 PreparedStatement ps = new PreparedStatement("DELETE FROM ba_article WHERE uuid_article=?uuid_article;");
-                ps["uuid_article"] = uuidArticle;
+                ps["uuid_article"] = uuidArticle.Bytes;
                 conn.queryExecute(ps);
             }
         }

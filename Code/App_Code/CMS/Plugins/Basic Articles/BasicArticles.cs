@@ -146,6 +146,9 @@ namespace CMS.BasicArticles
         /// <returns></returns>
         public bool pageArticle_create(Data data)
         {
+#if CAPTCHA
+            Captcha.hookPage(data);
+#endif
             string error = null;
             // Check for postback
             ArticleCreatePostback postback;
@@ -175,7 +178,7 @@ namespace CMS.BasicArticles
                             error = "Invalid request; please try again!";
 #endif
 #if CAPTCHA
-                        if (error != null && !Captcha.isCaptchaCorrect(data))
+                        if (error == null && !Captcha.isCaptchaCorrect(data))
                             error = "Invalid captcha verification code!";
 #endif
                         if (error == null)
