@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[core/page]]></path><description><![CDATA[The default page template used to wrap content.]]></description><html><![CDATA[<!DOCTYPE html>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[core/page]]></path><description><![CDATA[The default page template used to wrap content.]]></description><html><![CDATA[<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<title>&uuml;ber CMS - <!--:Title--></title>
