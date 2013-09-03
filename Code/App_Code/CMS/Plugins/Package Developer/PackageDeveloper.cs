@@ -319,7 +319,7 @@ namespace CMS.Plugins
                     Core.Plugins.remove(data.Connector, plugin, false, ref output);
                     break;
                 case "unload":
-                    Core.Plugins.unload(plugin);
+                    Core.Plugins.unload(data.Connector, plugin);
                     output.Append("Unloaded plugin '").Append(plugin.Title).Append("' (UUID: '").Append(plugin.UUID.HexHyphens).AppendLine("') from virtual runtime!");
                     break;
                 default:

@@ -114,6 +114,11 @@
     <Compile Include="Code\App_Code\CMS\Plugins\Package Developer\PackageDeveloper.cs" />
     <Compile Include="Code\App_Code\CMS\Base\PluginHandlerInfo.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Example\Example.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\models\RenderProvider.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\providers\AudioVideo.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\providers\Code.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\providers\Escaping.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\providers\Text.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\TextRenderer.cs" />
     <Compile Include="Code\Default.aspx.cs">
       <DependentUpon>Code\Default.aspx</DependentUpon>
@@ -130,6 +135,8 @@
     <Compile Include="Code\App_Code\CMS\Base\BaseUtils.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Code\App_Code\CMS\Plugins\Text Renderer\sql\install.sql" />
+    <Content Include="Code\App_Code\CMS\Plugins\Text Renderer\sql\uninstall.sql" />
     <Content Include="Code\Global.asax" />
     <Content Include="Code\web.config" />
     <Content Include="Code\Default.aspx" />
@@ -172,6 +179,7 @@
       <SubType>Designer</SubType>
     </Content>
     <None Include="Code\App_Code\CMS\Plugins\Basic Site Auth\files.list" />
+    <Content Include="Code\App_Code\CMS\Plugins\Text Renderer\Plugin.config" />
     <None Include="Code\installer\files.list" />
   </ItemGroup>
 </Project>

@@ -56,7 +56,7 @@ namespace CMS.BasicArticles
                     sb.Append("(").Append(uuidThread.NumericHexString).Append(", ").Append(g.ToString()).Append("),");
                 sb.Remove(sb.Length - 1, 1).Append(";");
             }
-            sb.Append("END;");
+            sb.Append("COMMIT;");
             try
             {
                 conn.queryExecute(sb.ToString());

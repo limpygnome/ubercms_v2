@@ -25,6 +25,7 @@
  *                                      Added generateRandomString method.
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-23      Changed executeSQL parameters and return-type from CMS v1 to v2 format.
+ *                      2013-09-02      Added protection from CSS and JS files being appended multiple times.
  * 
  * *********************************************************************************************************************
  * A utility class of commonly used code.
@@ -275,6 +276,13 @@ namespace CMS.Base
         /// <param name="data">Data object for the current request.</param>
         public static void headerAppendCss(string webPath, ref Data data)
         {
+            // Check it has already not been linked
+            string key = "__css_" + webPath;
+            if (data.isKeySet(key))
+                return;
+            else
+                data.setFlag(key);
+            // Link the file
             string t = "<link href=\"" + webPath + "\" type=\"text/css\" rel=\"Stylesheet\" />";
             headerAppend(ref t, ref data);
         }
@@ -286,6 +294,13 @@ namespace CMS.Base
         /// <param name="media">Media attribute options, refer to: http://www.w3schools.com/tags/att_link_media.asp</param>
         public static void headerAppendCss(string webPath, ref Data data, string media)
         {
+            // Check it has already not been linked
+            string key = "__css_" + webPath;
+            if (data.isKeySet(key))
+                return;
+            else
+                data.setFlag(key);
+            // Link the file
             string t = "<link href=\"" + webPath + "\" type=\"text/css\" rel=\"Stylesheet\" media=\"" + media + "\" />";
             headerAppend(ref t, ref data);
         }
@@ -296,6 +311,13 @@ namespace CMS.Base
         /// <param name="data">Data object for the current request.</param>
         public static void headerAppendJs(string webPath, ref Data data)
         {
+            // Check it has already not been linked
+            string key = "__js_" + webPath;
+            if (data.isKeySet(key))
+                return;
+            else
+                data.setFlag(key);
+            // Link the file
             string t = "<script src=\"" + webPath + "\"></script>";
             headerAppend(ref t, ref data);
         }

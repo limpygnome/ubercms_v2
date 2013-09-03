@@ -37,6 +37,8 @@
  *                                      Plugins are now stored based on UUID hex, rather than hex-with-hyphens, for less
  *                                      space complexity.
  *                      2013-08-27      Bug-fixes, general improvements.
+ *                      2013-09-02      pluginLoad and pluginUnload are invoked when the plugin is either loaded when
+ *                                      enabled or when the plugin is enabled.
  * 
  * *********************************************************************************************************************
  * A data-collection for managing and interacting with plugin models.
@@ -138,7 +140,7 @@ namespace CMS.Base
         /// <summary>
         /// Loads a plugin into the CMS's runtime.
         /// 
-        /// This does not rebuild the plugin handler cache.
+        /// This does not rebuild the plugin handler cache's.
         /// This will invoke any handlers, such as pluginStart.
         /// </summary>
         /// <param name="plugin">The plugin to be loaded into the runtime.</param>
@@ -172,11 +174,22 @@ namespace CMS.Base
         /// <summary>
         /// Unloads a plugin from the runtime; this does not affect the plugin's state.
         /// </summary>
-        /// <param name="plugin"></param>
-        public void unload(Plugin plugin)
+        /// <param name="conn">Database connector.</param>
+        /// <param name="plugin">The plugin being unloaded from the runtime.</param>
+        public void unload(Connector conn, Plugin plugin)
         {
             lock (this)
             {
+                // Call stop handler on the plugin if enabled
+                try
+                {
+                    if (plugin.State == Plugin.PluginState.Enabled && plugin.HandlerInfo.PluginStop)
+                        plugin.handler_pluginStop(conn);
+                }
+                catch
+                {
+                }
+                // Remove from internal storage
                 plugins.Remove(plugin.UUID.NumericHexString);
             }
         }
@@ -537,7 +550,7 @@ namespace CMS.Base
                             return false;
                         }
                     }
-                    // Invoke install handler of plugin
+                    // Invoke enable handler of plugin
                     try
                     {
                         if (!plugin.enable(conn, ref messageOutput))
@@ -556,6 +569,20 @@ namespace CMS.Base
                         foreach (Plugin p in Fetch)
                             if (plugin.UUID != p.UUID && p.HandlerInfo.PluginAction)
                                 p.handler_pluginAction(conn, Plugin.PluginAction.PostEnable, plugin);
+                        // Load the plugin
+                        if (plugin.HandlerInfo.PluginStart)
+                        {
+                            try
+                            {
+                                if (!plugin.handler_pluginStart(conn))
+                                    throw new Exception("Plugin returned false from pluginStart handler!");
+                            }
+                            catch(Exception ex)
+                            {
+                                unload(conn, plugin);
+                                Core.fail("Plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - pluginStart handler failed due to an exception and was unloaded: '" + ex.Message + "'; this is only a warning, the plugin has been enabled!");
+                            }
+                        }
                     }
                     else
                     {
@@ -620,6 +647,18 @@ namespace CMS.Base
                     plugin.State = Plugin.PluginState.Disabled;
                     if (plugin.save(conn))
                     {
+                        // Stop the plugin
+                        if (plugin.HandlerInfo.PluginStop)
+                        {
+                            try
+                            {
+                                plugin.handler_pluginStop(conn);
+                            }
+                            catch (Exception ex)
+                            {
+                                messageOutput.AppendLine("Warning: plugin '" + plugin.Title + "' (UUID: '" + plugin.UUID.HexHyphens + "') - exception occurred stopping plugin: '" + ex.Message + "'!");
+                            }
+                        }
                         // Invoke post-action handlers
                         foreach (Plugin p in Fetch)
                             if (plugin.UUID != p.UUID && p.HandlerInfo.PluginAction)
@@ -654,7 +693,7 @@ namespace CMS.Base
                 lock (plugin)
                 {
                     // Remove from runtime
-                    unload(plugin);
+                    unload(conn, plugin);
                     // Unpersist
                     try
                     {

@@ -183,7 +183,7 @@ namespace CMS.Base
                                     // Invoke plugin handlers
                                     foreach (Plugin p in plugins.Fetch)
                                         if (p.State == Plugin.PluginState.Enabled && p.HandlerInfo.PluginStart && !p.handler_pluginStart(conn))
-                                            plugins.unload(p);
+                                            plugins.unload(conn, p);
                                 }
                                 // Dispose connector
                                 conn.disconnect();
