@@ -11,4 +11,4 @@
 );
 
 CREATE OR REPLACE VIEW view_textrendering_providers AS
-	SELECT HEX(uuid) AS uuid, HEX(uuid_plugin) AS uuid_plugin, title, description, enabled FROM textrendering_providers;
+	SELECT HEX(uuid) AS uuid, HEX(uuid_plugin) AS uuid_plugin, classpath, title, description, enabled, priority FROM textrendering_providers;

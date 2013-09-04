@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Web;
 using CMS.Base;
 using CMS.Plugins;
@@ -150,6 +151,7 @@ namespace CMS.BasicArticles
             Captcha.hookPage(data);
 #endif
             string error = null;
+            string rendered = null;
             // Check for postback
             ArticleCreatePostback postback;
             if (data.Request.Form["article_display_raw"] != null)
@@ -170,98 +172,116 @@ namespace CMS.BasicArticles
             // Handle (possible) postback data
             if (postback != ArticleCreatePostback.None && title != null && url != null && raw != null)
             {
-                switch (postback)
+                // Check if to render the article
+                if (postback == ArticleCreatePostback.CreateEdit || postback == ArticleCreatePostback.Render)
                 {
-                    case ArticleCreatePostback.CreateEdit:
+                    StringBuilder text = new StringBuilder(raw);
+                    StringBuilder header = new StringBuilder();
+                    // Render text
+#if TextRenderer
+                    TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
+                    if (tr != null)
+                    {
+                        tr.render(data, ref header, ref text, RenderProvider.RenderType.Objects | RenderProvider.RenderType.TextFormatting);
+                        // Set rendered field for display/persisting
+                        rendered = text.ToString();
+                        // Append header data
+                        BaseUtils.headerAppend(header.ToString(), ref data);
+                    }
+                    else
+                        error = "The text renderer plugin is not running within the CMS's runtime; cannot continue, unable to render article source!";
+#endif
+                            
+                }
+                // Check if to persist the article
+                if (error == null && postback == ArticleCreatePostback.CreateEdit)
+                {
 #if CSRFP
-                        if (!CSRFProtection.authenticated(data))
-                            error = "Invalid request; please try again!";
+                    if (!CSRFProtection.authenticated(data))
+                        error = "Invalid request; please try again!";
 #endif
 #if CAPTCHA
-                        if (error == null && !Captcha.isCaptchaCorrect(data))
-                            error = "Invalid captcha verification code!";
+                    if (error == null && !Captcha.isCaptchaCorrect(data))
+                        error = "Invalid captcha verification code!";
 #endif
-                        if (error == null)
+                    // Check no errors have occurred thus far with security/validation
+                    if (error == null)
+                    {
+                        // Create a new article
+                        Article a = new Article();
+                        a.Title = title;
+                        a.TextRaw = raw;
+                        a.HTML = html;
+                        a.HidePanel = hidePanel;
+                        a.Comments = comments;
+                        // Attempt to persist the model
+                        Article.PersistStatus ps = a.save(data.Connector);
+                        if (ps != Article.PersistStatus.Success)
+                        { // Failed to persist...check why...
+                            switch (ps)
+                            {
+                                case Article.PersistStatus.Invalid_uuid_article:
+                                case Article.PersistStatus.Invalid_thread:
+                                case Article.PersistStatus.Error:
+                                    error = "An error occurred creating the article, please try again later!"; break;
+                                case Article.PersistStatus.Invalid_text_length:
+                                    error = "Source/raw article must be x to x characters in length!"; break;
+                                case Article.PersistStatus.Invalid_title_length:
+                                    error = "Title must be x to x characters in length!"; break;
+                                default:
+                                    error = "Unknown issue occurred persisting the article!"; break;
+                            }
+                        }
+                        else
                         {
-                            // Create a new article
-                            Article a = new Article();
-                            a.Title = title;
-                            a.TextRaw = raw;
-                            a.HTML = html;
-                            a.HidePanel = hidePanel;
-                            a.Comments = comments;
-                            // Attempt to persist the model
-                            Article.PersistStatus ps = a.save(data.Connector);
-                            if (ps != Article.PersistStatus.Success)
-                            { // Failed to persist...check why...
-                                switch (ps)
+                            // Fetch/create article thread based on the URL
+                            ArticleThread at = null;
+                            ArticleThread.CreateThread ct = ArticleThread.createFetch(data.Connector, this, url, out at);
+                            // Check we have fetched/created a thread
+                            if (ct != ArticleThread.CreateThread.Success)
+                            { // Failed...
+                                switch (ct)
                                 {
-                                    case Article.PersistStatus.Invalid_uuid_article:
-                                    case Article.PersistStatus.Invalid_thread:
-                                    case Article.PersistStatus.Error:
-                                        error = "An error occurred creating the article, please try again later!"; break;
-                                    case Article.PersistStatus.Invalid_text_length:
-                                        error = "Source/raw article must be x to x characters in length!"; break;
-                                    case Article.PersistStatus.Invalid_title_length:
-                                        error = "Title must be x to x characters in length!"; break;
-                                    default:
-                                        error = "Unknown issue occurred persisting the article!"; break;
+                                    case ArticleThread.CreateThread.UrlUsed:
+                                        error = "URL already in-use!"; break;
+                                    case ArticleThread.CreateThread.UrlInvalid:
+                                        error = "Invalid URL!"; break;
+                                    case ArticleThread.CreateThread.Error:
+                                        error = "Unknown error fetching the thread!"; break;
                                 }
+                                a.remove(data.Connector);
                             }
                             else
                             {
-                                // Fetch/create article thread based on the URL
-                                ArticleThread at = null;
-                                ArticleThread.CreateThread ct = ArticleThread.createFetch(data.Connector, this, url, out at);
-                                // Check we have fetched/created a thread
-                                if(ct != ArticleThread.CreateThread.Success)
-                                { // Failed...
-                                    switch(ct)
-                                    {
-                                        case ArticleThread.CreateThread.UrlUsed:
-                                            error = "URL already in-use!"; break;
-                                        case ArticleThread.CreateThread.UrlInvalid:
-                                            error = "Invalid URL!"; break;
-                                        case ArticleThread.CreateThread.Error:
-                                            error = "Unknown error fetching the thread!"; break;
-                                    }
+                                // Assign thread to the article and set the article as the current article for the thread
+                                a.UUIDThread = at.UUIDThread;
+                                at.UUIDArticleCurrent = a.UUIDArticle;
+                                // Persist the model data
+                                if (a.save(data.Connector) != Article.PersistStatus.Success)
+                                {
                                     a.remove(data.Connector);
+                                    at.remove(data.Connector);
+                                    error = "Unknown error occurred (article persistence)!";
+                                }
+                                else if (!at.save(data.Connector))
+                                {
+                                    a.remove(data.Connector);
+                                    at.remove(data.Connector);
+                                    error = "Unknown error occurred (thread persistence)!";
                                 }
                                 else
                                 {
-                                    // Assign thread to the article and set the article as the current article for the thread
-                                    a.UUIDThread = at.UUIDThread;
-                                    at.UUIDArticleCurrent = a.UUIDArticle;
-                                    // Persist the model data
-                                    if (a.save(data.Connector) != Article.PersistStatus.Success)
-                                    {
-                                        a.remove(data.Connector);
-                                        at.remove(data.Connector);
-                                        error = "Unknown error occurred (article persistence)!";
-                                    }
-                                    else if (!at.save(data.Connector))
-                                    {
-                                        a.remove(data.Connector);
-                                        at.remove(data.Connector);
-                                        error = "Unknown error occurred (thread persistence)!";
-                                    }
-                                    else
-                                    {
-                                        // Redirect to the article
-                                        BaseUtils.redirectAbs(data, "/article/" + a.UUIDArticle.Hex);
-                                    }
+                                    // Redirect to the article
+                                    BaseUtils.redirectAbs(data, "/article/" + a.UUIDArticle.Hex);
                                 }
-
                             }
                         }
-                        break;
-                    case ArticleCreatePostback.Render:
-
-                        break;
+                    }
                 }
             }
             // Setup the page
-            BaseUtils.headerAppendCss("/content/css/ba.css", ref data);
+            BaseUtils.headerAppendCss("/content/css/basic_articles.css", ref data);
+            BaseUtils.headerAppendJs("/content/js/basic_articles.js", ref data);
             // Set content
             data["Title"] = "Articles - Create";
             data["Content"] = Core.Templates.get(data.Connector, "basic_articles/create");
@@ -270,7 +290,7 @@ namespace CMS.BasicArticles
             data["article_url"] = HttpUtility.HtmlEncode(url);
             data["article_raw"] = HttpUtility.HtmlEncode(raw);
             if (postback == ArticleCreatePostback.Render)
-                data["article_rendered"] = "rendered";
+                data["article_rendered"] = rendered;
             // Set flags
             if (html)
                 data.setFlag("article_html");

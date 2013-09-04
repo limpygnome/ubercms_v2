@@ -26,6 +26,8 @@
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-23      Changed executeSQL parameters and return-type from CMS v1 to v2 format.
  *                      2013-09-02      Added protection from CSS and JS files being appended multiple times.
+ *                      2013-09-03      Added appending to StringBuilder for CSS and JS; headerAppend method public
+ *                                      and no longer performs checking.
  * 
  * *********************************************************************************************************************
  * A utility class of commonly used code.
@@ -276,15 +278,7 @@ namespace CMS.Base
         /// <param name="data">Data object for the current request.</param>
         public static void headerAppendCss(string webPath, ref Data data)
         {
-            // Check it has already not been linked
-            string key = "__css_" + webPath;
-            if (data.isKeySet(key))
-                return;
-            else
-                data.setFlag(key);
-            // Link the file
-            string t = "<link href=\"" + webPath + "\" type=\"text/css\" rel=\"Stylesheet\" />";
-            headerAppend(ref t, ref data);
+            headerAppendCss(webPath, ref data, null);
         }
         /// <summary>
         /// Appends a CSS link to the header.
@@ -301,8 +295,38 @@ namespace CMS.Base
             else
                 data.setFlag(key);
             // Link the file
-            string t = "<link href=\"" + webPath + "\" type=\"text/css\" rel=\"Stylesheet\" media=\"" + media + "\" />";
-            headerAppend(ref t, ref data);
+            headerAppend("<link href=\"" + webPath + "\" type=\"text/css\" rel=\"Stylesheet\" " + (media == null ? "" : "media=\"" + media + "\" ") + "/>", ref data);
+        }
+        /// <summary>
+        /// Appends a CSS link to the header.
+        /// </summary>
+        /// <param name="webPath">Path to CSS file.</param>
+        /// <param name="data">Data object for the current request.</param>
+        /// <param name="header">The place to output header data.</param>
+        public static void headerAppendCss(string webPath, ref Data data, ref StringBuilder header)
+        {
+            headerAppendCss(webPath, ref data, null, ref header);
+        }
+        /// <summary>
+        /// Appends a CSS link to the header.
+        /// </summary>
+        /// <param name="webPath">Path to CSS file.</param>
+        /// <param name="data">Data object for the current request.</param>
+        /// <param name="media">Media attribute options, refer to: http://www.w3schools.com/tags/att_link_media.asp</param>
+        /// <param name="header">The place to output header data.</param>
+        public static void headerAppendCss(string webPath, ref Data data, string media, ref StringBuilder header)
+        {
+            // Check it has already not been linked
+            string key = "__css_" + webPath;
+            if (data.isKeySet(key))
+                return;
+            else
+                data.setFlag(key);
+            // Link the file
+            header.Append("<link href=\"").AppendLine(webPath).Append("\" type=\"text/css\" rel=\"Stylesheet\" ");
+            if(media != null)
+                header.Append("media=\"").Append(media).Append("\" ");
+            header.AppendLine("/>");
         }
         /// <summary>
         /// Appends a JavaScript file include to the header.
@@ -318,15 +342,31 @@ namespace CMS.Base
             else
                 data.setFlag(key);
             // Link the file
-            string t = "<script src=\"" + webPath + "\"></script>";
-            headerAppend(ref t, ref data);
+            headerAppend("<script src=\"" + webPath + "\"></script>", ref data);
         }
-        private static void headerAppend(ref string entity, ref Data data)
+        /// <summary>
+        /// Appends a JavaScript file include to the header.
+        /// </summary>
+        /// <param name="webPath">Path to the JavaScript file.</param>
+        /// <param name="data">Data object for the current request.</param>
+        /// <param name="header">The place to output header data.</param>
+        public static void headerAppendJs(string webPath, ref Data data, ref StringBuilder header)
+        {
+            // Check it has already not been linked
+            string key = "__js_" + webPath;
+            if (data.isKeySet(key))
+                return;
+            else
+                data.setFlag(key);
+            // Link the file
+            header.Append("<script src=\"").Append(webPath).AppendLine("\"></script>");
+        }
+        public static void headerAppend(string headerData, ref Data data)
         {
             if (!data.isKeySet("Header"))
-                data["Header"] = entity;
-            else if (!data["Header"].Contains(entity))
-                data["Header"] += entity;
+                data["Header"] = headerData;
+            else
+                data["Header"] += "\n" + headerData;
         }
         /// <summary>
         /// Returns the human-readable format of a date-time string, which converts a date into the nearest time

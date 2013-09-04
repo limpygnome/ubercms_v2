@@ -76,12 +76,46 @@
 	</div>
 	<!--ENDIF:article_error-->
 	<div class="article_editor_toolbar">
-		<input type="submit" name="article_display_raw" value="Source" onclick="return articleSource();" <!--IF:!article_rendered-->class="SELECTED"<!--ENDIF:!article_rendered--> />
-		<input type="submit" name="article_display_rendered" value="Rendered" onclick="return articleRender();" <!--IF:article_rendered-->class="SELECTED"<!--ENDIF:article_rendered--> />
+		<input type="submit" name="article_display_raw" value="Source" <!--IF:!article_rendered-->class="SELECTED"<!--ENDIF:!article_rendered--> />
+		<input type="submit" name="article_display_rendered" value="Rendered" <!--IF:article_rendered-->class="SELECTED"<!--ENDIF:article_rendered--> />
+		
+		<div class="bbcode" id="article_bbcode">
+			<img src="/content/images/basic_articles/font_face.png" onclick="fontFace();" alt="Font Face" title="Font Face" />
+			<img src="/content/images/basic_articles/font_size.png" onclick="fontSize();" alt="Font Size" title="Font Size" />
+			<img src="/content/images/basic_articles/font_bold.png" onclick="fontBold();" alt="Bold" title="Bold" />
+			<img src="/content/images/basic_articles/font_italic.png" onclick="fontItalic();" alt="Italics" title="Italics" />
+			<img src="/content/images/basic_articles/font_underline.png" onclick="fontUnderline();" alt="Underline" title="Underline" />
+			<img src="/content/images/basic_articles/font_strike.png" onclick="fontStrike();" alt="Strike-Through" title="Strike-Through" />
+			
+			<div>&nbsp;</div>
+			
+			<img src="/content/images/basic_articles/colour.png" onclick="colour();" alt="Colour" title="Colour" />
+			<img src="/content/images/basic_articles/highlight.png" onclick="highlight();" alt="Highlight" title="Highlight" />
+			
+			<div>&nbsp;</div>
+			
+			<img src="/content/images/basic_articles/list.png" onclick="insertList(false);" alt="Insert List" title="Insert List" />
+			<img src="/content/images/basic_articles/numeric_list.png" onclick="insertList(true);" alt="Insert Numeric List" title="Insert Numeric List" />
+			<img src="/content/images/basic_articles/bullet.png" onclick="insertBulletPoint();" alt="Insert Bullet Point" title="Insert Bullet Point" />
+			
+			<div>&nbsp;</div>
+			
+			<img src="/content/images/basic_articles/align_left.png" onclick="alignLeft();" alt="Align Left" title="Align Left" />
+			<img src="/content/images/basic_articles/align_center.png" onclick="alignCenter();" alt="Align Center" title="Align Center" />
+			<img src="/content/images/basic_articles/align_right.png" onclick="alignRight();" alt="Align Right" title="Align Right" />
+			
+			<div>&nbsp;</div>
+			
+			<img src="/content/images/basic_articles/youtube.png" onclick="insertYouTube();" alt="Insert YouTube Video" title="Insert YouTube Video" />
+			<img src="/content/images/basic_articles/vimeo.png" onclick="insertVimeo();" alt="Insert Vimeo Video" title="Insert Vimeo Video" />
+			<img src="/content/images/basic_articles/code.png" onclick="insertCode();" alt="Insert Code" title="Insert Code" />
+			<img src="/content/images/basic_articles/quote.png" onclick="insertQuote();" alt="Insert Quote" title="Insert Quote" />
+			<img src="/content/images/basic_articles/image.png" onclick="insertImage();" alt="Insert Image at URL" title="Insert Image at URL" />
+		</div>
 	</div>
 	<div id="article_raw">
 		<!--IF:!article_rendered-->
-			<textarea cols="100" rows="25" name="article_raw"><!--article_raw--></textarea>
+			<textarea cols="100" rows="25" name="article_raw" id="article_raw"><!--article_raw--></textarea>
 		<!--ELSE-->
 			<input type="hidden" name="article_raw" value="<!--article_raw-->" />
 		<!--ENDIF:!article_rendered-->

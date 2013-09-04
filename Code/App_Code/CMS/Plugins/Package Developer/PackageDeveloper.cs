@@ -24,6 +24,7 @@
  *                                      Added more core functions and core syncing.
  *                                      Syncing now overwrites files.
  *                                      Added plugin versioning.
+ *                      2013-09-04      Fixed file sync bug.
  * 
  * *********************************************************************************************************************
  * A plugin to help developers produce plugins and deployable packages.
@@ -191,7 +192,7 @@ namespace CMS.Plugins
                             }
                         }
                         else
-                            pageSync_file(file1, file2 + "/" + System.IO.Path.GetFileName(file1), ref filesIncluded, ref filesExcluded);
+                            pageSync_file(file1, file2, ref filesIncluded, ref filesExcluded);
 
                     }
                 }
@@ -213,7 +214,7 @@ namespace CMS.Plugins
                 if (destination.EndsWith(".js"))
                     destination += ".file";
                 // Check the destination directoy exists
-                string dir = System.IO.Path.GetDirectoryName(destination);
+                string dir = destination.Substring(0, destination.LastIndexOf('/'));
                 if (!Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
                 // Copy the file

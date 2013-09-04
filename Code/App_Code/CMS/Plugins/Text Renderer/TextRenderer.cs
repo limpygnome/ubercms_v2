@@ -9,6 +9,11 @@ namespace CMS.Plugins
 {
     public class TextRenderer : Plugin
     {
+        // Constants
+        /// <summary>
+        /// The UUID of this plugin.
+        /// </summary>
+        public const string TR_UUID = "169A4055-3380-4746-99FD-EC8064F22E76";
         // Fields ******************************************************************************************************
         private List<RenderProvider> cacheProviders;
         // Methods - Constructors **************************************************************************************
@@ -67,14 +72,14 @@ namespace CMS.Plugins
         public override bool enable(Connector conn, ref StringBuilder messageOutput)
         {
             // Add pre-processing directives
-            if (!BaseUtils.preprocessorDirective_Add("TextRendering", ref messageOutput))
+            if (!BaseUtils.preprocessorDirective_Add("TextRenderer", ref messageOutput))
                 return false;
             return true;
         }
         public override bool disable(Connector conn, ref StringBuilder messageOutput)
         {
             // Remove pre-processing directives
-            if (!BaseUtils.preprocessorDirective_Remove("TextRendering", ref messageOutput))
+            if (!BaseUtils.preprocessorDirective_Remove("TextRenderer", ref messageOutput))
                 return false;
             return true;
         }
@@ -190,16 +195,24 @@ namespace CMS.Plugins
         // Methods - Rendering *****************************************************************************************
         /// <summary>
         /// Renders a piece of text.
+        /// 
+        /// Note: the data parameter should not be reused for rendering multiple pieces of text during a single request!
         /// </summary>
         /// <param name="data">The data for the current request.</param>
+        /// <param name="header">Header data such as CSS includes are appended here.</param>
         /// <param name="text">The text to be rendered.</param>
         /// <param name="renderTypes">The type of rendering to perform.</param>
-        public void render(Data data, ref StringBuilder text, RenderProvider.RenderType renderTypes)
+        public void render(Data data, ref StringBuilder header, ref StringBuilder text, RenderProvider.RenderType renderTypes)
         {
             lock (this)
             {
-                foreach (RenderProvider provider in cacheProviders)
-                    provider.render(data, ref text, renderTypes);
+                if (cacheProviders == null)
+                    text.AppendLine("Warning: text renderer cache has not been loaded; cannot render document.");
+                else
+                {
+                    foreach (RenderProvider provider in cacheProviders)
+                        provider.render(data, ref header, ref text, renderTypes);
+                }
             }
         }
         // Methods - Properties ****************************************************************************************

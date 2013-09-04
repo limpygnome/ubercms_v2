@@ -11,7 +11,7 @@ namespace CMS.Plugins.TRProviders
         public Escaping(UUID uuid, UUID uuidPlugin, string title, string description, bool enabled, int priority)
             : base(uuid, uuidPlugin, title, description, enabled, priority) { }
         // Methods - Overrides *****************************************************************************************
-        public override void render(Data data, ref StringBuilder text, RenderType renderTypes)
+        public override void render(Data data, ref StringBuilder header, ref StringBuilder text, RenderType renderTypes)
         {
             StringBuilder formatter;
             foreach (Match m in Regex.Matches(text.ToString(), @"\[(noformat|escape|esc|nobbcode)\](.*?)\[\/\1\]", RegexOptions.Multiline))

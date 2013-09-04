@@ -89,20 +89,20 @@ namespace CMS.Plugins
             RenderProvider p;
             try
             {
-                p = (RenderProvider)ass.CreateInstance(row["classpath"], false, BindingFlags.CreateInstance, null, new object[] { }, null, null);
+                p = (RenderProvider)ass.CreateInstance(row["classpath"], false, BindingFlags.CreateInstance, null, new object[] {
+                UUID.parse(row["uuid"]),
+                UUID.parse(row["uuid_plugin"]),
+                row.get2<string>("title"),
+                row.get2<string>("description"),
+                row["enabled"].Equals("1"),
+                row.get2<int>("priority")
+                }, null, null);
             }
             catch
             {
                 return null;
             }
             p.persisted = true;
-            // Load model data
-            p.uuid = UUID.parse(row["uuid"]);
-            p.uuidPlugin = UUID.parse(row["uuid_plugin"]);
-            p.title = row.get2<string>("title");
-            p.description = row.get2<string>("description");
-            p.enabled = row["enabled"].Equals("1");
-            p.priority = row.get2<int>("priority");
             return p;
         }
         /// <summary>
@@ -172,9 +172,10 @@ namespace CMS.Plugins
         /// Renders a piece of text.
         /// </summary>
         /// <param name="data">The data for the current request.</param>
+        /// <param name="header">Header data such as CSS includes are appended here.</param>
         /// <param name="text">The text to be rendered.</param>
         /// <param name="renderTypes">The type of rendering to perform.</param>
-        public virtual void render(Data data, ref StringBuilder text, RenderProvider.RenderType renderTypes)
+        public virtual void render(Data data, ref StringBuilder header, ref StringBuilder text, RenderProvider.RenderType renderTypes)
         {
         }
         // Methods - Properties ****************************************************************************************

@@ -151,6 +151,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Code\App_Code\CMS\Plugins\Admin Panel\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\AdultCatFinder\" />
     <Folder Include="Code\App_Code\CMS\Plugins\AJAX Navigation\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Articles\content\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Articles\templates\" />
@@ -178,6 +179,7 @@
     <Content Include="Code\App_Code\CMS\Plugins\CSRF Protection\Plugin.config">
       <SubType>Designer</SubType>
     </Content>
+    <None Include="Code\App_Code\CMS\Plugins\Basic Articles\files.list" />
     <None Include="Code\App_Code\CMS\Plugins\Basic Site Auth\files.list" />
     <Content Include="Code\App_Code\CMS\Plugins\Text Renderer\Plugin.config" />
     <None Include="Code\installer\files.list" />

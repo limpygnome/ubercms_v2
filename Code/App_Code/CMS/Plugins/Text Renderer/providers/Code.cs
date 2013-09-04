@@ -11,22 +11,22 @@ namespace CMS.Plugins.TRProviders
         public Code(UUID uuid, UUID uuidPlugin, string title, string description, bool enabled, int priority)
             : base(uuid, uuidPlugin, title, description, enabled, priority) { }
         // Methods - Overrides *****************************************************************************************
-        public override void render(Data data, ref StringBuilder text, RenderType renderTypes)
+        public override void render(Data data, ref StringBuilder header, ref StringBuilder text, RenderType renderTypes)
         {
             // Objects
             if((renderTypes & RenderType.Objects) == RenderType.Objects)
             {
-                syntaxHighlighter(data, ref text);
-                syntaxPastebin(data, ref text);
+                syntaxHighlighter(data, ref header, ref text);
+                syntaxPastebin(data, ref header, ref text);
             }
         }
         // Methods *****************************************************************************************************
-        private void syntaxPastebin(Data data, ref StringBuilder text)
+        private void syntaxPastebin(Data data, ref StringBuilder header, ref StringBuilder text)
         {
             foreach (Match m in Regex.Matches(text.ToString(), @"\[pastebin\]http://(?:www.)?pastebin.com/([a-zA-Z0-9]+)\[\/pastebin\]", RegexOptions.Multiline))
                 text.Replace(m.Value, "<script src=\"http://pastebin.com/embed_js.php?i=" + m.Groups[1].Value + "\"></script>");
         }
-        private void syntaxHighlighter(Data data, ref StringBuilder text)
+        private void syntaxHighlighter(Data data, ref StringBuilder header, ref StringBuilder text)
         {
             // Current version used: 3.0.83
             StringBuilder code;
@@ -98,7 +98,9 @@ namespace CMS.Plugins.TRProviders
                     default:
                         path = "shBrushPlain.js";       break;
                 }
-                BaseUtils.headerAppendCss("/content/js/syntaxhighlighter/" + path, ref data);
+                BaseUtils.headerAppendJs("/content/js/syntaxhighlighter/" + path, ref data, ref header);
+                BaseUtils.headerAppendCss("/content/css/syntaxhighlighter/shCore.css", ref data, ref header);
+                BaseUtils.headerAppendCss("/content/css/syntaxhighlighter/shThemeDefault.css", ref data, ref header);
                 // Replace text
                 text.Replace(m.Value, code.ToString());
                 // Add call to the end of the document (if not already added)

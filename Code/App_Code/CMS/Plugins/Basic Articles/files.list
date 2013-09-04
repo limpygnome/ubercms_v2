@@ -1,0 +1,3 @@
+﻿%GLOBAL%/content/css/basic_articles.css		,	%LOCAL%/content/css/basic_articles.css
+%GLOBAL%/content/js/basic_articles.js		,	%LOCAL%/content/js/basic_articles.js
+%GLOBAL%/content/images/basic_articles/*	,	%LOCAL%/content/images/basic_articles
