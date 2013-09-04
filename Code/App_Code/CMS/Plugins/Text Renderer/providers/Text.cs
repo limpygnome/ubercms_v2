@@ -26,7 +26,7 @@ namespace CMS.Plugins.TRProviders
                 text.Insert(0, "<p>");
                 text.Append("</p>");
                 // Remove new lines
-                text.Replace(">\n", ">").Replace("]\n", "]").Replace("\n\n", "</p><p>").Replace("\n", "<br />").Replace(replaceChars, "\n");
+                text.Replace(">\n", ">" + replaceChars).Replace("]\n", "]").Replace("\n[/", "[/").Replace("\n\n", "</p><p>").Replace("\n", "<br />").Replace(replaceChars, "\n");
             }
             // Text formatting
             if ((renderTypes & RenderType.TextFormatting) == RenderType.TextFormatting)

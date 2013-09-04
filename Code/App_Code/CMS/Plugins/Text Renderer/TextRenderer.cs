@@ -47,14 +47,14 @@ namespace CMS.Plugins
                 return false;
             }
             // -- Code
-            temp = new TRProviders.Code(UUID.parse("72E7D8A8-F9F2-40A7-9DF2-9CF09EFF3BFE"), this.UUID, "Embedding: Code", "Allows sections of code to be embedded and syntactically highlighted.", true, int.MaxValue / 8);
+            temp = new TRProviders.Code(UUID.parse("72E7D8A8-F9F2-40A7-9DF2-9CF09EFF3BFE"), this.UUID, "Embedding: Code", "Allows sections of code to be embedded and syntactically highlighted.", true, 0);
             if (!temp.save(this, conn))
             {
                 messageOutput.AppendLine("Failed to create 'Embedding: Code' text renderer provider!");
                 return false;
             }
             // -- Text
-            temp = new TRProviders.Text(UUID.parse("C42FAE9D-3E0C-4D4D-8D4F-F2CAF72FB1C6"), this.UUID, "Text Formatting", "General BBCode text-formatting.", true, 0);
+            temp = new TRProviders.Text(UUID.parse("C42FAE9D-3E0C-4D4D-8D4F-F2CAF72FB1C6"), this.UUID, "Text Formatting", "General BBCode text-formatting.", true, int.MaxValue / 8);
             if (!temp.save(this, conn))
             {
                 messageOutput.AppendLine("Failed to create 'Text Formatting' text renderer provider!");

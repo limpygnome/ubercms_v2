@@ -14,7 +14,7 @@ namespace CMS.Plugins.TRProviders
         public override void render(Data data, ref StringBuilder header, ref StringBuilder text, RenderType renderTypes)
         {
             StringBuilder formatter;
-            foreach (Match m in Regex.Matches(text.ToString(), @"\[(noformat|escape|esc|nobbcode)\](.*?)\[\/\1\]", RegexOptions.Multiline))
+            foreach (Match m in Regex.Matches(text.ToString(), @"\[(noformat|escape|esc|nobbcode)\](.*?)\[\/\1\]", RegexOptions.Singleline))
             {
                 formatter = new StringBuilder(m.Groups[2].Value);
                 strip(ref formatter);

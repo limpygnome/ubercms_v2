@@ -182,6 +182,7 @@
     <None Include="Code\App_Code\CMS\Plugins\Basic Articles\files.list" />
     <None Include="Code\App_Code\CMS\Plugins\Basic Site Auth\files.list" />
     <Content Include="Code\App_Code\CMS\Plugins\Text Renderer\Plugin.config" />
+    <None Include="Code\App_Code\CMS\Plugins\Text Renderer\files.list" />
     <None Include="Code\installer\files.list" />
   </ItemGroup>
 </Project>

@@ -18,6 +18,7 @@
  * 
  *      Change-Log:
  *                      2013-08-08      Created initial class.
+ *                      2013-09-04      UUID is now optional when loading a model.
  * 
  * *********************************************************************************************************************
  * Used for handling URL rewriting.
@@ -114,7 +115,7 @@ namespace CMS.Base
         {
             UrlRewriting rw = new UrlRewriting();
             rw.urlid = row.get2<int>("urlid");
-            rw.pluginOwner = UUID.parse(row["uuid"]);
+            rw.pluginOwner = row.contains("uuid") ? UUID.parse(row["uuid"]) : null;
             rw.fullPath = row.get2<string>("full_path");
             rw.priority = row.get2<int>("priority");
             return rw;

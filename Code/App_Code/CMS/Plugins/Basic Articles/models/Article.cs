@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using CMS.Base;
 using CMS.BasicSiteAuth.Models;
 using UberLib.Connector;
@@ -31,7 +32,8 @@ namespace CMS.BasicArticles
             HidePanel = 512,
             UserIDAuthor = 1024,
             UserIDPublisher = 2048,
-            All = 4095 // This should always be: [the next power of 2] - 1
+            HeaderData = 4096,
+            All = 8191 // This should always be: [the next power of 2] - 1
         }
         /// <summary>
         /// The status of the persistence of the model.
@@ -52,7 +54,9 @@ namespace CMS.BasicArticles
                             uuidThread;             // The UUID of the article thread.
         private string      title,                  // The title of the article.
                             textRaw,                // The raw markup of the article.
-                            textCache;              // The parsed and formatted markup, cached for speed.
+                            textCache,              // The parsed and formatted markup, cached for speed.
+                            headerData,             // The article's header data.
+                            headerDataHash;         // The hash to the existing header data record (may be shared by multiple articles); used for deletion of old header data.
         private DateTime    datetimeCreated,        // The date and time of when the article was created.
                             datetimeModified;       // The date and time of when the article was modified.
         private bool        published,              // Indicates if the article has been published.
@@ -68,7 +72,7 @@ namespace CMS.BasicArticles
             this.modified = Fields.None;
             this.uuidArticle = null;
             this.uuidThread = null;
-            this.title = this.textRaw = this.textCache = null;
+            this.title = this.textRaw = this.textCache = this.headerData = this.headerDataHash = null;
             this.useridAuthor = this.useridPublisher = -1;
         }
         // Methods - Database Persistence ******************************************************************************
@@ -170,6 +174,8 @@ namespace CMS.BasicArticles
             a.title = row.get2<string>("title");
             a.textRaw = row.contains("text_raw") ? row.get2<string>("text_raw") : null;
             a.textCache = row.contains("text_cache") ? row.get2<string>("text_cache") : null;
+            a.headerData = row.get2<string>("headerdata");
+            a.headerDataHash = row.get2<string>("headerdata_hash");
             a.datetimeCreated = row.get2<DateTime>("datetime_created");
             a.datetimeModified = row.get2<DateTime>("datetime_modified");
             a.published = row.get2<string>("published").Equals("1");
@@ -204,7 +210,33 @@ namespace CMS.BasicArticles
                     return PersistStatus.Invalid_title_length;
                 else if (textRaw.Length < Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MIN].get<int>() || textRaw.Length > Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MAX].get<int>())
                     return PersistStatus.Invalid_text_length;
-                // Compile SQL
+                // Check if to create new header data record
+                string hash = null;
+                if ((modified & Fields.HeaderData) == Fields.HeaderData && headerData != null && headerData.Length > 0)
+                {
+                    // Generate new hash
+                    HashAlgorithm ha = MD5.Create();
+                    hash = System.Text.Encoding.UTF8.GetString(ha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(headerData)));
+                    // Check the data has actually changed
+                    if (hash == headerDataHash)
+                        hash = null;
+                    else
+                    {
+                        // Begin a transaction - we want the article and header data to persist or fail together
+                        conn.queryExecute("BEGIN;");
+                        // Decide if to insert new record
+                        PreparedStatement ps = new PreparedStatement("SELECT COUNT('') AS count FROM ba_article_headerdata WHERE hash=?hash;");
+                        ps["hash"] = hash;
+                        if(int.Parse(conn.queryRead(ps)[0]["count"]) == 0)
+                        {
+                            ps = new PreparedStatement("INSERT INTO ba_article_headerdata (hash, headerdata) VALUES(?hash, ?headerdata);");
+                            ps["hash"] = hash;
+                            ps["headerdata"] = headerData;
+                            conn.queryExecute(ps);
+                        }
+                    }
+                }
+                // Compile article SQL
                 SQLCompiler sql = new SQLCompiler();
                 if ((modified & Fields.ThreadUUID) == Fields.ThreadUUID)
                     sql["uuid_thread"] = uuidThread != null ? uuidThread.Bytes : null;
@@ -230,7 +262,9 @@ namespace CMS.BasicArticles
                     sql["userid_author"] = useridAuthor;
                 if ((modified & Fields.UserIDPublisher) == Fields.UserIDPublisher)
                     sql["userid_publisher"] = useridPublisher;
-                // Execute SQL
+                if ((modified & Fields.HeaderData) == Fields.HeaderData)
+                    sql["headerdata_hash"] = hash;
+                // Execute article SQL
                 try
                 {
                     if (persisted)
@@ -247,11 +281,23 @@ namespace CMS.BasicArticles
                         sql.executeInsert(conn, "ba_article");
                         persisted = true;
                     }
+                    // Check if we're inside a transaction, if so commit it
+                    if (hash != null)
+                        conn.queryExecute("COMMIT;");
+                    // Check if to attempt to delete old hash data
+                    if ((modified & Fields.HeaderData) == Fields.HeaderData && headerDataHash != null)
+                    {
+                        PreparedStatement p = new PreparedStatement("DELETE FROM ba_article_headerdata WHERE hash=?hash AND (SELECT COUNT('') FROM ba_article WHERE headerdata_hash=?hash) = 0;");
+                        p["hash"] = headerDataHash;
+                        conn.queryExecute(p);
+                    }
                     modified = Fields.None;
                     return PersistStatus.Success;
                 }
                 catch (DuplicateEntryException ex)
                 {
+                    if (hash != null)
+                        conn.queryExecute("ROLLBACK;");
                     switch (ex.Attribute)
                     {
                         case "uuid_article":
@@ -262,6 +308,8 @@ namespace CMS.BasicArticles
                 }
                 catch (Exception)
                 {
+                    if(hash != null)
+                        conn.queryExecute("ROLLBACK;");
                     return PersistStatus.Error;
                 }
             }
@@ -308,8 +356,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                if (!persisted)
-                    uuidArticle = value;
+                lock (this)
+                {
+                    if (!persisted)
+                        uuidArticle = value;
+                }
             }
         }
         /// <summary>
@@ -323,8 +374,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                uuidThread = value;
-                modified |= Fields.ThreadUUID;
+                lock (this)
+                {
+                    uuidThread = value;
+                    modified |= Fields.ThreadUUID;
+                }
             }
         }
         /// <summary>
@@ -338,8 +392,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                title = value;
-                modified |= Fields.Title;
+                lock (this)
+                {
+                    title = value;
+                    modified |= Fields.Title;
+                }
             }
         }
         /// <summary>
@@ -353,8 +410,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                textRaw = value;
-                modified |= Fields.TextRaw;
+                lock (this)
+                {
+                    textRaw = value;
+                    modified |= Fields.TextRaw;
+                }
             }
         }
         /// <summary>
@@ -368,8 +428,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                textCache = value;
-                modified |= Fields.TextCache;
+                lock (this)
+                {
+                    textCache = value;
+                    modified |= Fields.TextCache;
+                }
             }
         }
         /// <summary>
@@ -383,8 +446,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                datetimeCreated = value;
-                modified |= Fields.DateTimeCreated;
+                lock (this)
+                {
+                    datetimeCreated = value;
+                    modified |= Fields.DateTimeCreated;
+                }
             }
         }
         /// <summary>
@@ -398,8 +464,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                datetimeModified = value;
-                modified |= Fields.DateTimeModified;
+                lock (this)
+                {
+                    datetimeModified = value;
+                    modified |= Fields.DateTimeModified;
+                }
             }
         }
         /// <summary>
@@ -413,8 +482,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                published = value;
-                modified |= Fields.Published;
+                lock (this)
+                {
+                    published = value;
+                    modified |= Fields.Published;
+                }
             }
         }
         /// <summary>
@@ -428,8 +500,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                comments = value;
-                modified |= Fields.Comments;
+                lock (this)
+                {
+                    comments = value;
+                    modified |= Fields.Comments;
+                }
             }
         }
         /// <summary>
@@ -443,8 +518,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                html = value;
-                modified |= Fields.HTML;
+                lock (this)
+                {
+                    html = value;
+                    modified |= Fields.HTML;
+                }
             }
         }
         /// <summary>
@@ -458,8 +536,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                hidePanel = value;
-                modified |= Fields.HidePanel;
+                lock (this)
+                {
+                    hidePanel = value;
+                    modified |= Fields.HidePanel;
+                }
             }
         }
         /// <summary>
@@ -473,8 +554,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                useridAuthor = value;
-                modified |= Fields.UserIDAuthor;
+                lock (this)
+                {
+                    useridAuthor = value;
+                    modified |= Fields.UserIDAuthor;
+                }
             }
         }
         /// <summary>
@@ -488,8 +572,27 @@ namespace CMS.BasicArticles
             }
             set
             {
-                useridPublisher = value;
-                modified |= Fields.UserIDPublisher;
+                lock (this)
+                {
+                    useridPublisher = value;
+                    modified |= Fields.UserIDPublisher;
+                }
+            }
+        }
+
+        public string HeaderData
+        {
+            get
+            {
+                return headerData;
+            }
+            set
+            {
+                lock (this)
+                {
+                    headerData = value;
+                    modified |= Fields.HeaderData;
+                }
             }
         }
     }

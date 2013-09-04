@@ -323,7 +323,7 @@ namespace CMS.Base
             else
                 data.setFlag(key);
             // Link the file
-            header.Append("<link href=\"").AppendLine(webPath).Append("\" type=\"text/css\" rel=\"Stylesheet\" ");
+            header.Append("<link href=\"").Append(webPath).Append("\" type=\"text/css\" rel=\"Stylesheet\" ");
             if(media != null)
                 header.Append("media=\"").Append(media).Append("\" ");
             header.AppendLine("/>");

@@ -58,7 +58,13 @@ namespace CMS.BasicArticles
             // Load, else create, the model for the article
             ArticleThread temp;
             if (r.Count == 1)
-                temp = ArticleThread.load(conn, UUID.parse(r[0].get2<string>("uuid_thread")));
+            {
+                if ((temp = ArticleThread.load(conn, UUID.parse(r[0].get2<string>("uuid_thread")))) == null)
+                {
+                    at = null;
+                    return CreateThread.Error;
+                }
+            }
             else if (r.Count > 1)
                 throw new Exception("Multiple article threads exist for the full-path - critical exception!");
             else
@@ -69,10 +75,10 @@ namespace CMS.BasicArticles
                 rw.FullPath = fullPath;
                 rw.PluginOwner = ba.UUID;
                 UrlRewriting.PersistStatus s = rw.save(conn);
-                if(s != UrlRewriting.PersistStatus.Success)
+                if (s != UrlRewriting.PersistStatus.Success)
                 {
                     at = null;
-                    switch(s)
+                    switch (s)
                     {
                         case UrlRewriting.PersistStatus.Error:
                             return CreateThread.Error;
@@ -102,8 +108,8 @@ namespace CMS.BasicArticles
         /// <returns>Model or null.</returns>
         public static ArticleThread load(Connector conn, UUID uuidThread)
         {
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_thread WHERE uuid_thread=?uuid_thread;");
-            ps["uuid_thread"] = uuidThread.Bytes;
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_thread WHERE uuid_thread_raw=?uuid_thread_raw;");
+            ps["uuid_thread_raw"] = uuidThread.Bytes;
             Result r = conn.queryRead(ps);
             return r.Count == 1 ? load(r[0]) : null;
         }

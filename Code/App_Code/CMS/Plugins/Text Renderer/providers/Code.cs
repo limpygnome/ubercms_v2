@@ -23,7 +23,7 @@ namespace CMS.Plugins.TRProviders
         // Methods *****************************************************************************************************
         private void syntaxPastebin(Data data, ref StringBuilder header, ref StringBuilder text)
         {
-            foreach (Match m in Regex.Matches(text.ToString(), @"\[pastebin\]http://(?:www.)?pastebin.com/([a-zA-Z0-9]+)\[\/pastebin\]", RegexOptions.Multiline))
+            foreach (Match m in Regex.Matches(text.ToString(), @"\[pastebin\]http://(?:www.)?pastebin.com/([a-zA-Z0-9]+)\[\/pastebin\]", RegexOptions.Singleline))
                 text.Replace(m.Value, "<script src=\"http://pastebin.com/embed_js.php?i=" + m.Groups[1].Value + "\"></script>");
         }
         private void syntaxHighlighter(Data data, ref StringBuilder header, ref StringBuilder text)
@@ -31,7 +31,7 @@ namespace CMS.Plugins.TRProviders
             // Current version used: 3.0.83
             StringBuilder code;
             string t;
-            foreach (Match m in Regex.Matches(text.ToString(), @"\[code=(applescript|as3|bash|coldfusion|cpp|csharp|c#|css|delphi|diff|erlang|groovy|java|javafx|jscript|perl|php|plain|powershell|python|ruby|sass|scala|sql|vb|xml)\](.*?)\[\/code\]", RegexOptions.Multiline))
+            foreach (Match m in Regex.Matches(text.ToString(), @"\[code=(applescript|as3|bash|coldfusion|cpp|csharp|c#|css|delphi|diff|erlang|groovy|java|javafx|jscript|perl|php|plain|powershell|python|ruby|sass|scala|sql|vb|xml)\](.*?)\[\/code\]", RegexOptions.Singleline))
             {
                 code = new StringBuilder(m.Groups[2].Value);
                 // Replace line breaks
@@ -98,6 +98,7 @@ namespace CMS.Plugins.TRProviders
                     default:
                         path = "shBrushPlain.js";       break;
                 }
+                BaseUtils.headerAppendJs("/content/js/syntaxhighlighter/shCore.js", ref data, ref header);
                 BaseUtils.headerAppendJs("/content/js/syntaxhighlighter/" + path, ref data, ref header);
                 BaseUtils.headerAppendCss("/content/css/syntaxhighlighter/shCore.css", ref data, ref header);
                 BaseUtils.headerAppendCss("/content/css/syntaxhighlighter/shThemeDefault.css", ref data, ref header);

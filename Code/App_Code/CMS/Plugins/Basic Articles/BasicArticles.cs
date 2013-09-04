@@ -152,6 +152,7 @@ namespace CMS.BasicArticles
 #endif
             string error = null;
             string rendered = null;
+            string headerData = null;
             // Check for postback
             ArticleCreatePostback postback;
             if (data.Request.Form["article_display_raw"] != null)
@@ -185,6 +186,7 @@ namespace CMS.BasicArticles
                         tr.render(data, ref header, ref text, RenderProvider.RenderType.Objects | RenderProvider.RenderType.TextFormatting);
                         // Set rendered field for display/persisting
                         rendered = text.ToString();
+                        headerData = header.ToString();
                         // Append header data
                         BaseUtils.headerAppend(header.ToString(), ref data);
                     }
@@ -214,6 +216,7 @@ namespace CMS.BasicArticles
                         a.HTML = html;
                         a.HidePanel = hidePanel;
                         a.Comments = comments;
+                        a.HeaderData = headerData;
                         // Attempt to persist the model
                         Article.PersistStatus ps = a.save(data.Connector);
                         if (ps != Article.PersistStatus.Success)
