@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/sqa_success]]></path><description><![CDATA[Displayed when a user successfully recovers their account.]]></description><html><![CDATA[<h2>Account Recovery - Secret Question/Answer - Success</h2>
-<p>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/sqa_success]]></path><description><![CDATA[Displayed when a user successfully recovers their account.]]></description><html><![CDATA[<p>
 	Your account's password has successfully been changed.
 </p>
 <h3>Options</h3>

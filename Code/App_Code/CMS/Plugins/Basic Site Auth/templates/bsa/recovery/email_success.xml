@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/email_success]]></path><description><![CDATA[Displayed when a user changes their password using the e-mail recovery option.]]></description><html><![CDATA[<h2>Account Recovery - Success</h2>
-<p>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/email_success]]></path><description><![CDATA[Displayed when a user changes their password using the e-mail recovery option.]]></description><html><![CDATA[<p>
 	You have successfully changed your password!
 </p>
 <h3>Options</h3>

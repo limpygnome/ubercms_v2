@@ -36,6 +36,7 @@ CREATE TABLE ba_article
 	FOREIGN KEY(`headerdata_hash`)		REFERENCES ba_article_headerdata(`hash`) ON UPDATE CASCADE ON DELETE SET NULL,
 	datetime_created					TIMESTAMP NOT NULL,
 	datetime_modified					TIMESTAMP,
+	datetime_published					TIMESTAMP,
 
 	published							VARCHAR(1) DEFAULT 0,
 	comments							VARCHAR(1) DEFAULT 0,
@@ -54,7 +55,7 @@ CREATE TABLE ba_tags
 	tagid								INT	PRIMARY KEY AUTO_INCREMENT,
 	keyword								VARCHAR(32) NOT NULL UNIQUE
 );
-CREATE TABLE bsa_tags_thread
+CREATE TABLE ba_tags_thread
 (
 	tagid								INT NOT NULL,
 	FOREIGN KEY(`tagid`)				REFERENCES ba_tags(`tagid`) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -70,16 +71,16 @@ CREATE OR REPLACE VIEW ba_view_load_article_thread AS
 	SELECT bat.uuid_thread AS uuid_thread_raw, HEX(bat.uuid_thread) AS uuid_thread, url.urlid, url.uuid, url.full_path, url.priority, HEX(bat.uuid_article_current) AS uuid_article_current, bat.thumbnail FROM ba_article_thread AS bat LEFT OUTER JOIN cms_urlrewriting AS url ON url.urlid=bat.urlid;
 
 CREATE OR REPLACE VIEW ba_view_load_article AS
-	SELECT a.uuid_article AS uuid_article_raw, HEX(a.uuid_article) AS uuid_article, HEX(a.uuid_thread) AS uuid_thread, a.title, a.text_raw, a.text_cache, hd.headerdata, a.headerdata_hash, a.datetime_created, a.datetime_modified, a.published, a.comments, a.html, a.hide_panel, a.userid_author, a.userid_publisher FROM ba_article AS a LEFT OUTER JOIN ba_article_headerdata AS hd ON hd.hash=a.headerdata_hash;
+	SELECT a.uuid_article AS uuid_article_raw, HEX(a.uuid_article) AS uuid_article, HEX(a.uuid_thread) AS uuid_thread, a.title, a.text_raw, a.text_cache, hd.headerdata, a.headerdata_hash, a.datetime_created, a.datetime_modified, a.datetime_published, a.published, a.comments, a.html, a.hide_panel, a.userid_author, a.userid_publisher FROM ba_article AS a LEFT OUTER JOIN ba_article_headerdata AS hd ON hd.hash=a.headerdata_hash;
 -- -- Should only be used for viewing the full raw text of an article (excludes cache)
 CREATE OR REPLACE VIEW ba_view_load_article_raw AS
-	SELECT a.uuid_article AS uuid_article_raw, HEX(a.uuid_article) AS uuid_article, HEX(a.uuid_thread) AS uuid_thread, a.title, a.text_raw, hd.headerdata, a.headerdata_hash, a.datetime_created, a.datetime_modified, a.published, a.comments, a.html, a.hide_panel, a.userid_author, a.userid_publisher FROM ba_article AS a LEFT OUTER JOIN ba_article_headerdata AS hd ON hd.hash=a.headerdata_hash;
+	SELECT a.uuid_article AS uuid_article_raw, HEX(a.uuid_article) AS uuid_article, HEX(a.uuid_thread) AS uuid_thread, a.title, a.text_raw, hd.headerdata, a.headerdata_hash, a.datetime_created, a.datetime_modified, a.datetime_published, a.published, a.comments, a.html, a.hide_panel, a.userid_author, a.userid_publisher FROM ba_article AS a LEFT OUTER JOIN ba_article_headerdata AS hd ON hd.hash=a.headerdata_hash;
 -- -- Should only be used for viewing an article (excludes raw text).
 CREATE OR REPLACE VIEW ba_view_load_article_rendered AS
-	SELECT a.uuid_article AS uuid_article_raw, HEX(a.uuid_article) AS uuid_article, HEX(a.uuid_thread) AS uuid_thread, a.title, a.text_cache, hd.headerdata, a.headerdata_hash, a.datetime_created, a.datetime_modified, a.published, a.comments, a.html, a.hide_panel, a.userid_author, a.userid_publisher FROM ba_article AS a LEFT OUTER JOIN ba_article_headerdata AS hd ON hd.hash=a.headerdata_hash;
+	SELECT a.uuid_article AS uuid_article_raw, HEX(a.uuid_article) AS uuid_article, HEX(a.uuid_thread) AS uuid_thread, a.title, a.text_cache, hd.headerdata, a.headerdata_hash, a.datetime_created, a.datetime_modified, a.datetime_published, a.published, a.comments, a.html, a.hide_panel, a.userid_author, a.userid_publisher FROM ba_article AS a LEFT OUTER JOIN ba_article_headerdata AS hd ON hd.hash=a.headerdata_hash;
 
 CREATE OR REPLACE VIEW ba_view_tags AS
-	SELECT tt.uuid_thread AS uuid_thread_raw, HEX(tt.uuid_thread) AS uuid_thread, t.tagid, t.keyword FROM bsa_tags_thread AS tt LEFT OUTER JOIN ba_tags AS t ON t.tagid=tt.tagid ORDER BY t.keyword ASC;
+	SELECT tt.uuid_thread AS uuid_thread_raw, HEX(tt.uuid_thread) AS uuid_thread, t.tagid, t.keyword FROM ba_tags_thread AS tt LEFT OUTER JOIN ba_tags AS t ON t.tagid=tt.tagid ORDER BY t.keyword ASC;
 
 -- -- Used for looking up an existing article thread based on the URL
 CREATE OR REPLACE VIEW ba_article_thread_createfetch AS

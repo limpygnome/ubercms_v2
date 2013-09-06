@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/article_rebuild]]></path><description><![CDATA[The page for rebuilding an article.]]></description><html><![CDATA[<form method="post" action="/article/<!--article_uuid-->/rebuild">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Confirm Rebuild
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					Are you sure you want to rebuild this article's content?
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" name="article_rebuild" value="Rebuild" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<!--IF:article_error-->
+	<div class="ERROR">
+		<!--article_error-->
+	</div>
+<!--ENDIF:article_error-->]]></html></template>

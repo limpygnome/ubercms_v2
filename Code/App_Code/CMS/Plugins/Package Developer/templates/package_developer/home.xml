@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[package_developer/home]]></path><description><![CDATA[Home-page listing all of the available plugins and their options.]]></description><html><![CDATA[<h2>Package Developer</h2>
-<h3>Plugins</h3>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[package_developer/home]]></path><description><![CDATA[Home-page listing all of the available plugins and their options.]]></description><html><![CDATA[<h3>Plugins</h3>
 <table>
 	<tr>
 		<th>UUID</th>

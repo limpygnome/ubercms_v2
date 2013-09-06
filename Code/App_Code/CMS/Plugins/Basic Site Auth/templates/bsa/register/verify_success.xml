@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/register/verify_success]]></path><description><![CDATA[The registration verification success page.]]></description><html><![CDATA[<h2>Register - Verify Account</h2>
-<p>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/register/verify_success]]></path><description><![CDATA[The registration verification success page.]]></description><html><![CDATA[<p>
 	Your account has been successfully verified! You can now <a href="/login">login</a>.
 </p>]]></html></template>

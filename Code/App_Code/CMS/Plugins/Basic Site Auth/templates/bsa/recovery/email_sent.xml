@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/email_sent]]></path><description><![CDATA[Displayed when a recovery e-mail has been deployed.]]></description><html><![CDATA[<h2>Account Recovery - E-mail</h2>
-<p>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/email_sent]]></path><description><![CDATA[Displayed when a recovery e-mail has been deployed.]]></description><html><![CDATA[<p>
 	A recovery code has been sent to your e-mail!
 </p>
 <p>

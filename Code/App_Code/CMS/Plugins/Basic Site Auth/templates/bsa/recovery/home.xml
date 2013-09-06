@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/home]]></path><description><![CDATA[The homepage for the account recovery area.]]></description><html><![CDATA[<h2>Account Recovery</h2>
-<p>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/home]]></path><description><![CDATA[The homepage for the account recovery area.]]></description><html><![CDATA[<p>
 	Recovery options:
 </p>
 <p>

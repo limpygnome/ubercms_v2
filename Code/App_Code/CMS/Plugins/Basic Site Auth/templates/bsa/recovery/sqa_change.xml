@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/sqa_change]]></path><description><![CDATA[The secret question/answer recovery page to answer the secret question and change password.]]></description><html><![CDATA[<h2>Account Recovery - Secret Question/Answer</h2>
-<form method="post" action="/account_recovery/sqa">
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/sqa_change]]></path><description><![CDATA[The secret question/answer recovery page to answer the secret question and change password.]]></description><html><![CDATA[<form method="post" action="/account_recovery/sqa">
 	<div class="TABLE">
 		<div class="ROW">
 			<div class="CELL2">

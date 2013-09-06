@@ -1,6 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/my_account/account_log]]></path><description><![CDATA[The main layout page for account log.]]></description><html><![CDATA[<h2>My Account - Account Log</h2>
-
-<div class="TABLE">
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/my_account/account_log]]></path><description><![CDATA[The main layout page for account log.]]></description><html><![CDATA[<div class="TABLE">
 	<div class="ROW HEADER">
 		<div class="CELL BSA_AL_1">
 			<div class="P">

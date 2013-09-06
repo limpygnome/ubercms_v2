@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/my_account/close]]></path><description><![CDATA[The page used for a user to close their account.]]></description><html><![CDATA[<h2>My Account - Close Account</h2>
-<p>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/my_account/close]]></path><description><![CDATA[The page used for a user to close their account.]]></description><html><![CDATA[<p>
 	Warning: your account will be queued for deletion; this action will delete all of your data on this site! You will also be logged-out
 	and prevented from logging-in. Your data will be deleted pending review, to prevent abuse.
 </p>

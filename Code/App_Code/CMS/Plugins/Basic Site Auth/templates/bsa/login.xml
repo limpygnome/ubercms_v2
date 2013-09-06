@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/login]]></path><description><![CDATA[The login page template.]]></description><html><![CDATA[<h2>Login</h2>
-<form method="post" action="/login">
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/login]]></path><description><![CDATA[The login page template.]]></description><html><![CDATA[<form method="post" action="/login">
 	<div class="TABLE">
 		<div class="ROW">
 			<div class="CELL2">

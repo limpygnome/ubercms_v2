@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/register/success_verify]]></path><description><![CDATA[The register page success verify page.]]></description><html><![CDATA[<h2>Register - E-mail Verification Required</p>
-<p>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/register/success_verify]]></path><description><![CDATA[The register page success verify page.]]></description><html><![CDATA[<p>
 	Your account has been successfully created, however it requires e-mail verification before you can login.
 </p>
 <p>

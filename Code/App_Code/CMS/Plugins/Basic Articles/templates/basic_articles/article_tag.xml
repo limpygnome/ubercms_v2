@@ -1,0 +1,1 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/article_tag]]></path><description><![CDATA[The template used to represent a tag displayed on the article page.]]></description><html><![CDATA[<a href="/articles/tag/%TAG_KEYWORD%">%TAG_KEYWORD%</a>]]></html></template>

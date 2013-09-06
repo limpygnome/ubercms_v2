@@ -99,6 +99,9 @@ namespace CMS.BasicSiteAuth
         public const string     SETTINGS_EMAIL_VERIFICATION__DESCRIPTION = "Specifies if users need to verify their accounts via e-mail.";
         public const bool       SETTINGS_EMAIL_VERIFICATION__DEFAULT = true;
         // -- User Groups **********************************************************************************************
+        public const string     SETTINGS_GROUP_ANONYMOUS_GROUPID = "bsa/groups/anonymous_groupid";
+        public const string     SETTINGS_GROUP_ANONYMOUS_GROUPID__DESCRIPTION = "The identifier of the anonymous/non-authenticated group.";
+
         public const string     SETTINGS_GROUP_UNVERIFIED_GROUPID = "bsa/groups/unverified_groupid";
         public const string     SETTINGS_GROUP_UNVERIFIED_GROUPID__DESCRIPTION = "The identifier of the unverified group.";
 
@@ -201,6 +204,11 @@ namespace CMS.BasicSiteAuth
             // -- -- Recovery codes
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_RECOVERYCODES_EXPIRE, SETTINGS_RECOVERYCODES_EXPIRE__DESCRIPTION, SETTINGS_RECOVERYCODES_EXPIRE__DEFAULT);
             // Create default user-groups
+            // -- Anonymous
+            UserGroup ugAnonymous = new UserGroup();
+            ugAnonymous.Title = "Anonymous";
+            ugAnonymous.Description = "Non-authenticated/anonymous users.";
+            ugAnonymous.save(this, conn);
             // -- Unverified
             UserGroup ugUnverified = new UserGroup();
             ugUnverified.Title = "Unverified";
@@ -270,6 +278,7 @@ namespace CMS.BasicSiteAuth
             ugAdministrator.Pages_Publish = true;
             ugAdministrator.save(this, conn);
             // Save group ID's
+            Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_ANONYMOUS_GROUPID, SETTINGS_GROUP_ANONYMOUS_GROUPID__DESCRIPTION, ugAnonymous.GroupID);
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_UNVERIFIED_GROUPID, SETTINGS_GROUP_UNVERIFIED_GROUPID__DESCRIPTION, ugUnverified.GroupID);
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_USER_GROUPID, SETTINGS_GROUP_USER_GROUPID__DESCRIPTION, ugUser.GroupID);
             Core.Settings.setInt(this, Settings.SetAction.AddOrUpdate, SETTINGS_GROUP_MODERATOR_GROUPID, SETTINGS_GROUP_MODERATOR_GROUPID__DESCRIPTION, ugModerator.GroupID);
@@ -1102,7 +1111,7 @@ namespace CMS.BasicSiteAuth
             else
             {
                 // Fetch the BSA plugin
-                BasicSiteAuth bsa = (BasicSiteAuth)Core.Plugins[BSA_UUID_NHUC];
+                BasicSiteAuth bsa = getCurrentInstance();
                 if (bsa != null)
                 {
                     // Load and set user object
@@ -1113,6 +1122,14 @@ namespace CMS.BasicSiteAuth
                         HttpContext.Current.Items[HTTPCONTEXTITEMS_BSA_CURRENT_USER] = null;
                 }
             }
+        }
+        /// <summary>
+        /// Gets the current instance of the BasicSiteAuth in the runtime.
+        /// </summary>
+        /// <returns>Model or null.</returns>
+        public static BasicSiteAuth getCurrentInstance()
+        {
+            return (BasicSiteAuth)Core.Plugins[BSA_UUID_NHUC];
         }
         // Methods *****************************************************************************************************
         private void loadSalts()

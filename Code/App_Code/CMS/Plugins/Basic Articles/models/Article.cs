@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using System.Text;
 using CMS.Base;
 using CMS.BasicSiteAuth.Models;
+using CMS.Plugins;
 using UberLib.Connector;
 
 namespace CMS.BasicArticles
@@ -26,14 +28,15 @@ namespace CMS.BasicArticles
             TextCache = 8,
             DateTimeCreated = 16,
             DateTimeModified = 32,
-            Published = 64,
-            Comments = 128,
-            HTML = 256,
-            HidePanel = 512,
-            UserIDAuthor = 1024,
-            UserIDPublisher = 2048,
-            HeaderData = 4096,
-            All = 8191 // This should always be: [the next power of 2] - 1
+            DateTimePublished = 64,
+            Published = 128,
+            Comments = 256,
+            HTML = 512,
+            HidePanel = 1024,
+            UserIDAuthor = 2048,
+            UserIDPublisher = 4096,
+            HeaderData = 8192,
+            All = 16383 // This should always be: [the next power of 2] - 1
         }
         /// <summary>
         /// The status of the persistence of the model.
@@ -58,7 +61,8 @@ namespace CMS.BasicArticles
                             headerData,             // The article's header data.
                             headerDataHash;         // The hash to the existing header data record (may be shared by multiple articles); used for deletion of old header data.
         private DateTime    datetimeCreated,        // The date and time of when the article was created.
-                            datetimeModified;       // The date and time of when the article was modified.
+                            datetimeModified,       // The date and time of when the article was modified.
+                            datetimePublished;      // The date and time of when the article was published.
         private bool        published,              // Indicates if the article has been published.
                             comments,               // Indicates if the article should display comments.
                             html,                   // Indicates if the article should allow HTML.
@@ -82,8 +86,10 @@ namespace CMS.BasicArticles
         /// <param name="conn">Database connector.</param>
         /// <param name="uuidArticle">Identifier of the article.</param>
         /// <returns>Model or null.</returns>
-        public Article load(Connector conn, UUID uuidArticle)
+        public static Article load(Connector conn, UUID uuidArticle)
         {
+            if (uuidArticle == null)
+                return null;
             PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article WHERE uuid_article_raw=?uuid;");
             ps["uuid"] = uuidArticle.Bytes;
             return load(conn, ps);
@@ -94,9 +100,11 @@ namespace CMS.BasicArticles
         /// <param name="conn">Database connector.</param>
         /// <param name="uuidArticle">Identifier of the article.</param>
         /// <returns>Model or null.</returns>
-        public Article loadRendered(Connector conn, UUID uuidArticle)
+        public static Article loadRendered(Connector conn, UUID uuidArticle)
         {
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_raw WHERE uuid_article_raw=?uuid;");
+            if (uuidArticle == null)
+                return null;
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_rendered WHERE uuid_article_raw=?uuid;");
             ps["uuid"] = uuidArticle.Bytes;
             return load(conn, ps);
         }
@@ -109,7 +117,7 @@ namespace CMS.BasicArticles
         /// <param name="articles">The number of articles to fetch.</param>
         /// <param name="page">The page offset starting at 1.</param>
         /// <returns>An array of articles.</returns>
-        public Article[] loadRendered(Connector conn, Sorting sorting, string tagKeyword, int articles, int page)
+        public static Article[] loadRendered(Connector conn, Sorting sorting, string tagKeyword, int articles, int page)
         {
             // Build sorting
             string strOrder;
@@ -144,9 +152,9 @@ namespace CMS.BasicArticles
         /// <param name="conn">Database connector.</param>
         /// <param name="uuidArticle">Identifier of the article.</param>
         /// <returns>Model or null.</returns>
-        public Article loadRaw(Connector conn, UUID uuidArticle)
+        public static Article loadRaw(Connector conn, UUID uuidArticle)
         {
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_rendered WHERE uuid_article_raw=?uuid;");
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_raw WHERE uuid_article_raw=?uuid;");
             ps["uuid"] = uuidArticle.Bytes;
             return load(conn, ps);
         }
@@ -156,7 +164,7 @@ namespace CMS.BasicArticles
         /// <param name="conn">Database connector.</param>
         /// <param name="ps">The prepared statement to be executed and read.</param>
         /// <returns>Model or null.</returns>
-        public Article load(Connector conn, PreparedStatement ps)
+        public static Article load(Connector conn, PreparedStatement ps)
         {
             Result r = conn.queryRead(ps);
             return r.Count == 1 ? load(r[0]) : null;
@@ -166,9 +174,10 @@ namespace CMS.BasicArticles
         /// </summary>
         /// <param name="row">Database tuple/row.</param>
         /// <returns>Model or null.</returns>
-        public Article load(ResultRow row)
+        public static Article load(ResultRow row)
         {
             Article a = new Article();
+            a.persisted = true;
             a.uuidArticle = UUID.parse(row.get2<string>("uuid_article"));
             a.uuidThread = UUID.parse(row.get2<string>("uuid_thread"));
             a.title = row.get2<string>("title");
@@ -177,13 +186,14 @@ namespace CMS.BasicArticles
             a.headerData = row.get2<string>("headerdata");
             a.headerDataHash = row.get2<string>("headerdata_hash");
             a.datetimeCreated = row.get2<DateTime>("datetime_created");
-            a.datetimeModified = row.get2<DateTime>("datetime_modified");
+            a.datetimeModified = row.isNull("datetime_modified") ? DateTime.MinValue : row.get2<DateTime>("datetime_modified");
+            a.datetimePublished = row.isNull("datetime_published") ? DateTime.MinValue : row.get2<DateTime>("datetime_published");
             a.published = row.get2<string>("published").Equals("1");
             a.comments = row.get2<string>("comments").Equals("1");
             a.html = row.get2<string>("html").Equals("1");
             a.hidePanel = row.get2<string>("hide_panel").Equals("1");
-            a.useridAuthor = row.get2<int>("userid_author");
-            a.useridPublisher = row.get2<int>("userid_publisher");
+            a.useridAuthor = row.isNull("userid_author") ? -1 : row.get2<int>("userid_author");
+            a.useridPublisher = row.isNull("userid_publisher") ? -1 : row.get2<int>("userid_publisher");
             return a;
         }
         /// <summary>
@@ -206,9 +216,9 @@ namespace CMS.BasicArticles
                     return PersistStatus.Invalid_thread;
                 else if (persisted && uuidArticle == null)
                     return PersistStatus.Invalid_uuid_article;
-                else if (title.Length < Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MIN].get<int>() || title.Length > Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MAX].get<int>())
+                else if ((modified & Fields.Title) == Fields.Title && (title == null || title.Length < Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MIN].get<int>() || title.Length > Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MAX].get<int>()))
                     return PersistStatus.Invalid_title_length;
-                else if (textRaw.Length < Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MIN].get<int>() || textRaw.Length > Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MAX].get<int>())
+                else if ((modified & Fields.TextRaw) == Fields.TextRaw && (textRaw == null || textRaw.Length < Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MIN].get<int>() || textRaw.Length > Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MAX].get<int>()))
                     return PersistStatus.Invalid_text_length;
                 // Check if to create new header data record
                 string hash = null;
@@ -224,7 +234,7 @@ namespace CMS.BasicArticles
                     {
                         // Begin a transaction - we want the article and header data to persist or fail together
                         conn.queryExecute("BEGIN;");
-                        // Decide if to insert new record
+                        // Decide if to insert new record for the hash data, for many articles to share (more efficient)
                         PreparedStatement ps = new PreparedStatement("SELECT COUNT('') AS count FROM ba_article_headerdata WHERE hash=?hash;");
                         ps["hash"] = hash;
                         if(int.Parse(conn.queryRead(ps)[0]["count"]) == 0)
@@ -247,9 +257,26 @@ namespace CMS.BasicArticles
                 if ((modified & Fields.TextCache) == Fields.TextCache)
                     sql["text_cache"] = textCache;
                 if ((modified & Fields.DateTimeCreated) == Fields.DateTimeCreated)
-                    sql["datetime_created"] = datetimeCreated;
+                {
+                    if (datetimeCreated == DateTime.MinValue)
+                        sql["datetime_created"] = null;
+                    else
+                        sql["datetime_created"] = datetimeCreated;
+                }
                 if ((modified & Fields.DateTimeModified) == Fields.DateTimeModified)
-                    sql["datetime_modified"] = datetimeModified;
+                {
+                    if (datetimeModified == DateTime.MinValue)
+                        sql["datetime_modified"] = null;
+                    else
+                        sql["datetime_modified"] = datetimeModified;
+                }
+                if ((modified & Fields.DateTimePublished) == Fields.DateTimePublished)
+                {
+                    if (datetimePublished == DateTime.MinValue)
+                        sql["datetime_published"] = null;
+                    else
+                        sql["datetime_published"] = datetimePublished;
+                }
                 if ((modified & Fields.Published) == Fields.Published)
                     sql["published"] = published ? "1" : "0";
                 if ((modified & Fields.Comments) == Fields.Comments)
@@ -286,11 +313,9 @@ namespace CMS.BasicArticles
                         conn.queryExecute("COMMIT;");
                     // Check if to attempt to delete old hash data
                     if ((modified & Fields.HeaderData) == Fields.HeaderData && headerDataHash != null)
-                    {
-                        PreparedStatement p = new PreparedStatement("DELETE FROM ba_article_headerdata WHERE hash=?hash AND (SELECT COUNT('') FROM ba_article WHERE headerdata_hash=?hash) = 0;");
-                        p["hash"] = headerDataHash;
-                        conn.queryExecute(p);
-                    }
+                        removeOldHeaderData(conn, headerDataHash);
+                    if((modified & Fields.HeaderData) == Fields.HeaderData)
+                        headerData = hash;
                     modified = Fields.None;
                     return PersistStatus.Success;
                 }
@@ -308,7 +333,7 @@ namespace CMS.BasicArticles
                 }
                 catch (Exception)
                 {
-                    if(hash != null)
+                    if (hash != null)
                         conn.queryExecute("ROLLBACK;");
                     return PersistStatus.Error;
                 }
@@ -318,16 +343,30 @@ namespace CMS.BasicArticles
         /// Unpersists this model from the database.
         /// </summary>
         /// <param name="conn">Database connector.</param>
-        public void remove(Connector conn)
+        /// <param name="thread">The thread model of the article; can be null. This thread may be unpersisted if this is the only article belonging to the thread.</param>
+        public void remove(Connector conn, ArticleThread thread)
         {
             lock (this)
             {
                 if (uuidArticle == null)
                     return;
+                // Remove the article
                 PreparedStatement ps = new PreparedStatement("DELETE FROM ba_article WHERE uuid_article=?uuid_article;");
                 ps["uuid_article"] = uuidArticle.Bytes;
                 conn.queryExecute(ps);
+                // Remove header data
+                if(headerDataHash != null)
+                    removeOldHeaderData(conn, headerDataHash);
+                // Remove thread; this will only work if it has no articles
+                if(thread != null)
+                    thread.remove(conn);
             }
+        }
+        private void removeOldHeaderData(Connector conn, string hash)
+        {
+            PreparedStatement p = new PreparedStatement("DELETE FROM ba_article_headerdata WHERE hash=?hash AND (SELECT COUNT('') FROM ba_article WHERE headerdata_hash=?hash) = 0;");
+            p["hash"] = headerDataHash;
+            conn.queryExecute(p);
         }
         // Methods *****************************************************************************************************
         /// <summary>
@@ -341,6 +380,24 @@ namespace CMS.BasicArticles
         public bool isAuthorisedEdit(User u)
         {
             return u.UserGroup.Administrator || u.UserGroup.Moderator || u.UserID == useridAuthor;
+        }
+        /// <summary>
+        /// Rebuilds the article's raw text; output available from TextCache and HeaderData.
+        /// </summary>
+        /// <param name="data">The data for the current request.</param>
+        public void rebuild(Data data)
+        {
+            StringBuilder text = new StringBuilder(textRaw);
+            StringBuilder header = new StringBuilder();
+            // Render text
+#if TextRenderer
+            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
+            if (tr != null)
+                tr.render(data, ref header, ref text, RenderProvider.RenderType.Objects | RenderProvider.RenderType.TextFormatting);
+#endif
+            textCache = text.Length > 0 ? text.ToString() : null;
+            headerData = header.Length > 0 ? header.ToString() : null;
+            modified |= Fields.HeaderData | Fields.TextCache;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>
@@ -437,6 +494,8 @@ namespace CMS.BasicArticles
         }
         /// <summary>
         /// The date and time of when the article was created.
+        /// 
+        /// The value DateTime.MinValue is the equivalent of null.
         /// </summary>
         public DateTime DateTimeCreated
         {
@@ -455,6 +514,8 @@ namespace CMS.BasicArticles
         }
         /// <summary>
         /// The date and time of when the article was modified.
+        /// 
+        /// The value DateTime.MinValue is the equivalent of null.
         /// </summary>
         public DateTime DateTimeModified
         {
@@ -467,6 +528,26 @@ namespace CMS.BasicArticles
                 lock (this)
                 {
                     datetimeModified = value;
+                    modified |= Fields.DateTimeModified;
+                }
+            }
+        }
+        /// <summary>
+        /// The date and time of when the article was published.
+        /// 
+        /// The value DateTime.MinValue is the equivalent of null.
+        /// </summary>
+        public DateTime DateTimePublished
+        {
+            get
+            {
+                return datetimePublished;
+            }
+            set
+            {
+                lock (this)
+                {
+                    datetimePublished = value;
                     modified |= Fields.DateTimeModified;
                 }
             }
@@ -579,7 +660,9 @@ namespace CMS.BasicArticles
                 }
             }
         }
-
+        /// <summary>
+        /// The header data to support the rendered article content.
+        /// </summary>
         public string HeaderData
         {
             get

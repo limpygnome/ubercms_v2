@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/my_account]]></path><description><![CDATA[The my account page, used to change the properties of an account.]]></description><html><![CDATA[<h2>My Account</h2>
-<form method="post" action="/my_account">
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/my_account]]></path><description><![CDATA[The my account page, used to change the properties of an account.]]></description><html><![CDATA[<form method="post" action="/my_account">
 	<div class="TABLE">
 		<div class="ROW HEADER">
 			<div class="CELL1">

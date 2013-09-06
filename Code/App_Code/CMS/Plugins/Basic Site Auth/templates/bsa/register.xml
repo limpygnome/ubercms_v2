@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/register]]></path><description><![CDATA[The register page template.]]></description><html><![CDATA[<h2>Register</h2>
-<form method="post" action="/register">
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/register]]></path><description><![CDATA[The register page template.]]></description><html><![CDATA[<form method="post" action="/register">
 	<div class="TABLE">
 		<div class="ROW HEADER">
 			<div class="CELL1">

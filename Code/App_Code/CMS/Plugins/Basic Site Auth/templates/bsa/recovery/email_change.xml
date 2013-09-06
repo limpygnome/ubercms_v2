@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/email_change]]></path><description><![CDATA[The page which enables a user to change their password from a recovery e-mail code.]]></description><html><![CDATA[<h2>Account Recovery - E-mail</h2>
-<form method="post" action="/account_recovery/email/<!--bsa_recovery_email_code-->">
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/email_change]]></path><description><![CDATA[The page which enables a user to change their password from a recovery e-mail code.]]></description><html><![CDATA[<form method="post" action="/account_recovery/email/<!--bsa_recovery_email_code-->">
 	<div class="TABLE">
 		<div class="ROW">
 			<div class="CELL2">

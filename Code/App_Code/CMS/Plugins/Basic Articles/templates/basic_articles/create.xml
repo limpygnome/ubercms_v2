@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/create]]></path><description><![CDATA[The page for creating new articles.]]></description><html><![CDATA[<h2>Articles - Create</h2>
-<form method="post" action="/article/create<!--IF:article_uuid-->/<!--article_uuid--><!--ENDIF:article_uuid-->">
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/create]]></path><description><![CDATA[The page for creating new articles.]]></description><html><![CDATA[<form method="post" action="/article/<!--IF:article_edit-->edit/<!--article_edit--><!--ELSE-->create<!--ENDIF:article_edit-->">
 	<div class="TABLE">
 		<div class="ROW">
 			<div class="CELL2">
@@ -10,6 +9,7 @@
 			</div>
 			<div class="clear"></div>
 		</div>
+		<!--IF:!article_edit-->
 		<div class="ROW">
 			<div class="CELL2">
 				URL:
@@ -19,6 +19,7 @@
 			</div>
 			<div class="clear"></div>
 		</div>
+		<!--ENDIF:!article_edit-->
 		<div class="ROW">
 			<div class="CELL1">
 				&nbsp;
@@ -40,7 +41,7 @@
 				</span>
 				<span class="checkbox">
 						<input type="checkbox" id="article_comments" name="article_comments" <!--IF:article_comments-->checked="checked"<!--ENDIF:article_comments-->/>
-						<label for="article_comments">Allow Comments</label>
+						<label for="article_comments">Show Comments</label>
 				</span>
 			</div>
 			<div class="clear"></div>
@@ -65,7 +66,10 @@
 				&nbsp;
 			</div>
 			<div class="CELL2">
-				<input type="submit" name="article_create" value="Create" />
+				<input type="submit" name="article_create" value="<!--IF:article_edit-->Save<!--ELSE-->Create<!--ENDIF:article_edit-->" />
+				<!--IF:article_edit-->
+					<a class="BUTTON" href="/article/<!--article_edit-->">Cancel</a>
+				<!--ENDIF:article_edit-->
 			</div>
 		</div>
 		<div class="clear"></div>

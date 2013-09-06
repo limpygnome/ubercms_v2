@@ -108,8 +108,25 @@ namespace CMS.BasicArticles
         /// <returns>Model or null.</returns>
         public static ArticleThread load(Connector conn, UUID uuidThread)
         {
+            if (uuidThread == null)
+                return null;
             PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_thread WHERE uuid_thread_raw=?uuid_thread_raw;");
             ps["uuid_thread_raw"] = uuidThread.Bytes;
+            Result r = conn.queryRead(ps);
+            return r.Count == 1 ? load(r[0]) : null;
+        }
+        /// <summary>
+        /// Loads the article at the specified url.
+        /// </summary>
+        /// <param name="url">The URL of the article.</param>
+        /// <param name="conn">Database connector.</param>
+        /// <returns>Model or null.</returns>
+        public static ArticleThread load(Connector conn, string url)
+        {
+            if (url == null || url.Length == 0)
+                return null;
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_thread WHERE full_path=?full_path;");
+            ps["full_path"] = UrlRewriting.stripFullPath(url);
             Result r = conn.queryRead(ps);
             return r.Count == 1 ? load(r[0]) : null;
         }
@@ -193,7 +210,9 @@ namespace CMS.BasicArticles
             {
                 try
                 {
+                    // Delete the article
                     conn.queryExecute("DELETE FROM ba_article_thread WHERE uuid_thread=" + uuidThread.NumericHexString);
+                    // Delete the URL
                     if(url != null)
                         url.remove(conn);
                     persisted = false;

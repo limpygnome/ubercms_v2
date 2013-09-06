@@ -1,39 +1,30 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using CMS.Base;
 using UberLib.Connector;
 
 namespace CMS.BasicArticles
 {
+    /// <summary>
+    /// A read-only model; persisted by ArticleThreadTags model. Represents a tag shared by many articles.
+    /// </summary>
     public class Tag
     {
         // Fields ******************************************************************************************************
-        private bool        modified,       // Indicates if the model has been modified.
-                            persisted;      // Indicates if the model has been persisted.
+        private bool        persisted;      // Indicates if the model has been persisted.
         private int         tagid;          // The unique identifier of the model on the database.
         private string      keyword;        // The tag's keyword.
         // Methods - Constructors **************************************************************************************
-        public Tag()
+        private Tag()
         {
-            this.modified = this.persisted = false;
+            this.persisted = false;
+        }
+        private Tag(string keyword)
+        {
+            this.persisted = false;
+            this.keyword = keyword;
         }
         // Methods - Database Persisetence *****************************************************************************
-        /// <summary>
-        /// Creates or loads a tag model for a keyword.
-        /// 
-        /// This may return null if a model cannot be loaded or persisted.
-        /// </summary>
-        /// <param name="conn">Database connector.</param>
-        /// <param name="keyword">The tag keyword.</param>
-        /// <returns>Model or null.</returns>
-        public static Tag createOrLoad(Connector conn, string keyword)
-        {
-            Tag t = load(conn, keyword);
-            if (t != null)
-                return t;
-            t = new Tag();
-            t.Keyword = keyword;
-            return t.save(conn) ? t : null;
-        }
         /// <summary>
         /// Loads a model from the database.
         /// </summary>
@@ -42,7 +33,7 @@ namespace CMS.BasicArticles
         /// <returns>Model or null.</returns>
         public static Tag load(Connector conn, int tagId)
         {
-            PreparedStatement ps = new PreparedStatement("SELECT tagid, keyword FROM ba_tags WHERE tagid=?tagid;");
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_tags WHERE tagid=?tagid;");
             ps["tagid"] = tagId;
             Result r = conn.queryRead(ps);
             return r.Count == 1 ? load(r[0]) : null;
@@ -55,7 +46,7 @@ namespace CMS.BasicArticles
         /// <returns>Model or null.</returns>
         public static Tag load(Connector conn, string keyword)
         {
-            PreparedStatement ps = new PreparedStatement("SELECT tagid, keyword FROM ba_tags WHERE keyword=?keyword;");
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_tags WHERE keyword=?keyword;");
             ps["keyword"] = keyword;
             Result r = conn.queryRead(ps);
             return r.Count == 1 ? load(r[0]) : null;
@@ -73,58 +64,16 @@ namespace CMS.BasicArticles
             t.keyword = row.get2<string>("keyword");
             return t;
         }
+        // Methods *****************************************************************************************************
         /// <summary>
-        /// Persists the model to the database.
+        /// Attempts to create a tag or returns null if invalid.
         /// </summary>
-        /// <param name="conn">Database connector.</param>
-        /// <returns>True = persisted, false = not persisted.</returns>
-        public bool save(Connector conn)
+        /// <returns>Model or null.</returns>
+        public Tag create(string keyword)
         {
-            lock (this)
-            {
-                if (!modified)
-                    return false;
-                // Compile SQL
-                SQLCompiler sql = new SQLCompiler();
-                sql["keyword"] = keyword;
-                // Execute
-                try
-                {
-                    if (persisted)
-                    {
-                        sql.UpdateAttribute = "tagid";
-                        sql.UpdateValue = tagid;
-                        sql.executeUpdate(conn, "ba_tags");
-                    }
-                    else
-                    {
-                        tagid = (int)sql.executeInsert(conn, "ba_tags", "tagid")[0].get2<int>("tagid");
-                        persisted = true;
-                    }
-                    modified = false;
-                    return true;
-                }
-                catch
-                {
-                    return false;
-                }
-            }
+            return Regex.IsMatch(keyword, @"^([a-zA-Z0-9_-]*?)$") ? new Tag(keyword) : null;
         }
-        /// <summary>
-        /// Unpersists the data from the database.
-        /// </summary>
-        /// <param name="conn">Database connector.</param>
-        public void remove(Connector conn)
-        {
-            lock (this)
-            {
-                PreparedStatement ps = new PreparedStatement("DELETE FROM ba_tags WHERE tagid=?tagid;");
-                ps["tagid"] = tagid;
-                conn.queryExecute(ps);
-                this.persisted = false;
-            }
-        }
-        // Methods - Properties ***************************************************************************************&
+        // Methods - Properties ****************************************************************************************
         /// <summary>
         /// The identifier of the tag.
         /// </summary>
@@ -133,6 +82,10 @@ namespace CMS.BasicArticles
             get
             {
                 return tagid;
+            }
+            set
+            {
+                tagid = value;
             }
         }
         /// <summary>
@@ -144,10 +97,19 @@ namespace CMS.BasicArticles
             {
                 return keyword;
             }
+        }
+        /// <summary>
+        /// Indicates if the model is persisted.
+        /// </summary>
+        public bool IsPersisted
+        {
+            get
+            {
+                return persisted;
+            }
             set
             {
-                keyword = value;
-                modified = true;
+                persisted = value;
             }
         }
     }

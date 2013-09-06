@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/email_fail]]></path><description><![CDATA[Displayed when a code does not exist or a user has tried too many wrong ones.]]></description><html><![CDATA[<h2>Account Recovery - E-mail</h2>
-<p>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[bsa/recovery/email_fail]]></path><description><![CDATA[Displayed when a code does not exist or a user has tried too many wrong ones.]]></description><html><![CDATA[<p>
 	The e-mail recovery code does not exist (possibly expired) or you have attempted too many incorrect recovery or login attempts.
 </p>]]></html></template>

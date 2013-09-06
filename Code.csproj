@@ -161,6 +161,8 @@
     <Folder Include="Code\App_Code\CMS\Plugins\Comments\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Downloads\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Gallery\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\KeepAlive\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\RedirectHTTPS\" />
     <Folder Include="Code\Content\CSS\" />
   </ItemGroup>
   <ItemGroup>

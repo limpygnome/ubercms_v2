@@ -9,15 +9,31 @@ namespace CMS.BasicArticles
 {
     public class ArticleThreadPermissions
     {
+        // Enums *******************************************************************************************************
+        public enum Action
+        {
+            View,
+            Create,
+            Edit,
+            Rebuild,
+            EditPermissions,
+            EditThreadInfo,
+            Publish,
+            Delete,
+            DeleteThread
+        };
         // Fields ******************************************************************************************************
         private bool                modified,           // Indicates if the model has been modified.
                                     persisted;          // Indicates if the model has been persisted.
         private UUID                uuidThread;         // The article thread these permissions apply to.
         private List<int>           groups;             // The user-groups currently able to view the thread.
+        private UserGroup           ugAnonymous;        // The cached model of the anonymous user-group for the current request.
         // Methods - Constructors **************************************************************************************
         public ArticleThreadPermissions()
         {
             this.modified = this.persisted = false;
+            this.groups = new List<int>();
+            this.ugAnonymous = null;
         }
         // Methods - Database Persistence ******************************************************************************
         /// <summary>
@@ -26,7 +42,7 @@ namespace CMS.BasicArticles
         /// <param name="conn">Database connector.</param>
         /// <param name="uuidThread">The identifier of the article thread.</param>
         /// <returns>Article thread permissions.</returns>
-        public ArticleThreadPermissions load(Connector conn, UUID uuidThread)
+        public static ArticleThreadPermissions load(Connector conn, UUID uuidThread)
         {
             ArticleThreadPermissions p = new ArticleThreadPermissions();
             p.uuidThread = uuidThread;
@@ -44,10 +60,12 @@ namespace CMS.BasicArticles
         /// <returns>True = persisted, false = not persisted.</returns>
         public bool save(Connector conn)
         {
+            if (!modified)
+                return false;
             StringBuilder sb = new StringBuilder();
             sb.Append("BEGIN;");
             // -- Drop existing permissions
-            sb.Append("DELETE FROM ba_article_thread_permissions;");
+            sb.Append("DELETE FROM ba_article_thread_permissions WHERE uuid_thread=" + uuidThread.NumericHexString + ";");
             // -- Insert new ones
             if (groups.Count > 0)
             {
@@ -66,21 +84,72 @@ namespace CMS.BasicArticles
             }
             catch
             {
+                conn.queryExecute("ROLLBACK;");
                 return false;
             }
         }
         // Methods *****************************************************************************************************
         /// <summary>
-        /// Tests if a user is able to access the current article based on the permissions.
+        /// Tests if a user is authorised to perform an action.
         /// 
         /// Note: user's apart of a user-group with administrator or/and moderator flag(s) set to true will be able to
         /// view all articles.
+        /// 
+        /// Warning: if this code is modified, you should be absolutely sure your logic is correct! This section of code
+        /// is responsible for nearly, if not all, permissions for this plugin.
         /// </summary>
         /// <param name="user">The user to be tested.</param>
+        /// <param name="permissions">The permissions for a thread; can be null.</param>
+        /// <param name="article">The article needed for context for some actions; can be null.</param>
         /// <returns>True = authorised, false = not authorised.</returns>
-        public bool isAuthorisedView(User user)
+        public static bool isAuthorised(User user, Action action, ArticleThreadPermissions permissions, Article article)
         {
-            return user.UserGroup.Administrator || user.UserGroup.Moderator || groups.Contains(user.UserGroup.GroupID);
+            // Fetch the anonymous user-group for non-authenticated users; this group's permissions may override user permissions if higher than a user
+            // -- Else the user could just logout and have higher permissions, which makes no sense.
+            UserGroup anon;
+            if (permissions != null)
+            {
+                if (permissions.ugAnonymous != null)
+                    anon = permissions.ugAnonymous;
+                else
+                    anon = permissions.ugAnonymous = getAnonymousGroup();
+            }
+            else
+                anon = getAnonymousGroup();
+            // Check which permission is being tested
+            switch (action)
+            {
+                case Action.View:
+                    return (anon != null && (anon.Moderator || anon.Administrator || (permissions != null && permissions.groups.Contains(anon.GroupID)))) ||
+                        (user != null &&
+                                        (user.UserGroup.Administrator || user.UserGroup.Moderator || permissions.groups.Contains(user.UserGroup.GroupID))
+                        );
+                case Action.Create:
+                    return (anon != null && (anon.Pages_Create || anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Pages_Create || user.UserGroup.Moderator || user.UserGroup.Administrator));
+                case Action.Edit:
+                case Action.Rebuild:
+                    return (anon != null && (anon.Pages_Modify || anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Pages_Modify || user.UserGroup.Moderator || user.UserGroup.Administrator || (article != null && article.UserIdAuthor == user.UserID && user.UserGroup.Pages_ModifyOwn)));
+                case Action.Delete:
+                    return (anon != null && (anon.Pages_Delete || anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Pages_Delete || user.UserGroup.Moderator || user.UserGroup.Administrator || (article != null && article.UserIdAuthor == user.UserID && user.UserGroup.Pages_DeleteOwn)));
+                case Action.DeleteThread:
+                    return (anon != null && (anon.Pages_Delete || anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Pages_Delete || user.UserGroup.Moderator || user.UserGroup.Administrator));
+                case Action.EditPermissions:
+                    return (anon != null && (anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Moderator || user.UserGroup.Administrator));
+                case Action.EditThreadInfo:
+                    return (anon != null && (anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Pages_Create || user.UserGroup.Moderator || user.UserGroup.Administrator));
+                case Action.Publish:
+                    return (anon != null && (anon.Pages_Publish || anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Pages_Publish || user.UserGroup.Moderator || user.UserGroup.Administrator));
+                default:
+                    return false;
+            }
+        }
+        private static UserGroup getAnonymousGroup()
+        {
+            BasicSiteAuth.BasicSiteAuth bsa = BasicSiteAuth.BasicSiteAuth.getCurrentInstance();
+            if (bsa == null)
+                return null;
+            else
+                return bsa.UserGroups[Core.Settings[BasicSiteAuth.BasicSiteAuth.SETTINGS_GROUP_ANONYMOUS_GROUPID].get<int>()];
         }
         // Methods - Mutators ******************************************************************************************
         /// <summary>

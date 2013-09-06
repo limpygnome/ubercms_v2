@@ -28,6 +28,9 @@
  *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
  *                      2013-07-23      Updated the way settings are handled.
  *                      2013-07-31      Added the ability for variables to be nully embedded into templates.
+ *                      2013-09-05      Fixed a "bug" where ELSE inside a double-nested IF (custom syntax) of template
+ *                                      rendering would be picked up by the parent IF; this has been resolved by
+ *                                      adding the ability to specify <!--ELSE:<expression>--> - like with ENDIF syntax.
  * 
  * *********************************************************************************************************************
  * Used to load, and possibly cache, HTML templates from the database; this class also transforms the custom markup
@@ -133,7 +136,7 @@ namespace CMS.Base
 				else
 					expressionValue = false;
 
-				elseMC = Regex.Matches(m.Groups[2].Value, @"(.*?)<!--ELSE-->(.*$?)", RegexOptions.Singleline);
+                elseMC = Regex.Matches(m.Groups[2].Value, @"(.*?)<!--ELSE(?:\:" + expression + @")?-->(.*$?)", RegexOptions.Singleline);
 				if (elseMC.Count == 1)
 				{
                     if (expressionValue)
