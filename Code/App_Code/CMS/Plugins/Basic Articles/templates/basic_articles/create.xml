@@ -43,6 +43,12 @@
 						<input type="checkbox" id="article_comments" name="article_comments" <!--IF:article_comments-->checked="checked"<!--ENDIF:article_comments-->/>
 						<label for="article_comments">Show Comments</label>
 				</span>
+				<!--IF:article_edit-->
+				<span class="checkbox">
+						<input type="checkbox" id="article_create_new" name="article_create_new" <!--IF:article_create_new-->checked="checked"<!--ENDIF:article_create_new-->/>
+						<label for="article_create_new">Create As New Article</label>
+				</span>
+				<!--ENDIF:article_edit-->
 			</div>
 			<div class="clear"></div>
 		</div>

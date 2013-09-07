@@ -11,6 +11,10 @@ namespace CMS.BasicArticles
 {
     public partial class BasicArticles : Plugin
     {
+        // Constants ***************************************************************************************************
+        private const string    SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE = "basic_articles/thread_revisions_articlesperpage";
+        private const string    SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE__DESC = "The number of articles to display on a thread revisions page.";
+        private const int       SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE__VALUE = 8;
         // Enums *******************************************************************************************************
         public enum ArticleCreatePostback
         {
@@ -59,7 +63,7 @@ namespace CMS.BasicArticles
             if (!BaseUtils.contentInstall(PathContent, Core.PathContent, true, ref messageOutput))
                 return false;
             // Install URL rewriting
-            if (!BaseUtils.urlRewritingInstall(conn, this, new string[] { "articles_home", "articles", "article" }, ref messageOutput))
+            if (!BaseUtils.urlRewritingInstall(conn, this, new string[] { "articles_home", "articles", "article", "thread" }, ref messageOutput))
                 return false;
             return true;
         }
@@ -84,11 +88,11 @@ namespace CMS.BasicArticles
                     switch (data.PathInfo[1])
                     {
                         case "create":
-                            return pageArticle_createEdit(data, false);
+                            return pageEditor(data, false);
                         case "edit":
-                            return pageArticle_createEdit(data, true);
+                            return pageEditor(data, true);
                         default:
-                            return pageArticle_view(data, false);
+                            return pageArticle(data, false);
                     }
                 case "articles":
                     switch (data.PathInfo[1])
@@ -140,13 +144,15 @@ namespace CMS.BasicArticles
                     break;
                 case "articles_home":
                     return pageArticles_render(data, Article.Sorting.Latest, "news");
+                case "thread":
+                    return pageThread(data);
                 default:
-                    return pageArticle_view(data, true);
+                    return pageArticle(data, true);
             }
             return false;
         }
         // Methods - Pages *********************************************************************************************
-        private bool pageArticle_createEdit(Data data, bool edit)
+        private bool pageEditor(Data data, bool edit)
         {
             // Fetch the current user model
             User user = BasicSiteAuth.BasicSiteAuth.getCurrentUser(data);
@@ -185,12 +191,19 @@ namespace CMS.BasicArticles
             bool html = data.Request.Form["article_html"] != null || (postback == ArticleCreatePostback.None && article != null && article.HTML);
             bool hidePanel = data.Request.Form["article_hide_panel"] != null || (postback == ArticleCreatePostback.None && article != null && article.HidePanel);
             bool comments = data.Request.Form["article_comments"] != null || (postback == ArticleCreatePostback.None && article != null && article.Comments);
+            bool createNew = edit && data.Request.Form["article_create_new"] != null;
             // Handle (possible) postback data
             if (postback != ArticleCreatePostback.None && title != null && (edit || url != null) && raw != null)
             {
                 // Check if we're making or modifying an article
                 if (article == null)
                     article = new Article();
+                else if (createNew)
+                {
+                    Article temp = article;
+                    article = new Article();
+                    article.UUIDThread = temp.UUIDThread;
+                }
                 else
                     article.DateTimeModified = DateTime.Now;
                 // Set the model's data
@@ -221,7 +234,8 @@ namespace CMS.BasicArticles
                     if (error == null)
                     {
                         // If the user has publish permissions, the article will be published under their account
-                        if (user.UserGroup.Pages_Publish)
+                        bool canPublish = ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Publish, null, article);
+                        if (canPublish)
                         {
                             article.UserIdPublisher = user.UserID;
                             article.Published = true;
@@ -294,6 +308,17 @@ namespace CMS.BasicArticles
                                     }
                                 }
                             }
+                            else if (createNew && canPublish)
+                            {
+                                // Set the current article for the thread
+                                ArticleThread at = ArticleThread.load(data.Connector, article.UUIDThread);
+                                if (at != null)
+                                {
+                                    at.UUIDArticleCurrent = article.UUIDArticle;
+                                    at.save(data.Connector);
+                                }
+                                BaseUtils.redirectAbs(data, "/article/" + article.UUIDArticle.Hex);
+                            }
                             else
                                 BaseUtils.redirectAbs(data, "/article/" + article.UUIDArticle.Hex);
                         }
@@ -327,7 +352,7 @@ namespace CMS.BasicArticles
                 data["article_error"] = HttpUtility.HtmlEncode(error);
             return true;
         }
-        private bool pageArticle_view(Data data, bool urlPath)
+        private bool pageArticle(Data data, bool urlPath)
         {
             string action = data.PathInfo[2];
             Article article = null;
@@ -449,6 +474,8 @@ namespace CMS.BasicArticles
             }
             data["article_created"] = BaseUtils.dateTimeToHumanReadable(article.DateTimeCreated);
             data["article_created_datetime"] = article.DateTimeCreated.ToString();
+            if (thread.Url != null)
+                data["article_url"] = BaseUtils.getAbsoluteURL(data, thread.Url.FullPath);
             // Set flags
             if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Edit, perms, article))
                 data.setFlag("article_modify");
@@ -464,50 +491,95 @@ namespace CMS.BasicArticles
                 data.setFlag("thread_delete");
             return true;
         }
-        private bool pageArticle_delete(Data data)
+        private bool pageThread(Data data)
         {
+            User user = BasicSiteAuth.BasicSiteAuth.getCurrentUser(data);
+            string action = data.PathInfo[2];
+            ArticleThread thread = null;
+            // Load the thread
+            {
+                UUID temp;
+                if ((temp = UUID.parse(data.PathInfo[1])) == null || (thread = ArticleThread.load(data.Connector, temp)) == null)
+                    return false;
+            }
+            ArticleThreadPermissions perms = ArticleThreadPermissions.load(data.Connector, thread.UUIDThread);
+            // Handle action
+            switch (action)
+            {
+                case "revisions":
+                    data["Title"] = "Thread - Revisions";
+                    data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_revisions");
+                    StringBuilder revisions = new StringBuilder();
+                    string templateRevision = Core.Templates.get(data.Connector, "basic_articles/thread_revisions_article");
+                    
+                    break;
+                case "permissions":
+                    data["Title"] = "Thread - Permissions";
+                    break;
+                case "info":
+                    data["Title"] = "Thread - Information";
+                    break;
+                case "delete":
+                    data["Title"] = "Thread - Delete";
+                    if (data.Request.Form["thread_delete"] != null)
+                    {
+#if CSRFP
+                    if (!CSRFProtection.authenticated(data))
+                        return false;
+#endif
+                        // Remove the thread
+                        thread.removeForce(data.Connector);
+                        // Redirect to home
+                        BaseUtils.redirectAbs(data, "/articles");
+                    }
+                    data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_delete");
+                    break;
+            }
+            // Set common data
+            data["Content"] = Core.Templates.get(data.Connector, "basic_articles/article");
+            data["thread_uuid"] = thread.UUIDThread.Hex;
+            data["article_uuid"] = thread.UUIDArticleCurrent != null ? thread.UUIDArticleCurrent.Hex : string.Empty;
+            data.setFlag("article_thread");
+            if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.EditPermissions, perms, null))
+                data.setFlag("thread_permissions");
+            if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.EditThreadInfo, perms, null))
+                data.setFlag("thread_info");
+            if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.DeleteThread, perms, null))
+                data.setFlag("thread_delete");
+            BaseUtils.headerAppendCss("/content/css/basic_articles.css", ref data);
             return true;
         }
-        private bool pageArticle_rebuild(Data data)
-        {
-            return true;
-        }
-        private bool pageThread_modify(Data data)
-        {
-            return true;
-        }
-        /// <summary>
-        /// Rebuilds the text of every article, with confirmation.
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="tagFilter"></param>
-        /// <returns></returns>
+        // rebuilds all articles
         private bool pageArticles_rebuild(Data data, string tagFilter)
         {
             return true;
         }
+        // browse articles by tag etc
         private bool pageArticles_browser(Data data, Article.Sorting sorting, string tagFilter)
         {
             return true;
         }
-        private bool pageArticles_render(Data data, Article.Sorting sorting, string tagFilter)
-        {
-            return true;
-        }
-
+        // changelog activity
         private bool pageArticles_changeLog(Data data)
         {
             return true;
         }
-
+        // articles which havent been published
         private bool pageArticles_pendingReview(Data data)
         {
             return true;
         }
+        // search articles
         private bool pageArticles_search(Data data)
         {
             return true;
         }
+        // for rendering multiple articles like a blog/news-reel
+        private bool pageArticles_render(Data data, Article.Sorting sorting, string tagFilter)
+        {
+            return true;
+        }
+        // general health
         private bool pageArticles_admin(Data data)
         {
             // check health, usage, dead header data, dead URL rewriting etc.

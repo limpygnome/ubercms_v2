@@ -119,24 +119,9 @@ namespace CMS.BasicArticles
         /// <returns>An array of articles.</returns>
         public static Article[] loadRendered(Connector conn, Sorting sorting, string tagKeyword, int articles, int page)
         {
-            // Build sorting
-            string strOrder;
-            switch (sorting)
-            {
-                case Sorting.Latest:
-                    strOrder = "datetime_created DESC"; break;
-                case Sorting.Oldest:
-                    strOrder = "datetime_created ASC"; break;
-                case Sorting.TitleAZ:
-                    strOrder = "title ASC"; break;
-                case Sorting.TitleZA:
-                    strOrder = "title DESC"; break;
-                default:
-                    return new Article[] { };
-            }
             // Parse results into models and return the array of models
             List<Article> buffer = new List<Article>(articles);
-            Result result = conn.queryRead("SELECT * FROM ba_view_load_article_rendered ORDER BY " + strOrder + " LIMIT " + articles + " OFFSET " + (page * articles) + ";");
+            Result result = conn.queryRead("SELECT * FROM ba_view_load_article_rendered ORDER BY " + getOrderBy(sorting) + " LIMIT " + articles + " OFFSET " + (page * articles) + ";");
             Article a;
             foreach (ResultRow row in result)
             {
@@ -157,6 +142,45 @@ namespace CMS.BasicArticles
             PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_raw WHERE uuid_article_raw=?uuid;");
             ps["uuid"] = uuidArticle.Bytes;
             return load(conn, ps);
+        }
+        /// <summary>
+        /// Loads a persisted model from the database; no content (raw and rendered text) is loaded.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="uuidArticle">Identifier of the article.</param>
+        /// <returns>Model or null.</returns>
+        public static Article loadNoContent(Connector conn, UUID uuidArticle)
+        {
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_nocontent WHERE uuid_article_raw=?uuid;");
+            ps["uuid"] = uuidArticle.Bytes;
+            return load(conn, ps);
+        }
+        /// <summary>
+        /// Loads articles with no content for a thread.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="uuidThread">The thread of the articles.</param>
+        /// <param name="sorting">The sorting of the articles.</param>
+        /// <param name="articlesPerPage">The number of articles to load.</param>
+        /// <param name="page">The offset/page, starting at 1.</param>
+        /// <returns>Array of articles; possibly empty.</returns>
+        public static Article[] loadNoContent(Connector conn, UUID uuidThread, Sorting sorting, int articlesPerPage, int page)
+        {
+            // Validate input
+            if (page < 1)
+                page = 1;
+            else if (uuidThread == null || articlesPerPage < 0)
+                return new Article[] { };
+            // Fetch and parse articles
+            List<Article> buffer = new List<Article>();
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_nocontent ORDER BY " + getOrderBy(sorting) + " LIMIT " + articlesPerPage + " OFFSET " + (page * articlesPerPage) + ";");
+            Article a;
+            foreach (ResultRow row in conn.queryRead(ps))
+            {
+                if ((a = Article.load(row)) != null)
+                    buffer.Add(a);
+            }
+            return buffer.ToArray();
         }
         /// <summary>
         /// Loads a persisted model from the database.
@@ -229,7 +253,7 @@ namespace CMS.BasicArticles
                     hash = System.Text.Encoding.UTF8.GetString(ha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(headerData)));
                     // Check the data has actually changed
                     if (hash == headerDataHash)
-                        hash = null;
+                        modified &= ~Fields.HeaderData;
                     else
                     {
                         // Begin a transaction - we want the article and header data to persist or fail together
@@ -237,7 +261,7 @@ namespace CMS.BasicArticles
                         // Decide if to insert new record for the hash data, for many articles to share (more efficient)
                         PreparedStatement ps = new PreparedStatement("SELECT COUNT('') AS count FROM ba_article_headerdata WHERE hash=?hash;");
                         ps["hash"] = hash;
-                        if(int.Parse(conn.queryRead(ps)[0]["count"]) == 0)
+                        if (int.Parse(conn.queryRead(ps)[0]["count"]) == 0)
                         {
                             ps = new PreparedStatement("INSERT INTO ba_article_headerdata (hash, headerdata) VALUES(?hash, ?headerdata);");
                             ps["hash"] = hash;
@@ -368,6 +392,24 @@ namespace CMS.BasicArticles
             p["hash"] = headerDataHash;
             conn.queryExecute(p);
         }
+        private static string getOrderBy(Sorting sorting)
+        {
+            string strOrder;
+            switch (sorting)
+            {
+                case Sorting.Latest:
+                    strOrder = "datetime_created DESC"; break;
+                case Sorting.Oldest:
+                    strOrder = "datetime_created ASC"; break;
+                case Sorting.TitleAZ:
+                    strOrder = "title ASC"; break;
+                case Sorting.TitleZA:
+                    strOrder = "title DESC"; break;
+                default:
+                    throw new Exception("Unknown sorting specified!");
+            }
+            return strOrder;
+        }
         // Methods *****************************************************************************************************
         /// <summary>
         /// Indicates if the user is allowed to edit the article.
@@ -387,7 +429,7 @@ namespace CMS.BasicArticles
         /// <param name="data">The data for the current request.</param>
         public void rebuild(Data data)
         {
-            StringBuilder text = new StringBuilder(textRaw);
+            StringBuilder text = new StringBuilder(html ? textRaw : System.Web.HttpUtility.HtmlEncode(textRaw));
             StringBuilder header = new StringBuilder();
             // Render text
 #if TextRenderer

@@ -49,53 +49,58 @@ namespace CMS.BasicArticles
         /// <returns>True = successfully fetched article thread model, false = failed to fetch article thread model.</returns>
         public static CreateThread createFetch(Connector conn, BasicArticles ba, string fullPath, out ArticleThread at)
         {
-            // Ensure the URL is formatted correctly
-            fullPath = UrlRewriting.stripFullPath(fullPath);
-            // Lookup for an existing article at the URL
-            PreparedStatement ps = new PreparedStatement("SELECT uuid_thread FROM ba_article_thread_createfetch WHERE full_path=?full_path;");
-            ps["full_path"] = fullPath;
-            Result r = conn.queryRead(ps);
-            // Load, else create, the model for the article
             ArticleThread temp;
-            if (r.Count == 1)
+            if (fullPath != null)
             {
-                if ((temp = ArticleThread.load(conn, UUID.parse(r[0].get2<string>("uuid_thread")))) == null)
+                // Ensure the URL is formatted correctly
+                fullPath = UrlRewriting.stripFullPath(fullPath);
+                // Lookup for an existing article at the URL
+                PreparedStatement ps = new PreparedStatement("SELECT uuid_thread FROM ba_article_thread_createfetch WHERE full_path=?full_path;");
+                ps["full_path"] = fullPath;
+                Result r = conn.queryRead(ps);
+                // Load, else create, the model for the article
+                if (r.Count == 1)
                 {
-                    at = null;
-                    return CreateThread.Error;
-                }
-            }
-            else if (r.Count > 1)
-                throw new Exception("Multiple article threads exist for the full-path - critical exception!");
-            else
-            {
-                // A thread does not exist at the specified full-path - create it!
-                // -- Create URL
-                UrlRewriting rw = new UrlRewriting();
-                rw.FullPath = fullPath;
-                rw.PluginOwner = ba.UUID;
-                UrlRewriting.PersistStatus s = rw.save(conn);
-                if (s != UrlRewriting.PersistStatus.Success)
-                {
-                    at = null;
-                    switch (s)
+                    if ((temp = ArticleThread.load(conn, UUID.parse(r[0].get2<string>("uuid_thread")))) == null)
                     {
-                        case UrlRewriting.PersistStatus.Error:
-                            return CreateThread.Error;
-                        case UrlRewriting.PersistStatus.InvalidPath:
-                            return CreateThread.UrlInvalid;
-                        case UrlRewriting.PersistStatus.InUse:
-                            return CreateThread.UrlUsed;
+                        at = null;
+                        return CreateThread.Error;
                     }
                 }
-                // -- Create thread
-                temp = new ArticleThread();
-                temp.Url = rw;
-                if (!temp.save(conn))
+                else if (r.Count > 1)
+                    throw new Exception("Multiple article threads exist for the full-path - critical exception!");
+                else
                 {
-                    at = null;
-                    return CreateThread.Error;
+                    // A thread does not exist at the specified full-path - create it!
+                    // -- Create URL
+                    UrlRewriting rw = new UrlRewriting();
+                    rw.FullPath = fullPath;
+                    rw.PluginOwner = ba.UUID;
+                    UrlRewriting.PersistStatus s = rw.save(conn);
+                    if (s != UrlRewriting.PersistStatus.Success)
+                    {
+                        at = null;
+                        switch (s)
+                        {
+                            case UrlRewriting.PersistStatus.Error:
+                                return CreateThread.Error;
+                            case UrlRewriting.PersistStatus.InvalidPath:
+                                return CreateThread.UrlInvalid;
+                            case UrlRewriting.PersistStatus.InUse:
+                                return CreateThread.UrlUsed;
+                        }
+                    }
+                    temp = new ArticleThread();
+                    temp.Url = rw;
                 }
+            }
+            else
+                temp = new ArticleThread();
+            // Persist the thread
+            if (!temp.save(conn))
+            {
+                at = null;
+                return CreateThread.Error;
             }
             at = temp;
             return CreateThread.Success;

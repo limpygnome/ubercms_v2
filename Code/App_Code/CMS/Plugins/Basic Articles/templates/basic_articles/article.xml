@@ -1,28 +1,30 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/article]]></path><description><![CDATA[The template for displaying an article.]]></description><html><![CDATA[<!--IF:article_show_panel-->
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/article]]></path><description><![CDATA[The template for displaying an article.]]></description><html><![CDATA[<!--IF:article_show_panel|article_thread-->
 <div class="article_header">
 	<div class="buttons">
 		<a href="/article/<!--article_uuid-->">
 			<img src="" alt="" title="View" />
 			View
 		</a>
-		<!--IF:article_modify-->
-		<a href="/article/edit/<!--article_uuid-->">
-			<img src="" alt="" title="Modify" />
-			Modify
-		</a>
-		<!--ENDIF:article_modify-->
-		<!--IF:article_rebuild-->
-		<a href="/article/<!--article_uuid-->/rebuild">
-			<img src="" alt="" title="Rebuild" />
-			Rebuild
-		</a>
-		<!--ENDIF:article_rebuild-->
-		<!--IF:article_delete-->
-		<a href="/article/<!--article_uuid-->/delete">
-			<img src="" alt="" title="Delete" />
-			Delete
-		</a>
-		<!--ENDIF:article_delete-->
+		<!--IF:!article_thread-->
+			<!--IF:article_modify-->
+			<a href="/article/edit/<!--article_uuid-->">
+				<img src="" alt="" title="Modify" />
+				Modify
+			</a>
+			<!--ENDIF:article_modify-->
+			<!--IF:article_rebuild-->
+			<a href="/article/<!--article_uuid-->/rebuild">
+				<img src="" alt="" title="Rebuild" />
+				Rebuild
+			</a>
+			<!--ENDIF:article_rebuild-->
+			<!--IF:article_delete-->
+			<a href="/article/<!--article_uuid-->/delete">
+				<img src="" alt="" title="Delete" />
+				Delete
+			</a>
+			<!--ENDIF:article_delete-->
+		<!--ENDIF:!article_thread-->
 		<span class="thread">
 			<a href="/thread/<!--thread_uuid-->/revisions">
 				<img src="" alt="" title="Revisions" />
@@ -51,7 +53,7 @@
 	</div>
 	<div class="clear"></div>
 </div>
-<!--ENDIF:article_show_panel-->
+<!--ENDIF:article_show_panel|article_thread-->
 <!--IF:article_showpanel_button-->
 <div class="article_show_panel">
 	<a class="BUTTON" href="/article/<!--article_uuid-->?show_panel=1">
@@ -62,7 +64,7 @@
 <div class="article_content">
 <!--article_content-->
 </div>
-<!--IF:article_show_panel-->
+<!--IF:article_show_panel&!article_thread-->
 <div class="article_footer">
 	<div class="tags">
 		<span>Tags:</span>
@@ -74,6 +76,10 @@
 	</div>
 	<div class="info">
 		Created: <span title="<!--article_created_datetime-->"><!--article_created--></span><!--IF:article_published--> / Published: <span title="<!--article_published_datetime-->"><!--article_published--></span><!--ENDIF:article_published--> <!--IF:article_modified-->/ Modified: <span title="<!--article_modified_datetime-->"><!--article_modified--></span><!--ENDIF:article_modified-->
+		<!--IF:article_url-->
+		<br />
+		URL: <a href="<!--article_url-->"><!--article_url--></a>
+		<!--ENDIF:article_url-->
 	</div>
 </div>
-<!--ENDIF:article_show_panel-->]]></html></template>
+<!--ENDIF:article_show_panel&!article_thread-->]]></html></template>
