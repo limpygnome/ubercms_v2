@@ -49,6 +49,7 @@ namespace CMS.BasicArticles
         /// <returns>True = successfully fetched article thread model, false = failed to fetch article thread model.</returns>
         public static CreateThread createFetch(Connector conn, BasicArticles ba, string fullPath, out ArticleThread at)
         {
+            bool newThread = true;
             ArticleThread temp;
             if (fullPath != null)
             {
@@ -66,6 +67,7 @@ namespace CMS.BasicArticles
                         at = null;
                         return CreateThread.Error;
                     }
+                    newThread = true;
                 }
                 else if (r.Count > 1)
                     throw new Exception("Multiple article threads exist for the full-path - critical exception!");
@@ -90,6 +92,7 @@ namespace CMS.BasicArticles
                                 return CreateThread.UrlUsed;
                         }
                     }
+                    // -- Create new model
                     temp = new ArticleThread();
                     temp.Url = rw;
                 }
@@ -102,6 +105,21 @@ namespace CMS.BasicArticles
                 at = null;
                 return CreateThread.Error;
             }
+            // Check if this is a new thread
+            if (newThread)
+            {
+                // -- Add the anonymous group by default to thread permissions for viewing
+                ArticleThreadPermissions perms = new ArticleThreadPermissions(temp.UUIDThread);
+                perms.add(ArticleThreadPermissions.getAnonymousGroup());
+                if (!perms.save(conn))
+                {
+                    // Rollback...
+                    temp.remove(conn);
+                    at = null;
+                    return CreateThread.Error;
+                }
+            }
+            // Success
             at = temp;
             return CreateThread.Success;
         }

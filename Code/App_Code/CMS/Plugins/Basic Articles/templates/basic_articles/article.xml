@@ -2,49 +2,49 @@
 <div class="article_header">
 	<div class="buttons">
 		<a href="/article/<!--article_uuid-->">
-			<img src="" alt="" title="View" />
+			<img src="/content/images/basic_articles/view.png" alt="View" title="View" />
 			View
 		</a>
 		<!--IF:!article_thread-->
 			<!--IF:article_modify-->
 			<a href="/article/edit/<!--article_uuid-->">
-				<img src="" alt="" title="Modify" />
+				<img src="/content/images/basic_articles/modify.png" alt="Modify" title="Modify" />
 				Modify
 			</a>
 			<!--ENDIF:article_modify-->
 			<!--IF:article_rebuild-->
 			<a href="/article/<!--article_uuid-->/rebuild">
-				<img src="" alt="" title="Rebuild" />
+				<img src="/content/images/basic_articles/rebuild.png" alt="Rebuild" title="Rebuild" />
 				Rebuild
 			</a>
 			<!--ENDIF:article_rebuild-->
 			<!--IF:article_delete-->
 			<a href="/article/<!--article_uuid-->/delete">
-				<img src="" alt="" title="Delete" />
+				<img src="/content/images/basic_articles/delete.png" alt="Delete" title="Delete" />
 				Delete
 			</a>
 			<!--ENDIF:article_delete-->
 		<!--ENDIF:!article_thread-->
 		<span class="thread">
 			<a href="/thread/<!--thread_uuid-->/revisions">
-				<img src="" alt="" title="Revisions" />
+				<img src="/content/images/basic_articles/revisions.png" alt="Revisions" title="Revisions" />
 				Revisions
 			</a>
 			<!--IF:thread_permissions-->
 			<a href="/thread/<!--thread_uuid-->/permissions">
-				<img src="" alt="" title="Permissions" />
+				<img src="/content/images/basic_articles/permissions.png" alt="Permissions" title="Permissions" />
 				Permissions
 			</a>
 			<!--ENDIF:thread_permissions-->
 			<!--IF:thread_info-->
 			<a href="/thread/<!--thread_uuid-->/info">
-				<img src="" alt="" title="Edit Info" />
+				<img src="/content/images/basic_articles/edit_info.png" alt="Edit Info" title="Edit Info" />
 				Edit Info
 			</a>
 			<!--ENDIF:thread_info-->
 			<!--IF:thread_delete-->
 			<a href="/thread/<!--thread_uuid-->/delete">
-				<img src="" alt="" title="Delete" />
+				<img src="/content/images/basic_articles/delete_thread.png" alt="Delete" title="Delete" />
 				Delete All
 			</a>
 			<!--ENDIF:thread_delete-->

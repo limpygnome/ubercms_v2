@@ -137,4 +137,7 @@
 		<!--ENDIF:article_rendered-->
 	</div>
 	<!--csrf()-->
-</form>]]></html></template>
+</form>
+<script type="text/javascript">
+	articleShowToolbar();
+</script>]]></html></template>

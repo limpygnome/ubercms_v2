@@ -333,7 +333,7 @@ namespace CMS.BasicArticles
                         persisted = true;
                     }
                     // Check if we're inside a transaction, if so commit it
-                    if (hash != null)
+                    if ((modified & Fields.HeaderData) == Fields.HeaderData)
                         conn.queryExecute("COMMIT;");
                     // Check if to attempt to delete old hash data
                     if ((modified & Fields.HeaderData) == Fields.HeaderData && headerDataHash != null)
@@ -345,7 +345,7 @@ namespace CMS.BasicArticles
                 }
                 catch (DuplicateEntryException ex)
                 {
-                    if (hash != null)
+                    if ((modified & Fields.HeaderData) == Fields.HeaderData)
                         conn.queryExecute("ROLLBACK;");
                     switch (ex.Attribute)
                     {
@@ -357,7 +357,7 @@ namespace CMS.BasicArticles
                 }
                 catch (Exception)
                 {
-                    if (hash != null)
+                    if ((modified & Fields.HeaderData) == Fields.HeaderData)
                         conn.queryExecute("ROLLBACK;");
                     return PersistStatus.Error;
                 }

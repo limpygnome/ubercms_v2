@@ -384,11 +384,14 @@ namespace CMS.BasicSiteAuth
         }
         public override bool handler_pluginStart(Connector conn)
         {
+            // Load password hashing salts
             loadSalts();
             // Load user-groups
-            this.groups = UserGroups.load(conn);
+            if ((this.groups = UserGroups.load(conn)) == null)
+                return false;
             // Load account event types
-            this.accountEventTypes = AccountEventTypes.load(conn);
+            if ((this.accountEventTypes = AccountEventTypes.load(conn)) == null)
+                return false;
             return true;
         }
         public override void handler_pluginCycle()

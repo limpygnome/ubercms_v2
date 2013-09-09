@@ -29,10 +29,17 @@ namespace CMS.BasicArticles
         private List<int>           groups;             // The user-groups currently able to view the thread.
         private UserGroup           ugAnonymous;        // The cached model of the anonymous user-group for the current request.
         // Methods - Constructors **************************************************************************************
-        public ArticleThreadPermissions()
+        private ArticleThreadPermissions()
         {
             this.modified = this.persisted = false;
             this.groups = new List<int>();
+            this.ugAnonymous = null;
+        }
+        public ArticleThreadPermissions(UUID uuidThread)
+        {
+            this.modified = this.persisted = false;
+            this.groups = new List<int>();
+            this.uuidThread = uuidThread;
             this.ugAnonymous = null;
         }
         // Methods - Database Persistence ******************************************************************************
@@ -62,6 +69,7 @@ namespace CMS.BasicArticles
         {
             if (!modified)
                 return false;
+            // Compile query
             StringBuilder sb = new StringBuilder();
             sb.Append("BEGIN;");
             // -- Drop existing permissions
@@ -69,7 +77,7 @@ namespace CMS.BasicArticles
             // -- Insert new ones
             if (groups.Count > 0)
             {
-                sb.Append("INSERT INTO ba_article_thread permissions (uuid_thread, groupid) VALUES");
+                sb.Append("INSERT INTO ba_article_thread_permissions (uuid_thread, groupid) VALUES");
                 foreach (int g in groups)
                     sb.Append("(").Append(uuidThread.NumericHexString).Append(", ").Append(g.ToString()).Append("),");
                 sb.Remove(sb.Length - 1, 1).Append(";");
@@ -143,13 +151,10 @@ namespace CMS.BasicArticles
                     return false;
             }
         }
-        private static UserGroup getAnonymousGroup()
+        public static UserGroup getAnonymousGroup()
         {
             BasicSiteAuth.BasicSiteAuth bsa = BasicSiteAuth.BasicSiteAuth.getCurrentInstance();
-            if (bsa == null)
-                return null;
-            else
-                return bsa.UserGroups[Core.Settings[BasicSiteAuth.BasicSiteAuth.SETTINGS_GROUP_ANONYMOUS_GROUPID].get<int>()];
+            return bsa == null ? null : bsa.UserGroups[Core.Settings[BasicSiteAuth.BasicSiteAuth.SETTINGS_GROUP_ANONYMOUS_GROUPID].get<int>()];
         }
         // Methods - Mutators ******************************************************************************************
         /// <summary>
@@ -160,7 +165,7 @@ namespace CMS.BasicArticles
         {
             lock (this)
             {
-                if (!groups.Contains(g.GroupID))
+                if (g != null && !groups.Contains(g.GroupID))
                 {
                     groups.Add(g.GroupID);
                     modified = true;
