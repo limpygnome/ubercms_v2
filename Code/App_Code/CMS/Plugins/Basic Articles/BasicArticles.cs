@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Web;
 using CMS.Base;
@@ -503,73 +504,6 @@ namespace CMS.BasicArticles
                     return false;
             }
             ArticleThreadPermissions perms = ArticleThreadPermissions.load(data.Connector, thread.UUIDThread);
-            // Handle action
-            switch (action)
-            {
-                case "revisions":
-                    // Parse page options
-                    string praw = data.PathInfo[3];
-                    int page;
-                    if (praw == null || !int.TryParse(praw, out page) || page < 1)
-                        page = 1;
-                    // Build list of articles
-                    StringBuilder revisions = new StringBuilder();
-                    string templateRevision = Core.Templates.get(data.Connector, "basic_articles/thread_revisions_article");
-                    StringBuilder temp;
-                    Data tempData;
-                    int limit = Core.Settings[SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE].get<int>();
-                    foreach (Article article in Article.loadNoContent(data.Connector, thread.UUIDThread, Article.Sorting.Latest, limit, page))
-                    {
-                        temp = new StringBuilder(templateRevision);
-                        tempData = new Data(null, null);
-                        // Set render parameters
-                        tempData["uuid_article"] = article.UUIDArticle.Hex;
-                        tempData["title"] = HttpUtility.HtmlEncode(article.Title);
-                        tempData["datetime_created"] = article.DateTimeCreated.ToString();
-                        if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Edit, perms, article))
-                            tempData.setFlag("article_modify");
-                        if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Rebuild, perms, article))
-                            tempData.setFlag("article_rebuild");
-                        if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Delete, perms, article))
-                            tempData.setFlag("article_delete");
-                        // Render and append
-                        Core.Templates.render(ref temp, ref tempData);
-                        revisions.Append(temp);
-                    }
-                    // Set data
-                    data["Title"] = "Thread - Revisions";
-                    data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_revisions");
-                    data["article_page"] = page.ToString();
-                    if(page > 1)
-                        data["article_page_prev"] = (page - 1).ToString();
-                    if(page < int.MaxValue)
-                        data["article_page_next"] = (page + 1).ToString();
-                    data["uuid_thread"] = thread.UUIDThread.Hex;
-                    if(revisions.Length > 0)
-                        data["article_revisions"] = revisions.ToString();
-                    break;
-                case "permissions":
-                    data["Title"] = "Thread - Permissions";
-                    break;
-                case "info":
-                    data["Title"] = "Thread - Information";
-                    break;
-                case "delete":
-                    data["Title"] = "Thread - Delete";
-                    if (data.Request.Form["thread_delete"] != null)
-                    {
-#if CSRFP
-                    if (!CSRFProtection.authenticated(data))
-                        return false;
-#endif
-                        // Remove the thread
-                        thread.removeForce(data.Connector);
-                        // Redirect to home
-                        BaseUtils.redirectAbs(data, "/articles");
-                    }
-                    data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_delete");
-                    break;
-            }
             // Set common data
             data["Content"] = Core.Templates.get(data.Connector, "basic_articles/article");
             data["thread_uuid"] = thread.UUIDThread.Hex;
@@ -582,6 +516,149 @@ namespace CMS.BasicArticles
             if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.DeleteThread, perms, null))
                 data.setFlag("thread_delete");
             BaseUtils.headerAppendCss("/content/css/basic_articles.css", ref data);
+            // Handle action
+            switch (action)
+            {
+                case "revisions":
+                    return pageThread_revisions(data, thread, user, perms);
+                case "permissions":
+                    return pageThread_permissions(data, thread, user, perms);
+                case "info":
+                    return pageThread_info(data, thread, user, perms);
+                case "delete":
+                    return pageThread_delete(data, thread, user, perms);
+                default:
+                    return false;
+            }
+        }
+        private bool pageThread_revisions(Data data, ArticleThread thread, User user, ArticleThreadPermissions perms)
+        {
+            // Parse page options
+            string praw = data.PathInfo[3];
+            int page;
+            if (praw == null || !int.TryParse(praw, out page) || page < 1)
+                page = 1;
+            // Build list of articles
+            StringBuilder revisions = new StringBuilder();
+            string templateRevision = Core.Templates.get(data.Connector, "basic_articles/thread_revisions_article");
+            StringBuilder temp;
+            Data tempData;
+            int limit = Core.Settings[SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE].get<int>();
+            Article[] articles = Article.loadNoContent(data.Connector, thread.UUIDThread, Article.Sorting.Latest, limit, page);
+            foreach (Article article in articles)
+            {
+                temp = new StringBuilder(templateRevision);
+                tempData = new Data(null, null);
+                // Set render parameters
+                tempData["uuid_article"] = article.UUIDArticle.Hex;
+                tempData["title"] = HttpUtility.HtmlEncode(article.Title);
+                tempData["datetime_created"] = HttpUtility.HtmlEncode(BaseUtils.dateTimeToHumanReadable(article.DateTimeCreated));
+                tempData["datetime_created_full"] = HttpUtility.HtmlEncode(article.DateTimeCreated.ToString());
+                if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Edit, perms, article))
+                    tempData.setFlag("article_modify");
+                if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Rebuild, perms, article))
+                    tempData.setFlag("article_rebuild");
+                if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Delete, perms, article))
+                    tempData.setFlag("article_delete");
+                // Render and append
+                Core.Templates.render(ref temp, ref tempData);
+                revisions.Append(temp);
+            }
+            // Set data
+            data["Title"] = "Thread - Revisions";
+            data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_revisions");
+            data["article_page"] = page.ToString();
+            if (page > 1)
+                data["article_page_prev"] = (page - 1).ToString();
+            if (page < int.MaxValue && limit == articles.Length)
+                data["article_page_next"] = (page + 1).ToString();
+            if (revisions.Length > 0)
+                data["article_revisions"] = revisions.ToString();
+            return true;
+        }
+        private bool pageThread_permissions(Data data, ArticleThread thread, User user, ArticleThreadPermissions perms)
+        {
+            string success = null;
+            string error = null;
+            // Check for postback
+            bool postback = data.Request.Form["thread_permissions"] != null;
+            if (postback)
+            {
+                BasicSiteAuth.BasicSiteAuth bsa = BasicSiteAuth.BasicSiteAuth.getCurrentInstance();
+                // Clear permissions
+                perms.clear();
+                // Readd
+                int groupid;
+                const string ARTICLE_PERMISSION_FIELD_NAME = "article_permission_";
+                foreach (string s in data.Request.Form.AllKeys)
+                {
+                    if (s.StartsWith(ARTICLE_PERMISSION_FIELD_NAME) && s.Length > ARTICLE_PERMISSION_FIELD_NAME.Length && int.TryParse(s.Substring(ARTICLE_PERMISSION_FIELD_NAME.Length), out groupid))
+                    {
+                        if (bsa.UserGroups.contains(groupid))
+                            perms.add(groupid);
+                        else
+                            error = "Group with identifier '" + groupid + "' does not exist!";
+                    }
+                }
+                if (error == null)
+                {
+                    // Persist the model
+                    if (!perms.save(data.Connector))
+                        error = "An error occurred persisting the new permissions!";
+                    else
+                        success = "Updated thread viewing permission(s)! " + perms.UserGroups.Count;
+                }
+            }
+            // Build user groups list
+            StringBuilder buffer = new StringBuilder();
+            string template = Core.Templates.get(data.Connector, "basic_articles/thread_permissions_item");
+            StringBuilder temp;
+            Data tempData;
+            foreach (KeyValuePair<int,UserGroup> group in BasicSiteAuth.BasicSiteAuth.getCurrentInstance().UserGroups)
+            {
+                temp = new StringBuilder(template);
+                tempData = new Data(null, null);
+                // Set data
+                tempData["usergroup_id"] = group.Value.GroupID.ToString();
+                tempData["usergroup_title"] = HttpUtility.HtmlEncode(group.Value.Title);
+                if ((postback && data.Request.Form["article_permission_" + group.Value.GroupID] != null) || (!postback && perms.contains(group.Value)))
+                    tempData.setFlag("usergroup_selected");
+                // Render and append
+                Core.Templates.render(ref temp, ref tempData);
+                buffer.Append(temp);
+            }
+            if (buffer.Length > 0)
+                data["thread_permissions"] = buffer.ToString();
+            // Set data
+            data["Title"] = "Thread - Permissions";
+            data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_permissions");
+            if (success != null)
+                data["thread_perms_success"] = HttpUtility.HtmlEncode(success);
+            if (error != null)
+                data["thread_perms_error"] = HttpUtility.HtmlEncode(error);
+            return true;
+        }
+        private bool pageThread_info(Data data, ArticleThread thread, User user, ArticleThreadPermissions perms)
+        {
+            // Set data
+            data["Title"] = "Thread - Information";
+            return true;
+        }
+        private bool pageThread_delete(Data data, ArticleThread thread, User user, ArticleThreadPermissions perms)
+        {
+            data["Title"] = "Thread - Delete";
+            if (data.Request.Form["thread_delete"] != null)
+            {
+#if CSRFP
+                    if (!CSRFProtection.authenticated(data))
+                        return false;
+#endif
+                // Remove the thread
+                thread.removeForce(data.Connector);
+                // Redirect to home
+                BaseUtils.redirectAbs(data, "/articles");
+            }
+            data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_delete");
             return true;
         }
         // rebuilds all articles

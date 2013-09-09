@@ -160,7 +160,7 @@ namespace CMS.BasicArticles
         /// <summary>
         /// Adds a user-group to view the article thread.
         /// </summary>
-        /// <param name="g"></param>
+        /// <param name="g">The user-group.</param>
         public void add(UserGroup g)
         {
             lock (this)
@@ -168,6 +168,21 @@ namespace CMS.BasicArticles
                 if (g != null && !groups.Contains(g.GroupID))
                 {
                     groups.Add(g.GroupID);
+                    modified = true;
+                }
+            }
+        }
+        /// <summary>
+        /// Adds a user-group to view the article thread.
+        /// </summary>
+        /// <param name="groupID">The identifier of the user-group.</param>
+        public void add(int groupID)
+        {
+            lock (this)
+            {
+                if (!groups.Contains(groupID))
+                {
+                    groups.Add(groupID);
                     modified = true;
                 }
             }
@@ -186,6 +201,32 @@ namespace CMS.BasicArticles
                     modified = true;
                 }
             }
+        }
+        /// <summary>
+        /// Indicates if the collection contains the user-group.
+        /// </summary>
+        /// <param name="g"The user-group.></param>
+        /// <returns>True = exists, false = not exists.</returns>
+        public bool contains(UserGroup g)
+        {
+            return contains(g.GroupID);
+        }
+        /// <summary>
+        /// Indicates if the collection contains the user-group.
+        /// </summary>
+        /// <param name="groupID"The user-group identifier.></param>
+        /// <returns>True = exists, false = not exists.</returns>
+        public bool contains(int groupID)
+        {
+            return groups.Contains(groupID);
+        }
+        /// <summary>
+        /// Clears all of the user-groups added.
+        /// </summary>
+        public void clear()
+        {
+            groups.Clear();
+            modified = true;
         }
         // Methods - Properties ****************************************************************************************
         public List<int> UserGroups

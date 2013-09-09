@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/thread_permissions]]></path><description><![CDATA[The page for setting thread viewing permissions.]]></description><html><![CDATA[<form method="post" action="/thread/<!--thread_uuid-->/permissions">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Thread Permissions - Viewing
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<!--thread_permissions-->
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" value="Save" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+	<input type="hidden" name="thread_permissions" value="1" />
+</form>
+
+<!--IF:thread_perms_success-->
+<p class="SUCCESS">
+	<!--thread_perms_success-->
+</p>
+<!--ENDIF:thread_perms_success-->
+<!--IF:thread_perms_error-->
+<p class="ERROR">
+	<!--thread_perms_error-->
+</p>
+<!--ENDIF:thread_perms_error-->]]></html></template>

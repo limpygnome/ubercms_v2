@@ -44,6 +44,11 @@ namespace CMS.BasicSiteAuth.Models
         {
             groups = new Dictionary<int, UserGroup>();
         }
+        // Methods - Enumerators ***************************************************************************************
+        public Dictionary<int, UserGroup>.Enumerator GetEnumerator()
+        {
+            return groups.GetEnumerator();
+        }
         // Methods *****************************************************************************************************
         /// <summary>
         /// Adds a new user-group; note: the specified group-id will be ignored!
@@ -79,11 +84,20 @@ namespace CMS.BasicSiteAuth.Models
         /// <summary>
         /// Checks if the group, based on the group ID, exists.
         /// </summary>
-        /// <param name="ug">The user group to check.</param>
+        /// <param name="ug">The user-group.</param>
         /// <returns>True = user-group is within the collection, false = the user group is not in the collection.</returns>
         public bool contains(UserGroup ug)
         {
             return groups.ContainsKey(ug.GroupID);
+        }
+        /// <summary>
+        /// Checks if the group, based on the group ID, exists.
+        /// </summary>
+        /// <param name="groupID">The user-group identifier..</param>
+        /// <returns>True = user-group is within the collection, false = the user group is not in the collection.</returns>
+        public bool contains(int groupID)
+        {
+            return groups.ContainsKey(groupID);
         }
         /// <summary>
         /// Reloads the collection of user-groups from the database.

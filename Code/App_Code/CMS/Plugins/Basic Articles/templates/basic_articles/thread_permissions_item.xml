@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/thread_permissions_item]]></path><description><![CDATA[Thread permissions item/user-group.]]></description><html><![CDATA[<div class="article_thread_permission">
+	<span class="checkbox">
+			<input type="checkbox" id="article_permission_<!--usergroup_id-->" name="article_permission_<!--usergroup_id-->" <!--IF:usergroup_selected-->checked="checked"<!--ENDIF:usergroup_selected-->/>
+			<label for="article_permission_<!--usergroup_id-->"><!--usergroup_title--></label>
+	</span>
+</div>]]></html></template>

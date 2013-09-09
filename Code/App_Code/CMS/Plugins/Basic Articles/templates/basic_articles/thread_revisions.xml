@@ -39,10 +39,10 @@
 
 <p class="tac">
 <!--IF:article_page_prev-->
-<a class="fl BUTTON" href="/thread/<!--uuid_thread-->/revisions/<!--article_page_prev-->">Previous</a>
+<a class="fl BUTTON" href="/thread/<!--thread_uuid-->/revisions/<!--article_page_prev-->">Previous</a>
 <!--ENDIF:article_page_prev-->
 Page <!--article_page-->
 <!--IF:article_page_next-->
-<a class="fr BUTTON" href="/thread/<!--uuid_thread-->/revisions/<!--article_page_next-->">Next</a>
+<a class="fr BUTTON" href="/thread/<!--thread_uuid-->/revisions/<!--article_page_next-->">Next</a>
 <!--ENDIF:article_page_next-->
 </div>]]></html></template>
