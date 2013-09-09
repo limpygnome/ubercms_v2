@@ -1,1 +1,40 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/thread_revisions_article]]></path><description><![CDATA[An article item on the article revisions thread page.]]></description><html><![CDATA[]]></html></template>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/thread_revisions_article]]></path><description><![CDATA[An article item on the article revisions thread page.]]></description><html><![CDATA[<div class="ROW">
+		<div class="CELL acell1">
+			<div class="P">
+				<!--uuid_article-->
+			</div>
+		</div>
+		<div class="CELL acell2">
+			<div class="P">
+				<!--title-->
+			</div>
+		</div>
+		<div class="CELL acell3">
+			<div class="P" title="<!--datetime_created_full-->">
+				<!--datetime_created-->
+			</div>
+		</div>
+		<div class="CELL acell4">
+			<div class="P">
+				<a href="/article/<!--uuid_article-->">
+					<img src="/content/images/basic_articles/view.png" alt="View" title="View" />
+				</a>
+				<!--IF:article_modify-->
+				<a href="/article/edit/<!--uuid_article-->">
+					<img src="/content/images/basic_articles/modify.png" alt="Modify" title="Modify" />
+				</a>
+				<!--ENDIF:article_modify-->
+				<!--IF:article_rebuild-->
+				<a href="/article/<!--uuid_article-->/rebuild">
+					<img src="/content/images/basic_articles/rebuild.png" alt="Rebuild" title="Rebuild" />
+				</a>
+				<!--ENDIF:article_rebuild-->
+				<!--IF:article_delete-->
+				<a href="/article/<!--uuid_article-->/delete">
+					<img src="/content/images/basic_articles/delete.png" alt="Delete" title="Delete" />
+				</a>
+				<!--ENDIF:article_delete-->
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>]]></html></template>

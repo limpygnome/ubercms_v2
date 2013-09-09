@@ -173,7 +173,10 @@ namespace CMS.BasicArticles
                 return new Article[] { };
             // Fetch and parse articles
             List<Article> buffer = new List<Article>();
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_nocontent ORDER BY " + getOrderBy(sorting) + " LIMIT " + articlesPerPage + " OFFSET " + (page * articlesPerPage) + ";");
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_nocontent WHERE uuid_thread_raw=?uuid_thread ORDER BY " + getOrderBy(sorting) + " LIMIT ?app OFFSET ?apage;");
+            ps["uuid_thread"] = uuidThread.Bytes;
+            ps["app"] = articlesPerPage;
+            ps["apage"] = ((page - 1) * articlesPerPage);
             Article a;
             foreach (ResultRow row in conn.queryRead(ps))
             {

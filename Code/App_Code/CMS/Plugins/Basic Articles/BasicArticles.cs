@@ -12,7 +12,7 @@ namespace CMS.BasicArticles
     public partial class BasicArticles : Plugin
     {
         // Constants ***************************************************************************************************
-        private const string    SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE = "basic_articles/thread_revisions_articlesperpage";
+        private const string    SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE = "basic_articles/thread_revisions/articlesperpage";
         private const string    SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE__DESC = "The number of articles to display on a thread revisions page.";
         private const int       SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE__VALUE = 8;
         // Enums *******************************************************************************************************
@@ -507,11 +507,46 @@ namespace CMS.BasicArticles
             switch (action)
             {
                 case "revisions":
-                    data["Title"] = "Thread - Revisions";
-                    data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_revisions");
+                    // Parse page options
+                    string praw = data.PathInfo[3];
+                    int page;
+                    if (praw == null || !int.TryParse(praw, out page) || page < 1)
+                        page = 1;
+                    // Build list of articles
                     StringBuilder revisions = new StringBuilder();
                     string templateRevision = Core.Templates.get(data.Connector, "basic_articles/thread_revisions_article");
-                    
+                    StringBuilder temp;
+                    Data tempData;
+                    int limit = Core.Settings[SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE].get<int>();
+                    foreach (Article article in Article.loadNoContent(data.Connector, thread.UUIDThread, Article.Sorting.Latest, limit, page))
+                    {
+                        temp = new StringBuilder(templateRevision);
+                        tempData = new Data(null, null);
+                        // Set render parameters
+                        tempData["uuid_article"] = article.UUIDArticle.Hex;
+                        tempData["title"] = HttpUtility.HtmlEncode(article.Title);
+                        tempData["datetime_created"] = article.DateTimeCreated.ToString();
+                        if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Edit, perms, article))
+                            tempData.setFlag("article_modify");
+                        if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Rebuild, perms, article))
+                            tempData.setFlag("article_rebuild");
+                        if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Delete, perms, article))
+                            tempData.setFlag("article_delete");
+                        // Render and append
+                        Core.Templates.render(ref temp, ref tempData);
+                        revisions.Append(temp);
+                    }
+                    // Set data
+                    data["Title"] = "Thread - Revisions";
+                    data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_revisions");
+                    data["article_page"] = page.ToString();
+                    if(page > 1)
+                        data["article_page_prev"] = (page - 1).ToString();
+                    if(page < int.MaxValue)
+                        data["article_page_next"] = (page + 1).ToString();
+                    data["uuid_thread"] = thread.UUIDThread.Hex;
+                    if(revisions.Length > 0)
+                        data["article_revisions"] = revisions.ToString();
                     break;
                 case "permissions":
                     data["Title"] = "Thread - Permissions";

@@ -1,1 +1,48 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/thread_revisions]]></path><description><![CDATA[The page of article revisions for a thread.]]></description><html><![CDATA[]]></html></template>
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/thread_revisions]]></path><description><![CDATA[The page of article revisions for a thread.]]></description><html><![CDATA[<div class="TABLE article_revisions">
+	<div class="ROW HEADER">
+		<div class="CELL acell1">
+			<div class="P">
+				UUID
+			</div>
+		</div>
+		<div class="CELL acell2">
+			<div class="P">
+				Title
+			</div>
+		</div>
+		<div class="CELL acell3">
+			<div class="P">
+				Created
+			</div>
+		</div>
+		<div class="CELL acell4">
+			<div class="P">
+				Options
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--IF:article_revisions-->
+		<!--article_revisions-->
+	<!--ELSE-->
+	<div class="ROW">
+		<div class="CELL1">
+			<div class="P">
+				No article revisions available.
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--ENDIF:article_revisions-->
+	<div class="clear"></div>
+</div>
+
+<p class="tac">
+<!--IF:article_page_prev-->
+<a class="fl BUTTON" href="/thread/<!--uuid_thread-->/revisions/<!--article_page_prev-->">Previous</a>
+<!--ENDIF:article_page_prev-->
+Page <!--article_page-->
+<!--IF:article_page_next-->
+<a class="fr BUTTON" href="/thread/<!--uuid_thread-->/revisions/<!--article_page_next-->">Next</a>
+<!--ENDIF:article_page_next-->
+</div>]]></html></template>
