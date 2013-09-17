@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Drawing;
+using System.IO;
 using CMS.Base;
 using UberLib.Connector;
 
@@ -21,6 +23,13 @@ namespace CMS.BasicArticles
             UrlUsed,
             Success
         };
+        public enum UpdateThumbnail
+        {
+            InvalidSize,
+            InvalidData,
+            Error,
+            Success
+        }
         // Fields ******************************************************************************************************
         private Fields          modified;                   // Indicates if the model has been modified.
         private bool            persisted;                  // Indicates if the model has been persisted.
@@ -261,40 +270,140 @@ namespace CMS.BasicArticles
             persisted = false;
         }
         // Methods *****************************************************************************************************
-        ///// <summary>
-        ///// Changes the URL rewriting path of the thread.
-        ///// </summary>
-        ///// <param name="conn">Database connector.</param>
-        ///// <param name="ba">BA plugin.</param>
-        ///// <param name="fullPath">The new URL for the article thread.</param>
-        ///// <returnsTrue = success, false = path invalid/in-use.></returns>
-        //public UrlRewriting.PersistStatus setPath(Connector conn, BasicArticles ba, string fullPath)
-        //{
-        //    if (urlid < -1)
-        //    {
-        //        // Create new URL path
-        //        UrlRewriting.PersistStatus ps = UrlRewriting.PersistStatus.Error;
-        //        UrlRewriting rw = UrlRewriting.create(conn, ba, fullPath, out ps);
-        //        if (rw != null)
-        //            urlid = rw.UrlID;
-        //        return ps;
-        //    }
-        //    else
-        //    {
-        //        // Load existing URL path and switch it
-        //        UrlRewriting rw = UrlRewriting.load(conn, urlid);
-        //        if (rw == null)
-        //        {
-        //            urlid = -1;
-        //            return UrlRewriting.PersistStatus.Error;
-        //        }
-        //        else
-        //        {
-        //            rw.FullPath = fullPath;
-        //            return rw.save(conn);
-        //        }
-        //    }
-        //}
+        /// <summary>
+        /// Updates the thumbnail for the thread.
+        /// </summary>
+        /// <param name="stream">Image data.</param>
+        /// <param name="length">The size/length of the image data.</param>
+        /// <param name="extension">The extension of the image.</param>
+        /// <returns>Status of updating the thumbnail.</returns>
+        public UpdateThumbnail thumbnailUpdate(Stream stream, int length, string extension, BaseUtils.ResizeAction action)
+        {
+            lock (this)
+            {
+                // Check the file-size
+                if (length < Core.Settings[Settings.SETTINGS__THREAD_IMAGE_LENGTH_MIN].get<int>() || length > Core.Settings[Settings.SETTINGS__THREAD_IMAGE_LENGTH_MAX].get<int>())
+                    return UpdateThumbnail.InvalidSize;
+                // Check extension
+                if (extension.StartsWith("."))
+                {
+                    if (extension.Length == 1)
+                        return UpdateThumbnail.InvalidData;
+                    else
+                        extension = extension.Substring(1);
+                }
+                if (!Core.Settings[Settings.SETTINGS__THREAD_IMAGE_ALLOWED_EXTENSIONS].get<string>().Contains(extension))
+                    return UpdateThumbnail.InvalidData;
+                // Convert to byte array
+                byte[] data = new byte[length];
+                try
+                {
+                    stream.Read(data, 0, length);
+                    stream.Close();
+                }
+                catch
+                {
+                    return UpdateThumbnail.InvalidData;
+                }
+                return thumbnailUpdate(data, action);
+            }
+        }
+        /// <summary>
+        /// Updates the thumbnail for the thread.
+        /// </summary>
+        /// <param name="data">Image data.</param>
+        /// <returns>Status of updating the thumbnail.</returns>
+        public UpdateThumbnail thumbnailUpdate(byte[] data, BaseUtils.ResizeAction action)
+        {
+            lock (this)
+            {
+                // Parse the byte data into an image
+                try
+                {
+                    MemoryStream ms = new MemoryStream(data);
+                    UpdateThumbnail ut = thumbnailUpdate(Image.FromStream(ms), action);
+                    ms.Close();
+                    ms.Dispose();
+                    return ut;
+                }
+                catch
+                {
+                    return UpdateThumbnail.InvalidData;
+                }
+            }
+        }
+        /// <summary>
+        /// Updates the thumbnail for the thread.
+        /// </summary>
+        /// <param name="img">Image data.</param>
+        /// <returns>Status of updating the thumbnail.</returns>
+        public UpdateThumbnail thumbnailUpdate(Image img, BaseUtils.ResizeAction action)
+        {
+            lock (this)
+            {
+                // Resize image
+                img = BaseUtils.resizeImage(img, action, Core.Settings[Settings.SETTINGS__THREAD_IMAGE_WIDTH].get<int>(), Core.Settings[Settings.SETTINGS__THREAD_IMAGE_HEIGHT].get<int>());
+                // Save the image to disk
+                try
+                {
+                    if (!Directory.Exists(PathThumbnails))
+                        Directory.CreateDirectory(PathThumbnails);
+                    img.Save(PathThumbnail, System.Drawing.Imaging.ImageFormat.Jpeg);
+                }
+                catch
+                {
+                    return UpdateThumbnail.Error;
+                }
+                // Update modification flags
+                if (!thumbnail)
+                {
+                    thumbnail = true;
+                    modified |= Fields.Thumbnail;
+                }
+                return UpdateThumbnail.Success;
+            }
+        }
+        /// <summary>
+        /// Resets the thumbnail.
+        /// </summary>
+        public void thumbnailReset()
+        {
+            lock (this)
+            {
+                if (thumbnail)
+                {
+                    File.Delete(PathThumbnail);
+                    thumbnail = false;
+                    modified |= Fields.Thumbnail;
+                }
+            }
+        }
+        /// <summary>
+        /// Moves the thread to a new URL.
+        /// 
+        /// Note: you will need to persist the thread model to save changes!
+        /// </summary>
+        /// <param name="ba">Basic Articles plugin model.</param>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="urlNew">The new URL/destination of the thread.</param>
+        /// <returns>The status of the operation.</returns>
+        public UrlRewriting.PersistStatus move(BasicArticles ba, Connector conn, string urlNew)
+        {
+            // Save the old for unpersistence later
+            UrlRewriting urOld = url;
+            // Create new URL
+            UrlRewriting urNew = new UrlRewriting();
+            urNew.PluginOwner = ba.UUID;
+            urNew.FullPath = urlNew;
+            UrlRewriting.PersistStatus ps = urNew.save(conn);
+            if (ps == UrlRewriting.PersistStatus.Success)
+            {
+                urOld.remove(conn);
+                url = urNew;
+                modified |= Fields.Url;
+            }
+            return ps;
+        }
         // Methods - Properties ****************************************************************************************
         /// <summary>
         /// The UUID of this article thread.
@@ -359,13 +468,14 @@ namespace CMS.BasicArticles
             }
         }
         /// <summary>
-        /// The URL of the thumbnail for this article thread.
+        /// The URL of the thumbnail for this article thread; if no thumbnail is available, the URL will point to a
+        /// default thumbnail.
         /// </summary>
         public string UrlThumbnail
         {
             get
             {
-                return "/content/basic_articles/thumbnails/" + uuidThread.Hex + ".jpg";
+                return thumbnail ? ("/content/basic_articles/thumbnails/" + uuidThread.Hex + ".jpg") : "/content/images/basic_articles/default.png";
             }
         }
         /// <summary>
@@ -386,6 +496,21 @@ namespace CMS.BasicArticles
             get
             {
                 return Core.PathContent + "/basic_articles/thumbnails";
+            }
+        }
+
+        public bool IsPersisted
+        {
+            get
+            {
+                return persisted;
+            }
+        }
+        public bool IsModified
+        {
+            get
+            {
+                return modified != Fields.None;
             }
         }
     }

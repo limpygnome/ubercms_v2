@@ -20,7 +20,8 @@ namespace CMS.BasicArticles
             EditThreadInfo,
             Publish,
             Delete,
-            DeleteThread
+            DeleteThread,
+            MoveThread
         };
         // Fields ******************************************************************************************************
         private bool                modified,           // Indicates if the model has been modified.
@@ -140,6 +141,8 @@ namespace CMS.BasicArticles
                 case Action.Delete:
                     return (anon != null && (anon.Pages_Delete || anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Pages_Delete || user.UserGroup.Moderator || user.UserGroup.Administrator || (article != null && article.UserIdAuthor == user.UserID && user.UserGroup.Pages_DeleteOwn)));
                 case Action.DeleteThread:
+                    return (anon != null && (anon.Pages_Modify || anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Pages_Modify || user.UserGroup.Moderator || user.UserGroup.Administrator));
+                case Action.MoveThread:
                     return (anon != null && (anon.Pages_Delete || anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Pages_Delete || user.UserGroup.Moderator || user.UserGroup.Administrator));
                 case Action.EditPermissions:
                     return (anon != null && (anon.Moderator || anon.Administrator)) || (user != null && (user.UserGroup.Moderator || user.UserGroup.Administrator));

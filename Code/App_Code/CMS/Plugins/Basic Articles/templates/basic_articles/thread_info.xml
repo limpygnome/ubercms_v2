@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/thread_info]]></path><description><![CDATA[The page for changing thread information.]]></description><html><![CDATA[<form method="post" action="/thread/<!--thread_uuid-->/info" enctype="multipart/form-data">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Thread Thumbnail
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Current Thumbnail:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<img class="article_thumbnail_large" src="<!--thread_thumbnail_url-->" alt="Current Thread Thumbnail" />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Select Upload:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="file" name="thumbnail" />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Resize Action:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<select name="thumbnail_resize">
+						<option value="resize">Resize</option>
+						<option value="crop">Crop Edges</option>
+						<option value="none">None</option>
+					</select>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" name="thumbnail_reset" value="Reset Current Thumbnail" />
+				<input type="submit" value="Save" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<form method="post" action="/thread/<!--thread_uuid-->/info">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Thread Tags
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					Enter each tag/keyword below separated by a comma:
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					<textarea name="tags" class="article_thread_info_ta" rows="3"><!--thread_tags--></textarea>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" value="Update" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+
+<!--IF:thread_info_success-->
+<p class="SUCCESS">
+	<!--thread_info_success-->
+</p>
+<!--ENDIF:thread_info_success-->
+<!--IF:thread_info_error-->
+<p class="ERROR">
+	<!--thread_info_error-->
+</p>
+<!--ENDIF:thread_info_error-->]]></html></template>

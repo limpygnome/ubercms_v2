@@ -12,10 +12,6 @@ namespace CMS.BasicArticles
 {
     public partial class BasicArticles : Plugin
     {
-        // Constants ***************************************************************************************************
-        private const string    SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE = "basic_articles/thread_revisions/articlesperpage";
-        private const string    SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE__DESC = "The number of articles to display on a thread revisions page.";
-        private const int       SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE__VALUE = 8;
         // Enums *******************************************************************************************************
         public enum ArticleCreatePostback
         {
@@ -41,8 +37,15 @@ namespace CMS.BasicArticles
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__TITLE_LENGTH_MAX, Settings.SETTINGS__TITLE_LENGTH_MAX__DESC, Settings.SETTINGS__TITLE_LENGTH_MAX__DEFAULT);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__TEXT_LENGTH_MIN, Settings.SETTINGS__TEXT_LENGTH_MIN__DESC, Settings.SETTINGS__TEXT_LENGTH_MIN__DEFAULT);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__TEXT_LENGTH_MAX, Settings.SETTINGS__TEXT_LENGTH_MAX__DESC, Settings.SETTINGS__TEXT_LENGTH_MAX__DEFAULT);
-            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MIN, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MIN__DESC, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MIN__DEFAULT);
-            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MAX, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MAX__DESC, Settings.SETTINGS__TAG_KEYWORD_LENGTH_MAX__DEFAULT);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE, Settings.SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE__DESC, Settings.SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE__VALUE);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_IMAGE_LENGTH_MIN, Settings.SETTINGS__THREAD_IMAGE_LENGTH_MIN__DESC, Settings.SETTINGS__THREAD_IMAGE_LENGTH_MIN__VALUE);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_IMAGE_LENGTH_MAX, Settings.SETTINGS__THREAD_IMAGE_LENGTH_MAX__DESC, Settings.SETTINGS__THREAD_IMAGE_LENGTH_MAX__VALUE);
+            Core.Settings.set(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_IMAGE_ALLOWED_EXTENSIONS, Settings.SETTINGS__THREAD_IMAGE_ALLOWED_EXTENSIONS__DESC, Settings.SETTINGS__THREAD_IMAGE_ALLOWED_EXTENSIONS__VALUE);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_IMAGE_WIDTH, Settings.SETTINGS__THREAD_IMAGE_WIDTH__DESC, Settings.SETTINGS__THREAD_IMAGE_WIDTH__VALUE);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_IMAGE_HEIGHT, Settings.SETTINGS__THREAD_IMAGE_HEIGHT__DESC, Settings.SETTINGS__THREAD_IMAGE_HEIGHT__VALUE);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_TAG_LENGTH_MIN, Settings.SETTINGS__THREAD_TAG_LENGTH_MIN__DESC, Settings.SETTINGS__THREAD_TAG_LENGTH_MIN__VALUE);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_TAG_LENGTH_MAX, Settings.SETTINGS__THREAD_TAG_LENGTH_MAX__DESC, Settings.SETTINGS__THREAD_TAG_LENGTH_MAX__VALUE);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_TAGS_MAX, Settings.SETTINGS__THREAD_TAGS_MAX__DESC, Settings.SETTINGS__THREAD_TAGS_MAX__VALUE);
             Core.Settings.save(conn);
             return true;
         }
@@ -258,9 +261,9 @@ namespace CMS.BasicArticles
                                 case Article.PersistStatus.Error:
                                     error = "An error occurred creating the article, please try again later!"; break;
                                 case Article.PersistStatus.Invalid_text_length:
-                                    error = "Source/raw article must be x to x characters in length!"; break;
+                                    error = "Source/raw article must be " + Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MIN].get<int>() + " to " + Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MAX].get<int>() + " characters in length!"; break;
                                 case Article.PersistStatus.Invalid_title_length:
-                                    error = "Title must be x to x characters in length!"; break;
+                                    error = "Title must be " + Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MIN].get<int>() + " to " + Core.Settings[Settings.SETTINGS__TITLE_LENGTH_MAX].get<int>() + " characters in length!"; break;
                                 default:
                                     error = "Unknown issue occurred persisting the article!"; break;
                             }
@@ -490,6 +493,8 @@ namespace CMS.BasicArticles
                 data.setFlag("thread_info");
             if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.DeleteThread, perms, article))
                 data.setFlag("thread_delete");
+            if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.MoveThread, perms, null))
+                data.setFlag("thread_move");
             return true;
         }
         private bool pageThread(Data data)
@@ -515,6 +520,8 @@ namespace CMS.BasicArticles
                 data.setFlag("thread_info");
             if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.DeleteThread, perms, null))
                 data.setFlag("thread_delete");
+            if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.MoveThread, perms, null))
+                data.setFlag("thread_move");
             BaseUtils.headerAppendCss("/content/css/basic_articles.css", ref data);
             // Handle action
             switch (action)
@@ -527,6 +534,8 @@ namespace CMS.BasicArticles
                     return pageThread_info(data, thread, user, perms);
                 case "delete":
                     return pageThread_delete(data, thread, user, perms);
+                case "move":
+                    return pageThread_move(data, thread, user, perms);
                 default:
                     return false;
             }
@@ -543,7 +552,7 @@ namespace CMS.BasicArticles
             string templateRevision = Core.Templates.get(data.Connector, "basic_articles/thread_revisions_article");
             StringBuilder temp;
             Data tempData;
-            int limit = Core.Settings[SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE].get<int>();
+            int limit = Core.Settings[Settings.SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE].get<int>();
             Article[] articles = Article.loadNoContent(data.Connector, thread.UUIDThread, Article.Sorting.Latest, limit, page);
             foreach (Article article in articles)
             {
@@ -578,6 +587,9 @@ namespace CMS.BasicArticles
         }
         private bool pageThread_permissions(Data data, ArticleThread thread, User user, ArticleThreadPermissions perms)
         {
+            // Check the user is allowed to modify permissions
+            if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.EditPermissions, perms, null))
+                return false;
             string success = null;
             string error = null;
             // Check for postback
@@ -640,12 +652,120 @@ namespace CMS.BasicArticles
         }
         private bool pageThread_info(Data data, ArticleThread thread, User user, ArticleThreadPermissions perms)
         {
+            // Check the user is allowed to modify permissions
+            if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.EditThreadInfo, perms, null))
+                return false;
+            // Load tags
+            ArticleThreadTags tags = ArticleThreadTags.load(data.Connector, thread.UUIDThread);
+            string  error = null,
+                    success = null;
+            // Check for postback
+            // -- Thumbnail
+            if (data.Request.Files["thumbnail"] != null && data.Request.Files["thumbnail"].ContentLength > 0)
+            {
+#if CSRFP
+                if (!CSRFProtection.authenticated(data))
+                    error = "Invalid request; please try again!";
+#endif
+                if (error == null)
+                {
+                    string actionRaw = data.Request.Form["thumbnail_resize"];
+                    BaseUtils.ResizeAction action = actionRaw != null ? actionRaw == "resize" ? BaseUtils.ResizeAction.Resize : actionRaw == "crop" ? BaseUtils.ResizeAction.CropEdges : BaseUtils.ResizeAction.None : BaseUtils.ResizeAction.None;
+                    HttpPostedFile temp = data.Request.Files["thumbnail"];
+                    int t = temp.FileName.LastIndexOf('.');
+                    switch (thread.thumbnailUpdate(temp.InputStream, temp.ContentLength, t < 0 || t >= temp.FileName.Length - 1 ? string.Empty : temp.FileName.Substring(t + 1), action))
+                    {
+                        case ArticleThread.UpdateThumbnail.InvalidData:
+                            error = "Invalid image data/type!";
+                            break;
+                        case ArticleThread.UpdateThumbnail.InvalidSize:
+                            error = "Invalid file-size; must be between " + BaseUtils.getBytesString((float)Core.Settings[Settings.SETTINGS__THREAD_IMAGE_LENGTH_MIN].get<int>()) + " to " + BaseUtils.getBytesString((float)Core.Settings[Settings.SETTINGS__THREAD_IMAGE_LENGTH_MAX].get<int>()) + " in size!";
+                            break;
+                        case ArticleThread.UpdateThumbnail.Error:
+                            error = "An unknown exception occurred, please try again!";
+                            break;
+                        case ArticleThread.UpdateThumbnail.Success:
+                            success = "Successfully updated article thumbnail!";
+                            break;
+                    }
+                }
+            }
+            // -- Thumbnail reset
+            if (error == null && data.Request.Form["thumbnail_reset"] != null)
+            {
+#if CSRFP
+                if (!CSRFProtection.authenticated(data))
+                    error = "Invalid request; please try again!";
+#endif
+                if (error == null)
+                {
+                    thread.thumbnailReset();
+                    success = "Thread thumbnail reset.";
+                }
+            }
+            // -- Tags
+            if (error == null && data.Request.Form["tags"] != null)
+            {
+#if CSRFP
+                if (!CSRFProtection.authenticated(data))
+                    error = "Invalid request; please try again!";
+#endif
+                if (error == null)
+                {
+                    string[] rawtags = data.Request.Form["tags"].Split(',');
+                    tags.clear();
+                    foreach (string s in rawtags)
+                    {
+                        if (s.Length != 0 && !tags.add(s, data.Connector))
+                            error = "Invalid tag/keyword '" + s + "', must be " + Core.Settings[Settings.SETTINGS__THREAD_TAG_LENGTH_MIN].get<int>() + " to " + Core.Settings[Settings.SETTINGS__THREAD_TAG_LENGTH_MAX].get<int>() + " characters with alpha-numeric characters (undeerscroll, hyphen and space allowed)!";
+                    }
+                    if (error == null)
+                    {
+                        ArticleThreadTags.PersistStatus ps = tags.save(data.Connector);
+                        switch(ps)
+                        {
+                            case ArticleThreadTags.PersistStatus.Error:
+                                error = "Failed to persist tags, unknown error occurred - please try again!";
+                                break;
+                            case ArticleThreadTags.PersistStatus.TooManyTags:
+                                error = "A maximum of " + Core.Settings[Settings.SETTINGS__THREAD_TAGS_MAX].get<int>() + " tags are allowed!";
+                                break;
+                            case ArticleThreadTags.PersistStatus.Success:
+                                success = "Successfully updated thread tags!";
+                                break;
+                        }
+                    }
+                }
+            }
+            // -- Check if to persist thread changes
+            if (thread.IsModified && !thread.save(data.Connector))
+                error = "Failed to persist thread data!";
             // Set data
             data["Title"] = "Thread - Information";
+            data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_info");
+            data["thread_thumbnail_url"] = thread.UrlThumbnail;
+            if (data.Request.Form["tags"] != null)
+                data["thread_tags"] = HttpUtility.HtmlEncode(data.Request.Form["tags"]);
+            else
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (Tag tag in tags)
+                    sb.Append(tag.Keyword).Append(",");
+                if (sb.Length > 0)
+                    sb.Remove(sb.Length - 1, 1);
+                data["thread_tags"] = HttpUtility.HtmlEncode(sb.ToString());
+            }
+            if (success != null)
+                data["thread_info_success"] = HttpUtility.HtmlEncode(success);
+            if (error != null)
+                data["thread_info_error"] = HttpUtility.HtmlEncode(error);
             return true;
         }
         private bool pageThread_delete(Data data, ArticleThread thread, User user, ArticleThreadPermissions perms)
         {
+            // Check the user is allowed to modify permissions
+            if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.DeleteThread, perms, null))
+                return false;
             data["Title"] = "Thread - Delete";
             if (data.Request.Form["thread_delete"] != null)
             {
@@ -659,6 +779,53 @@ namespace CMS.BasicArticles
                 BaseUtils.redirectAbs(data, "/articles");
             }
             data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_delete");
+            return true;
+        }
+        private bool pageThread_move(Data data, ArticleThread thread, User user, ArticleThreadPermissions perms)
+        {
+            // Check the user is allowed to modify permissions
+            if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.MoveThread, perms, null))
+                return false;
+            string error = null;
+            // Check for postback
+            string threadUrl = data.Request.Form["thread_url"];
+            // -- csrf
+            if (threadUrl != null)
+            {
+#if CSRFP
+                    if (!CSRFProtection.authenticated(data))
+                        return false;
+#endif
+                if (error == null)
+                {
+                    UrlRewriting.PersistStatus ps = thread.move(this, data.Connector, threadUrl);
+                    switch (ps)
+                    {
+                        case UrlRewriting.PersistStatus.Success:
+                            if (thread.save(data.Connector))
+                                BaseUtils.redirectAbs(data, thread.Url.FullPath);
+                            else
+                                error = "Failed to persist thread data! Please try again...";
+                            break;
+                        case UrlRewriting.PersistStatus.InUse:
+                            error = "URL is already in-use!";
+                            break;
+                        case UrlRewriting.PersistStatus.InvalidPath:
+                            error = "Invalid URL/path specified!";
+                            break;
+                        case UrlRewriting.PersistStatus.Error:
+                        default:
+                            error = "An unknown error occurred, please try again!";
+                            break;
+                    }
+                }
+            }
+            // Set data
+            data["Title"] = "Thread - Move";
+            data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_move");
+            data["thread_url_current"] = thread.Url.FullPath;
+            if (threadUrl != null)
+                data["thread_url"] = HttpUtility.HtmlEncode(threadUrl);
             return true;
         }
         // rebuilds all articles
@@ -697,6 +864,5 @@ namespace CMS.BasicArticles
             // check health, usage, dead header data, dead URL rewriting etc.
             return true;
         }
-        // Methods - Static - Rendering ********************************************************************************
     }
 }

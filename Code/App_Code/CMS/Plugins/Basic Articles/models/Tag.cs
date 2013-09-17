@@ -69,9 +69,10 @@ namespace CMS.BasicArticles
         /// Attempts to create a tag or returns null if invalid.
         /// </summary>
         /// <returns>Model or null.</returns>
-        public Tag create(string keyword)
+        public static Tag create(string keyword)
         {
-            return Regex.IsMatch(keyword, @"^([a-zA-Z0-9_-]*?)$") ? new Tag(keyword) : null;
+            keyword = keyword.Trim();
+            return keyword.Length < Core.Settings[Settings.SETTINGS__THREAD_TAG_LENGTH_MIN].get<int>() || keyword.Length > Core.Settings[Settings.SETTINGS__THREAD_TAG_LENGTH_MAX].get<int>() || Regex.IsMatch(keyword, @"^([a-zA-Z0-9_ -]*?)$") ? new Tag(keyword) : null;
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>

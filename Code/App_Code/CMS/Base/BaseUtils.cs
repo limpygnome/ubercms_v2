@@ -28,12 +28,14 @@
  *                      2013-09-02      Added protection from CSS and JS files being appended multiple times.
  *                      2013-09-03      Added appending to StringBuilder for CSS and JS; headerAppend method public
  *                                      and no longer performs checking.
+ *                      2013-09-17      Added resizeImage method and ResizeAction enum.
  * 
  * *********************************************************************************************************************
  * A utility class of commonly used code.
  * *********************************************************************************************************************
  */
 using System;
+using System.Drawing;
 using System.IO;
 using System.Text;
 using UberLib.Connector;
@@ -49,6 +51,14 @@ namespace CMS.Base
     /// </summary>
     public static class BaseUtils
     {
+        // Enums *******************************************************************************************************
+        public enum ResizeAction
+        {
+            None,
+            Resize,
+            CropEdges
+        }
+        // Methods - Static ********************************************************************************************
         /// <summary>
         /// Executes a multi-line SQL file on the provided connector.
         /// </summary>
@@ -573,6 +583,43 @@ namespace CMS.Base
         public static string getWebsiteUrl(Data data)
         {
             return data.Request.Url.GetLeftPart(UriPartial.Authority);
+        }
+        /// <summary>
+        /// Resizes an image.
+        /// </summary>
+        /// <param name="image">The image to be resized.</param>
+        /// <param name="action">The resize action to be applied.</param>
+        /// <returns>The image resulting from the action.</returns>
+        public static Image resizeImage(Image image, ResizeAction action, int targetWidth, int targetHeight)
+        {
+            Bitmap temp = new Bitmap(targetWidth, targetHeight);
+            Graphics g = Graphics.FromImage(temp);
+            switch (action)
+            {
+                case ResizeAction.CropEdges:
+                    g.DrawImage(image, (int)(((double)targetWidth / 2.0) - ((double)image.Width / 2.0)), (int)(((double)targetHeight / 2.0) - ((double)image.Height / 2.0)), image.Width, image.Height);
+                    break;
+                case ResizeAction.Resize:
+                    int w, h, x, y;
+                    if (image.Width > image.Height)
+                    {
+                        w = targetWidth;
+                        h = (int)(((double)targetWidth / (double)image.Width) * image.Height);
+                    }
+                    else
+                    {
+                        h = targetHeight;
+                        w = (int)(((double)targetHeight / (double)image.Height) * image.Width);
+                    }
+                    x = (int)(((double)targetWidth / 2.0) - ((double)w / 2.0));
+                    y = (int)(((double)targetHeight / 2.0) - ((double)h / 2.0));
+                    g.DrawImage(image, x, y, w, h);
+                    break;
+                default:
+                    g.DrawImage(image, 0, 0, targetWidth, targetHeight);
+                    break;
+            }
+            return temp;
         }
     }
 }

@@ -8,6 +8,16 @@ namespace CMS.BasicArticles
 {
     public class ArticleThreadTags
     {
+        // Enums *******************************************************************************************************
+        /// <summary>
+        /// The status of attempting to persist this model.
+        /// </summary>
+        public enum PersistStatus
+        {
+            TooManyTags,
+            Error,
+            Success
+        }
         // Fields ******************************************************************************************************
         private bool            modified,           // Indicates if the model has been modified.
                                 persisted;          // Indicates if the model has been persisted.
@@ -40,12 +50,14 @@ namespace CMS.BasicArticles
             }
             return ts;
         }
-        public bool save(Connector conn)
+        public PersistStatus save(Connector conn)
         {
             lock (this)
             {
                 if (!modified)
-                    return false;
+                    return PersistStatus.Error;
+                else if (tags.Count > Core.Settings[Settings.SETTINGS__THREAD_TAGS_MAX].get<int>())
+                    return PersistStatus.TooManyTags;
                 // Compile SQL
                 StringBuilder t = new StringBuilder();
                 t.Append("BEGIN;");
@@ -57,7 +69,7 @@ namespace CMS.BasicArticles
                     {
                         sql = new SQLCompiler();
                         sql["keyword"] = tag.Keyword;
-                        tag.TagID = (int)sql.executeInsert(conn, "ba_tags", "tagid")[0].get2<long>("tagid");
+                        tag.TagID = int.Parse(sql.executeInsert(conn, "ba_tags", "tagid")[0]["tagid"]);
                     }
                 }
                 // -- Delete all the tags for the current thread
@@ -71,7 +83,7 @@ namespace CMS.BasicArticles
                     t.Remove(t.Length - 1, 1).Append(";");
                 }
                 // -- Clean unused tags
-                t.Append("DELETE FROM ba_tags WHERE (SELECT COUNT('') FROM ba_tags_thread WHERE tagid=tagid) = 0;");
+                t.Append("DELETE btt FROM ba_tags AS btt WHERE (SELECT COUNT('') FROM ba_tags_thread WHERE tagid=btt.tagid) = 0;");
                 t.Append("COMMIT;");
                 // Execute SQL
                 try
@@ -79,11 +91,11 @@ namespace CMS.BasicArticles
                     conn.queryExecute(t.ToString());
                     persisted = true;
                     modified = false;
-                    return true;
+                    return PersistStatus.Success;
                 }
                 catch
                 {
-                    return false;
+                    return PersistStatus.Error;
                 }
             }
         }
@@ -104,14 +116,43 @@ namespace CMS.BasicArticles
             }
         }
         /// <summary>
+        /// Adds a keyword.
+        /// 
+        /// This will automatically attempt to load the model for the tag or create a new unpersisted model.
+        /// </summary>
+        /// <param name="keyword">The keyword of the tag.</param>
+        /// <param name="conn">Database connector.</param>
+        /// <returns>True = added, false = invalid characters/length.</returns>
+        public bool add(string keyword, Connector conn)
+        {
+            lock (this)
+            {
+                keyword = keyword.Trim();
+                if (!contains(keyword))
+                {
+                    Tag t = Tag.load(conn, keyword);
+                    if (t == null)
+                        t = Tag.create(keyword);
+                    if (t != null)
+                    {
+                        tags.Add(t);
+                        return true;
+                    }
+                    return false;
+                }
+                else
+                    return true;
+            }
+        }
+        /// <summary>
         /// Adds a new tag to the thread; this also checks a tag with the same keyword does not exist.
         /// </summary>
         /// <param name="tag"></param>
         public void add(Tag tag)
         {
-            lock (tags)
+            lock (this)
             {
-                if (tag != null)
+                if (tag != null && !contains(tag.Keyword))
                     tags.Add(tag);
             }
         }
@@ -121,7 +162,7 @@ namespace CMS.BasicArticles
         /// <param name="tag">The tag model to be removed.</param>
         public void remove(Tag tag)
         {
-            lock (tags)
+            lock (this)
             {
                 tags.Remove(tag);
             }
@@ -140,6 +181,17 @@ namespace CMS.BasicArticles
                         buffer.Add(tag);
                 foreach (Tag tag in buffer)
                     tags.Remove(tag);
+            }
+        }
+        /// <summary>
+        /// Removes all the tags from the collection.
+        /// </summary>
+        public void clear()
+        {
+            lock (this)
+            {
+                tags.Clear();
+                modified = true;
             }
         }
         // Methods - Properties ****************************************************************************************

@@ -183,8 +183,21 @@ namespace CMS.Base
 			{
 				Settings settings = new Settings();
                 Result result = conn.queryRead("SELECT * FROM cms_view_settings_load;");
-				foreach(ResultRow row in result)
-					settings.config.Add(row.get2<string>("path"), new SettingsNode(SettingsNode.parseType(row.get2<string>("type")), row.get2<string>("value"), row.get2<string>("description"), UUID.parse(row.get2<string>("uuid"))));
+                foreach (ResultRow row in result)
+                {
+                    try
+                    {
+                        settings.config.Add(row.get2<string>("path"), new SettingsNode(SettingsNode.parseType(row.get2<string>("type")), row.get2<string>("value"), row.get2<string>("description"), UUID.parse(row.get2<string>("uuid"))));
+                    }
+                    catch (FormatException)
+                    {
+                        throw new FormatException("Invalid value for setting '" + row.get2<string>("path") + "', value '" + row.get2<string>("value") + "', expected type '" + row.get2<string>("type") + "'; plugin '" + row.get2<string>("uuid") + "'!");
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("Exception occurred loading setting '" + row.get2<string>("path") + "': " + ex.Message);
+                    }
+                }
                 return settings;
 			}
 			catch(Exception ex)

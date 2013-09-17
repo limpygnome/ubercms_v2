@@ -42,6 +42,12 @@
 				Edit Info
 			</a>
 			<!--ENDIF:thread_info-->
+			<!--IF:thread_move-->
+			<a href="/thread/<!--thread_uuid-->/move">
+				<img src="/content/images/basic_articles/move.png" alt="Move" title="Move" />
+				Move
+			</a>
+			<!--ENDIF:thread_move-->
 			<!--IF:thread_delete-->
 			<a href="/thread/<!--thread_uuid-->/delete">
 				<img src="/content/images/basic_articles/delete_thread.png" alt="Delete" title="Delete" />

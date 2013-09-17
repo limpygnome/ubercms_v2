@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/thread_move]]></path><description><![CDATA[The page for moving a thread.]]></description><html><![CDATA[<form method="post" action="/thread/<!--thread_uuid-->/move">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					New Location
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Current URL:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<a href="/<!--thread_url_current-->">/<!--thread_url_current--></a>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					New URL:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="text" name="thread_url" value="<!--:thread_url_new-->" />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="submit" value="Change" />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+
+<!--IF:thread_url_error-->
+<p class="ERROR">
+	<!--thread_url_error-->
+</p>
+<!--ENDIF:thread_url_error-->]]></html></template>
