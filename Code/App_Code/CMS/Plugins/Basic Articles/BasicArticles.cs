@@ -30,6 +30,9 @@ namespace CMS.BasicArticles
             // Install SQL
             if (!BaseUtils.executeSQL(PathSQL + "/install.sql", conn, ref messageOutput))
                 return false;
+#if TextRenderer
+            RenderProvider tr = new ArticleTextRenderer(UUID.parse("da38909c-d348-478f-9add-45be7847695c"), this.UUID, "Basic Articles - General Formatting", "Provides general markup for interacting with the basic articles plugin.", true, 0);
+#endif
             // Install settings
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__ARTICLE_THREAD_URL_MIN, Settings.SETTINGS__ARTICLE_THREAD_URL_MIN__DESC, Settings.SETTINGS__ARTICLE_THREAD_URL_MIN__DEFAULT);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__ARTICLE_THREAD_URL_MAX, Settings.SETTINGS__ARTICLE_THREAD_URL_MAX__DESC, Settings.SETTINGS__ARTICLE_THREAD_URL_MAX__DEFAULT);
@@ -221,7 +224,7 @@ namespace CMS.BasicArticles
                 if (postback == ArticleCreatePostback.CreateEdit || postback == ArticleCreatePostback.Render)
                 {
                     article.rebuild(data);
-                    BaseUtils.headerAppend(article.HeaderData, ref data);
+                    BaseUtils.headerAppend(article.HeaderData.compile(), ref data);
                 }
                 // Check if to persist the article
                 if (error == null && postback == ArticleCreatePostback.CreateEdit)
@@ -416,8 +419,8 @@ namespace CMS.BasicArticles
                     else
                         data.setFlag("article_showpanel_button");
                     // Add header-data
-                    if (article.HeaderData != null && article.HeaderData.Length > 0)
-                        BaseUtils.headerAppend(article.HeaderData, ref data);
+                    if (article.HeaderData != null)
+                        BaseUtils.headerAppend(article.HeaderData.compile(), ref data);
                     break;
                 case "rebuild":
                     if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Rebuild, perms, article))

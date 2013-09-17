@@ -88,9 +88,11 @@
     <Compile Include="Code\App_Code\CMS\Base\SQLCompiler.cs" />
     <Compile Include="Code\App_Code\CMS\Base\Version.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic 404 Page\Basic404Page.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\ArticleTextRenderer.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\BasicArticles.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\Constants.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\Article.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\ArticleHeader.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\ArticleThread.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\ArticleThreadPermissions.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\models\ArticleThreadTags.cs" />

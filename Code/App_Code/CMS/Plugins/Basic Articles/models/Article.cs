@@ -51,24 +51,23 @@ namespace CMS.BasicArticles
             Success
         }
         // Fields ******************************************************************************************************
-        private bool        persisted;              // Indicates if the model has been persisted.
-        private Fields      modified;               // Indicates modified fields.
-        private UUID        uuidArticle,            // The UUID of this article.
-                            uuidThread;             // The UUID of the article thread.
-        private string      title,                  // The title of the article.
-                            textRaw,                // The raw markup of the article.
-                            textCache,              // The parsed and formatted markup, cached for speed.
-                            headerData,             // The article's header data.
-                            headerDataHash;         // The hash to the existing header data record (may be shared by multiple articles); used for deletion of old header data.
-        private DateTime    datetimeCreated,        // The date and time of when the article was created.
-                            datetimeModified,       // The date and time of when the article was modified.
-                            datetimePublished;      // The date and time of when the article was published.
-        private bool        published,              // Indicates if the article has been published.
-                            comments,               // Indicates if the article should display comments.
-                            html,                   // Indicates if the article should allow HTML.
-                            hidePanel;              // Indicates if the article should display an options panel.
-        private int         useridAuthor,           // The identifier of the user (BSA) which authored the article.
-                            useridPublisher;        // The identifier of the user (BSA) which published the article.
+        private bool            persisted;              // Indicates if the model has been persisted.
+        private Fields          modified;               // Indicates modified fields.
+        private UUID            uuidArticle,            // The UUID of this article.
+                                uuidThread;             // The UUID of the article thread.
+        private string          title,                  // The title of the article.
+                                textRaw,                // The raw markup of the article.
+                                textCache;              // The parsed and formatted markup, cached for speed.
+        private ArticleHeader   header;                 // The header-data for this article.
+        private DateTime        datetimeCreated,        // The date and time of when the article was created.
+                                datetimeModified,       // The date and time of when the article was modified.
+                                datetimePublished;      // The date and time of when the article was published.
+        private bool            published,              // Indicates if the article has been published.
+                                comments,               // Indicates if the article should display comments.
+                                html,                   // Indicates if the article should allow HTML.
+                                hidePanel;              // Indicates if the article should display an options panel.
+        private int             useridAuthor,           // The identifier of the user (BSA) which authored the article.
+                                useridPublisher;        // The identifier of the user (BSA) which published the article.
         // Methods - Constructors **************************************************************************************
         public Article()
         {
@@ -76,8 +75,9 @@ namespace CMS.BasicArticles
             this.modified = Fields.None;
             this.uuidArticle = null;
             this.uuidThread = null;
-            this.title = this.textRaw = this.textCache = this.headerData = this.headerDataHash = null;
+            this.title = this.textRaw = this.textCache = null;
             this.useridAuthor = this.useridPublisher = -1;
+            this.header = new ArticleHeader();
         }
         // Methods - Database Persistence ******************************************************************************
         /// <summary>
@@ -210,8 +210,7 @@ namespace CMS.BasicArticles
             a.title = row.get2<string>("title");
             a.textRaw = row.contains("text_raw") ? row.get2<string>("text_raw") : null;
             a.textCache = row.contains("text_cache") ? row.get2<string>("text_cache") : null;
-            a.headerData = row.get2<string>("headerdata");
-            a.headerDataHash = row.get2<string>("headerdata_hash");
+            a.header = new ArticleHeader(row.get2<string>("headerdata"), row.get2<string>("headerdata_hash"));
             a.datetimeCreated = row.get2<DateTime>("datetime_created");
             a.datetimeModified = row.isNull("datetime_modified") ? DateTime.MinValue : row.get2<DateTime>("datetime_modified");
             a.datetimePublished = row.isNull("datetime_published") ? DateTime.MinValue : row.get2<DateTime>("datetime_published");
@@ -247,32 +246,6 @@ namespace CMS.BasicArticles
                     return PersistStatus.Invalid_title_length;
                 else if ((modified & Fields.TextRaw) == Fields.TextRaw && (textRaw == null || textRaw.Length < Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MIN].get<int>() || textRaw.Length > Core.Settings[Settings.SETTINGS__TEXT_LENGTH_MAX].get<int>()))
                     return PersistStatus.Invalid_text_length;
-                // Check if to create new header data record
-                string hash = null;
-                if ((modified & Fields.HeaderData) == Fields.HeaderData && headerData != null && headerData.Length > 0)
-                {
-                    // Generate new hash
-                    HashAlgorithm ha = MD5.Create();
-                    hash = System.Text.Encoding.UTF8.GetString(ha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(headerData)));
-                    // Check the data has actually changed
-                    if (hash == headerDataHash)
-                        modified &= ~Fields.HeaderData;
-                    else
-                    {
-                        // Begin a transaction - we want the article and header data to persist or fail together
-                        conn.queryExecute("BEGIN;");
-                        // Decide if to insert new record for the hash data, for many articles to share (more efficient)
-                        PreparedStatement ps = new PreparedStatement("SELECT COUNT('') AS count FROM ba_article_headerdata WHERE hash=?hash;");
-                        ps["hash"] = hash;
-                        if (int.Parse(conn.queryRead(ps)[0]["count"]) == 0)
-                        {
-                            ps = new PreparedStatement("INSERT INTO ba_article_headerdata (hash, headerdata) VALUES(?hash, ?headerdata);");
-                            ps["hash"] = hash;
-                            ps["headerdata"] = headerData;
-                            conn.queryExecute(ps);
-                        }
-                    }
-                }
                 // Compile article SQL
                 SQLCompiler sql = new SQLCompiler();
                 if ((modified & Fields.ThreadUUID) == Fields.ThreadUUID)
@@ -316,8 +289,6 @@ namespace CMS.BasicArticles
                     sql["userid_author"] = useridAuthor;
                 if ((modified & Fields.UserIDPublisher) == Fields.UserIDPublisher)
                     sql["userid_publisher"] = useridPublisher;
-                if ((modified & Fields.HeaderData) == Fields.HeaderData)
-                    sql["headerdata_hash"] = hash;
                 // Execute article SQL
                 try
                 {
@@ -338,11 +309,10 @@ namespace CMS.BasicArticles
                     // Check if we're inside a transaction, if so commit it
                     if ((modified & Fields.HeaderData) == Fields.HeaderData)
                         conn.queryExecute("COMMIT;");
-                    // Check if to attempt to delete old hash data
-                    if ((modified & Fields.HeaderData) == Fields.HeaderData && headerDataHash != null)
-                        removeOldHeaderData(conn, headerDataHash);
-                    if((modified & Fields.HeaderData) == Fields.HeaderData)
-                        headerData = hash;
+                    // Persist header-data
+                    if ((modified & Fields.HeaderData) == Fields.HeaderData)
+                        header.persist(conn, uuidArticle);
+                    // Done!
                     modified = Fields.None;
                     return PersistStatus.Success;
                 }
@@ -382,18 +352,12 @@ namespace CMS.BasicArticles
                 ps["uuid_article"] = uuidArticle.Bytes;
                 conn.queryExecute(ps);
                 // Remove header data
-                if(headerDataHash != null)
-                    removeOldHeaderData(conn, headerDataHash);
+                if (header != null)
+                    header.remove(conn);
                 // Remove thread; this will only work if it has no articles
                 if(thread != null)
                     thread.remove(conn);
             }
-        }
-        private void removeOldHeaderData(Connector conn, string hash)
-        {
-            PreparedStatement p = new PreparedStatement("DELETE FROM ba_article_headerdata WHERE hash=?hash AND (SELECT COUNT('') FROM ba_article WHERE headerdata_hash=?hash) = 0;");
-            p["hash"] = headerDataHash;
-            conn.queryExecute(p);
         }
         private static string getOrderBy(Sorting sorting)
         {
@@ -441,7 +405,9 @@ namespace CMS.BasicArticles
                 tr.render(data, ref header, ref text, RenderProvider.RenderType.Objects | RenderProvider.RenderType.TextFormatting);
 #endif
             textCache = text.Length > 0 ? text.ToString() : null;
-            headerData = header.Length > 0 ? header.ToString() : null;
+            this.header.clear();
+            if(header.Length > 0)
+                this.header.addMultiple(header.ToString());
             modified |= Fields.HeaderData | Fields.TextCache;
         }
         // Methods - Properties ****************************************************************************************
@@ -708,17 +674,17 @@ namespace CMS.BasicArticles
         /// <summary>
         /// The header data to support the rendered article content.
         /// </summary>
-        public string HeaderData
+        public ArticleHeader HeaderData
         {
             get
             {
-                return headerData;
+                return header;
             }
             set
             {
                 lock (this)
                 {
-                    headerData = value;
+                    header = value;
                     modified |= Fields.HeaderData;
                 }
             }
