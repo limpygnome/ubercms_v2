@@ -24,6 +24,10 @@
 	float: right;
 }
 /* Layout */
+html
+{
+	overflow-y: scroll;
+}
 body
 {
 	margin: 0em;
@@ -197,7 +201,7 @@ body
 .AREA_CONTENT h2
 {
 	padding: 0em;
-	margin: 0.5em 0.25em;
+	margin: 0.25em;
 	color: #333;
 	font-weight: normal;
 	font-size: x-large;
@@ -307,6 +311,7 @@ body
 	background: #FFF;
 	box-shadow: 0em 0em 0.5em #CCC;
 	padding: 0.25em 0.5em;
+	box-sizing: border-box;
 }
 .TABLE input[type=text]:hover, .TABLE input[type=text]:focus, .TABLE input[type=password]:hover, .TABLE input[type=password]:focus, .TEXTBOX:hover, .TEXTBOX:focus
 {

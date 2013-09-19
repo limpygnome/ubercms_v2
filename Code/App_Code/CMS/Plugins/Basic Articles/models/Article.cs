@@ -12,6 +12,19 @@ namespace CMS.BasicArticles
     public class Article
     {
         // Enums *******************************************************************************************************
+        /// <summary>
+        /// Indicates which parts of the article's text should be loaded.
+        /// </summary>
+        public enum Text
+        {
+            Rendered,
+            Raw,
+            Both,
+            None
+        }
+        /// <summary>
+        /// Indicates the sorting when fetching articles from the database.
+        /// </summary>
         public enum Sorting
         {
             Latest,
@@ -85,98 +98,70 @@ namespace CMS.BasicArticles
         /// </summary>
         /// <param name="conn">Database connector.</param>
         /// <param name="uuidArticle">Identifier of the article.</param>
+        /// <param name="text">The text to load.</param>
         /// <returns>Model or null.</returns>
-        public static Article load(Connector conn, UUID uuidArticle)
+        public static Article load(Connector conn, UUID uuidArticle, Text text)
         {
             if (uuidArticle == null)
                 return null;
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article WHERE uuid_article_raw=?uuid;");
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM " + loadTable(text, false) + " WHERE uuid_article_raw=?uuid;");
             ps["uuid"] = uuidArticle.Bytes;
             return load(conn, ps);
         }
         /// <summary>
-        /// Loads a persisted model from the database; the raw text is not loaded.
+        /// Loads multiple articles with sorting.
         /// </summary>
         /// <param name="conn">Database connector.</param>
-        /// <param name="uuidArticle">Identifier of the article.</param>
-        /// <returns>Model or null.</returns>
-        public static Article loadRendered(Connector conn, UUID uuidArticle)
-        {
-            if (uuidArticle == null)
-                return null;
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_rendered WHERE uuid_article_raw=?uuid;");
-            ps["uuid"] = uuidArticle.Bytes;
-            return load(conn, ps);
-        }
-        /// <summary>
-        /// Loads multiple rendered articles.
-        /// </summary>
-        /// <param name="conn">Database connector.</param>
-        /// <param name="sorting">The sorting to apply</param>
-        /// <param name="tagKeyword">The keyword for filtering; can be null.</param>
-        /// <param name="articles">The number of articles to fetch.</param>
-        /// <param name="page">The page offset starting at 1.</param>
-        /// <returns>An array of articles.</returns>
-        public static Article[] loadRendered(Connector conn, Sorting sorting, string tagKeyword, int articles, int page)
-        {
-            // Parse results into models and return the array of models
-            List<Article> buffer = new List<Article>(articles);
-            Result result = conn.queryRead("SELECT * FROM ba_view_load_article_rendered ORDER BY " + getOrderBy(sorting) + " LIMIT " + articles + " OFFSET " + (page * articles) + ";");
-            Article a;
-            foreach (ResultRow row in result)
-            {
-                a = load(row);
-                if (a != null)
-                    buffer.Add(a);
-            }
-            return buffer.ToArray();
-        }
-        /// <summary>
-        /// Loads a persisted model from the database; the rendered text is not loaded.
-        /// </summary>
-        /// <param name="conn">Database connector.</param>
-        /// <param name="uuidArticle">Identifier of the article.</param>
-        /// <returns>Model or null.</returns>
-        public static Article loadRaw(Connector conn, UUID uuidArticle)
-        {
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_raw WHERE uuid_article_raw=?uuid;");
-            ps["uuid"] = uuidArticle.Bytes;
-            return load(conn, ps);
-        }
-        /// <summary>
-        /// Loads a persisted model from the database; no content (raw and rendered text) is loaded.
-        /// </summary>
-        /// <param name="conn">Database connector.</param>
-        /// <param name="uuidArticle">Identifier of the article.</param>
-        /// <returns>Model or null.</returns>
-        public static Article loadNoContent(Connector conn, UUID uuidArticle)
-        {
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_nocontent WHERE uuid_article_raw=?uuid;");
-            ps["uuid"] = uuidArticle.Bytes;
-            return load(conn, ps);
-        }
-        /// <summary>
-        /// Loads articles with no content for a thread.
-        /// </summary>
-        /// <param name="conn">Database connector.</param>
-        /// <param name="uuidThread">The thread of the articles.</param>
+        /// <param name="uuidThread">The thread of the articles; can be null.</param>
         /// <param name="sorting">The sorting of the articles.</param>
+        /// <param name="tagKeyword">The tag keyword for filtering; can be null.</param>
+        /// <param name="search">The search keyword(s); can be null.</param>
         /// <param name="articlesPerPage">The number of articles to load.</param>
         /// <param name="page">The offset/page, starting at 1.</param>
+        /// <param name="text">The text to load.</param>
+        /// <param name="singleArticle">Indicates if to only load the current article per thread.</param>
+        /// <param name="publishedOnly">Indicates if to display only published articles.</param>
+        /// <param name="loadExtra">Indicates if to load an extra model on top of the amount and page; this is useful for page systems.</param>
         /// <returns>Array of articles; possibly empty.</returns>
-        public static Article[] loadNoContent(Connector conn, UUID uuidThread, Sorting sorting, int articlesPerPage, int page)
+        public static Article[] load(Connector conn, UUID uuidThread, Sorting sorting, string tagKeyword, string search, int articlesPerPage, int page, Text text, bool singleArticle, bool publishedOnly, bool loadExtra)
         {
             // Validate input
-            if (page < 1)
-                page = 1;
-            else if (uuidThread == null || articlesPerPage < 0)
+            if (page < 1 || articlesPerPage < 0)
                 return new Article[] { };
+            // Build query
+            PreparedStatement ps = new PreparedStatement();
+            StringBuilder query = new StringBuilder();
+            query.Append("SELECT v.* FROM ").Append(loadTable(text, singleArticle));
+            if (uuidThread != null || tagKeyword != null || search != null || singleArticle || publishedOnly)
+            {
+                query.Append(" WHERE ");
+                if (singleArticle)
+                    query.Append("t.uuid_thread=v.uuid_thread_raw AND v.uuid_article_raw=t.uuid_article_current AND ");
+                if (publishedOnly)
+                    query.Append("published='1' AND ");
+                if (uuidThread != null)
+                {
+                    ps["uuid_thread"] = uuidThread.Bytes;
+                    query.Append("uuid_thread_raw=?uuid_thread AND ");
+                }
+                if (tagKeyword != null)
+                {
+                    ps["keyword"] = tagKeyword;
+                    query.Append("(SELECT COUNT('') FROM ba_tags_thread AS btt, ba_tags AS bt WHERE bt.keyword=?keyword AND btt.uuid_thread=t.uuid_thread AND btt.tagid=bt.tagid) > 0 AND ");
+                }
+                if (search != null)
+                {
+                    ps["search"] = search;
+                    query.Append("(title LIKE '%?search%' OR text_raw LIKE '%?search%') AND ");
+                }
+                query.Remove(query.Length - 5, 5);
+            }
+            query.Append(" ORDER BY " + getOrderBy(sorting) + " LIMIT ?app OFFSET ?apage;");
+            ps.Query = query.ToString();
+            ps["app"] = articlesPerPage + (loadExtra ? 1 : 0);
+            ps["apage"] = ((page - 1) * articlesPerPage);
             // Fetch and parse articles
             List<Article> buffer = new List<Article>();
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM ba_view_load_article_nocontent WHERE uuid_thread_raw=?uuid_thread ORDER BY " + getOrderBy(sorting) + " LIMIT ?app OFFSET ?apage;");
-            ps["uuid_thread"] = uuidThread.Bytes;
-            ps["app"] = articlesPerPage;
-            ps["apage"] = ((page - 1) * articlesPerPage);
             Article a;
             foreach (ResultRow row in conn.queryRead(ps))
             {
@@ -184,6 +169,21 @@ namespace CMS.BasicArticles
                     buffer.Add(a);
             }
             return buffer.ToArray();
+        }
+        private static string loadTable(Text text, bool joinThreadTable)
+        {
+            switch (text)
+            {
+                case Text.Both:
+                    return "ba_view_load_article AS v" + (joinThreadTable ? ", ba_article_thread AS t" : "");
+                case Text.Raw:
+                    return "ba_view_load_article_raw AS v" + (joinThreadTable ? ", ba_article_thread AS t" : "");
+                case Text.Rendered:
+                    return "ba_view_load_article_rendered AS v" + (joinThreadTable ? ", ba_article_thread AS t" : "");
+                case Text.None:
+                default:
+                    return "ba_view_load_article_nocontent AS v" + (joinThreadTable ? ", ba_article_thread AS t" : "");
+            }
         }
         /// <summary>
         /// Loads a persisted model from the database.
@@ -365,9 +365,9 @@ namespace CMS.BasicArticles
             switch (sorting)
             {
                 case Sorting.Latest:
-                    strOrder = "datetime_created DESC"; break;
+                    strOrder = "datetime_published DESC"; break;
                 case Sorting.Oldest:
-                    strOrder = "datetime_created ASC"; break;
+                    strOrder = "datetime_published ASC"; break;
                 case Sorting.TitleAZ:
                     strOrder = "title ASC"; break;
                 case Sorting.TitleZA:
@@ -376,6 +376,15 @@ namespace CMS.BasicArticles
                     throw new Exception("Unknown sorting specified!");
             }
             return strOrder;
+        }
+        /// <summary>
+        /// Returns the total number of articles pending publication.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <returns>The number of articles pending publication.</returns>
+        public static int getTotalPendingArticles(Connector conn)
+        {
+            return conn.queryCount("SELECT COUNT('') FROM ba_article WHERE published='0';");
         }
         // Methods *****************************************************************************************************
         /// <summary>

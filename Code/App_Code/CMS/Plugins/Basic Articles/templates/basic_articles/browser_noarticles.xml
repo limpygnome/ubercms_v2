@@ -1,0 +1,3 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/browser_noarticles]]></path><description><![CDATA[Displayed when no articles are displayed.]]></description><html><![CDATA[<p>
+No articles available.
+</p>]]></html></template>

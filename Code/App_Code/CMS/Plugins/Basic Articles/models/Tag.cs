@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
 using CMS.Base;
 using UberLib.Connector;
@@ -10,10 +12,20 @@ namespace CMS.BasicArticles
     /// </summary>
     public class Tag
     {
+        // Enums *******************************************************************************************************
+        /// <summary>
+        /// The sorting for loading multiple tags.
+        /// </summary>
+        public enum Sorting
+        {
+            Keyword,
+            Population
+        }
         // Fields ******************************************************************************************************
         private bool        persisted;      // Indicates if the model has been persisted.
         private int         tagid;          // The unique identifier of the model on the database.
         private string      keyword;        // The tag's keyword.
+        private int         threads;        // The total number of threads referenced by this tag.
         // Methods - Constructors **************************************************************************************
         private Tag()
         {
@@ -23,6 +35,7 @@ namespace CMS.BasicArticles
         {
             this.persisted = false;
             this.keyword = keyword;
+            this.threads = 0;
         }
         // Methods - Database Persisetence *****************************************************************************
         /// <summary>
@@ -62,7 +75,38 @@ namespace CMS.BasicArticles
             t.persisted = true;
             t.tagid = row.get2<int>("tagid");
             t.keyword = row.get2<string>("keyword");
+            if (row.contains("count"))
+                t.threads = int.Parse(row["count"]);
             return t;
+        }
+        /// <summary>
+        /// Loads multiple tags.
+        /// </summary>
+        /// <param name="conn">Database connector.</param>
+        /// <param name="page">The current page of tags.</param>
+        /// <param name="tagsPerPage">The maximum number of tags to load.</param>
+        /// <param name="sorting">The sorting when loading tags from the database.</param>
+        /// <param name="loadExtra">Indicates if to load an extra model; useful for page systems.</param>
+        /// <returns>Array of tags; this is never null but possibly empty.</returns>
+        public static Tag[] load(Connector conn, int page, int tagsPerPage, Sorting sorting, bool loadExtra)
+        {
+            // Validate input
+            if (page < 1 || tagsPerPage < 0)
+                return new Tag[] { };
+            // Build query
+            PreparedStatement ps = new PreparedStatement("SELECT (SELECT COUNT('') FROM ba_tags_thread AS tt, ba_article_thread AS t, ba_article AS a WHERE tt.tagid=bt.tagid AND t.uuid_thread=tt.uuid_thread AND a.uuid_article=t.uuid_article_current AND a.published='1') AS count, bt.* FROM ba_tags AS bt ORDER BY " + (sorting == Sorting.Population ? "count DESC, bt.keyword ASC" : "bt.keyword ASC") + " LIMIT ?limit OFFSET ?offset");
+            ps["limit"] = tagsPerPage + (loadExtra ? 1 : 0);
+            ps["offset"] = (page * tagsPerPage) - tagsPerPage;
+            // Execute query and parse data
+            Result r = conn.queryRead(ps);
+            Tag tag;
+            List<Tag> buffer = new List<Tag>();
+            foreach (ResultRow row in r)
+            {
+                if ((tag = load(row)) != null)
+                    buffer.Add(tag);
+            }
+            return buffer.ToArray();
         }
         // Methods *****************************************************************************************************
         /// <summary>
@@ -111,6 +155,18 @@ namespace CMS.BasicArticles
             set
             {
                 persisted = value;
+            }
+        }
+        /// <summary>
+        /// The number of threads referencing this tag.
+        /// 
+        /// Note: this is only loaded when loading multiple tags.
+        /// </summary>
+        public int ThreadReferences
+        {
+            get
+            {
+                return threads;
             }
         }
     }

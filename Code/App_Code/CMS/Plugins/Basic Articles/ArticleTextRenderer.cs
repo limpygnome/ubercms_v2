@@ -28,7 +28,7 @@ namespace CMS.BasicArticles
                 foreach (Match m in Regex.Matches(text.ToString(), @"\[\[(.+)\]\]", RegexOptions.Multiline))
                 {
                     options = m.Groups[1].Value.Split('|');
-                    if (options.Length > 0 && options[0].Length > 0 && (th = ArticleThread.load(data.Connector, options[0])) != null && th.UUIDArticleCurrent != null && (a = Article.loadRendered(data.Connector, th.UUIDArticleCurrent)) != null)
+                    if (options.Length > 0 && options[0].Length > 0 && (th = ArticleThread.load(data.Connector, options[0])) != null && th.UUIDArticleCurrent != null && (a = Article.load(data.Connector, th.UUIDArticleCurrent, Article.Text.Rendered)) != null)
                     {
                         // Replace params in content
                         content = new StringBuilder(a.TextCache);

@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/browser_tag]]></path><description><![CDATA[A tag item displayed on the browser template.]]></description><html><![CDATA[<a href="/articles/tag/<TAG_URL>" class="tag">
+	<span>
+		<THREADS>
+	</span>
+	<TAG>
+</a>]]></html></template>

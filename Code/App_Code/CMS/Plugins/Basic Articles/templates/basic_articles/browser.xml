@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/browser]]></path><description><![CDATA[The template for browsing articles and options.]]></description><html><![CDATA[<div class="articles_browser">
+	<div class="navigation">
+		<div class="header">
+			Search
+		</div>
+		<div class="row">
+			<form method="get" action="/articles/search">
+				<input type="text" name="query" placeholder="Enter title/text..." value="<!--:articles_search-->" class="TEXTBOX" />
+			</form>
+		</div>
+		<div class="header">
+			Main
+		</div>
+		<a href="/articles/latest">
+			<img src="/content/images/basic_articles/articles.png" alt="Latest Articles" />
+			Latest Articles
+		</a>
+		<a href="/articles/oldest">
+			<img src="/content/images/basic_articles/articles.png" alt="Oldest Articles" />
+			Oldest Articles
+		</a>
+		<a href="/articles/title_az">
+			<img src="/content/images/basic_articles/articles.png" alt="Title A-Z" />
+			Title A-Z
+		</a>
+		<a href="/articles/title_za">
+			<img src="/content/images/basic_articles/articles.png" alt="Title Z-A" />
+			Title Z-A
+		</a>
+		<!--IF:articles_create-->
+		<a href="/article/create">
+			<img src="/content/images/basic_articles/create.png" alt="Create Article" />
+			Create Article
+		</a>
+		<!--ENDIF:articles_create-->
+		<a href="/articles/change_log">
+			<img src="/content/images/basic_articles/modify.png" alt="Change-Log" />
+			Change-Log
+		</a>
+		<a href="/articles/tags">
+			<img src="/content/images/basic_articles/tags.png" alt="Tags" />
+			View All Tags
+		</a>
+		<!--IF:articles_publish|articles_rebuild-->
+		<div class="header">
+			Admin
+		</div>
+			<!--IF:articles_publish-->
+			<a href="/articles/pending">
+				<img src="/content/images/basic_articles/publish.png" alt="Pending" />
+				Pending Review <!--IF:articles_pending--><span class="pred">(<!--articles_pending-->)</span><!--ELSE:articles_pending--><span class="pgreen">(0)</span><!--ENDIF:articles_pending-->
+			</a>
+			<!--ENDIF:articles_publish-->
+			<!--IF:articles_rebuild-->
+			<a href="/articles/rebuild">
+				<img src="/content/images/basic_articles/rebuild.png" alt="Rebuild" />
+				Rebuild Articles
+			</a>
+			<!--ENDIF:articles_rebuild-->
+		<!--ENDIF:articles_publish|articles_rebuild-->
+		<div class="header">
+			Most Populated Tags
+		</div>
+		<!--IF:article_tags-->
+			<!--article_tags-->
+		<!--ELSE:article_tags-->
+			<div class="row">
+				No tags available.
+			</div>
+		<!--ENDIF:article_tags-->
+	</div>
+	<div class="view">
+		<!--browser_content-->
+	</div>
+	<div class="clear"></div>
+</div>]]></html></template>

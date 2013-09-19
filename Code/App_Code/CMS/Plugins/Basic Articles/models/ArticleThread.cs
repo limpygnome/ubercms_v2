@@ -14,7 +14,8 @@ namespace CMS.BasicArticles
             None = 0,
             Url = 1,
             Thumbnail = 2,
-            ArticleCurrent = 4
+            ArticleCurrent = 4,
+            Description = 8
         };
         public enum CreateThread
         {
@@ -37,6 +38,7 @@ namespace CMS.BasicArticles
         private UrlRewriting    url;                        // The URL rewriting model.
         private UUID            uuidArticleCurrent;         // The UUID of the article currently displayed for the thread.
         private bool            thumbnail;                  // Indicates if the article has a thumbnail uploaded.
+        private string          description;                // A description of the thread.
         // Methods - Constructors **************************************************************************************
         public ArticleThread()
         {
@@ -46,6 +48,7 @@ namespace CMS.BasicArticles
             this.url = null;
             this.uuidArticleCurrent = null;
             this.thumbnail = false;
+            this.description = null;
         }
         // Methods - Database Persistence ******************************************************************************
         /// <summary>
@@ -175,6 +178,7 @@ namespace CMS.BasicArticles
             th.url = UrlRewriting.load(data);
             th.uuidArticleCurrent = UUID.parse(data["uuid_article_current"]);
             th.thumbnail = data["thumbnail"].Equals("1");
+            th.description = data.isNull("description") || data["description"].Length == 0 ? null : data["description"];
             return th;
         }
         /// <summary>
@@ -204,6 +208,8 @@ namespace CMS.BasicArticles
                     sql["uuid_article_current"] = uuidArticleCurrent != null ? uuidArticleCurrent.Bytes : null;
                 if((modified & Fields.Thumbnail) == Fields.Thumbnail)
                     sql["thumbnail"] = thumbnail ? "1" : "0";
+                if ((modified & Fields.Description) == Fields.Description)
+                    sql["description"] = description;
                 // Execute SQL
                 try
                 {
@@ -236,22 +242,25 @@ namespace CMS.BasicArticles
         /// <param name="conn">Database connector.</param>
         public void remove(Connector conn)
         {
-            conn.queryExecute("BEGIN;");
-            bool delete = conn.queryCount("SELECT COUNT('') FROM ba_article WHERE uuid_thread=" + uuidThread.NumericHexString) == 0;
-            if (delete)
+            lock (this)
             {
-                try
+                conn.queryExecute("BEGIN;");
+                bool delete = conn.queryCount("SELECT COUNT('') FROM ba_article WHERE uuid_thread=" + uuidThread.NumericHexString) == 0;
+                if (delete)
                 {
-                    // Delete the article
-                    conn.queryExecute("DELETE FROM ba_article_thread WHERE uuid_thread=" + uuidThread.NumericHexString);
-                    // Delete the URL
-                    if(url != null)
-                        url.remove(conn);
-                    persisted = false;
+                    try
+                    {
+                        // Delete the article
+                        conn.queryExecute("DELETE FROM ba_article_thread WHERE uuid_thread=" + uuidThread.NumericHexString);
+                        // Delete the URL
+                        if (url != null)
+                            url.remove(conn);
+                        persisted = false;
+                    }
+                    catch { }
                 }
-                catch { }
+                conn.queryExecute("COMMIT;");
             }
-            conn.queryExecute("COMMIT;");
         }
         /// <summary>
         /// Unpersists the model from the database.
@@ -259,15 +268,18 @@ namespace CMS.BasicArticles
         /// <param name="conn">Database connector.</param>
         public void removeForce(Connector conn)
         {
-            PreparedStatement ps = new PreparedStatement("DELETE FROM ba_article_thread WHERE uuid_thread=?uuid_thread;");
-            ps["uuid_thread"] = uuidThread.Bytes;
-            try
+            lock (this)
             {
-                conn.queryExecute(ps);
-                url.remove(conn);
+                PreparedStatement ps = new PreparedStatement("DELETE FROM ba_article_thread WHERE uuid_thread=?uuid_thread;");
+                ps["uuid_thread"] = uuidThread.Bytes;
+                try
+                {
+                    conn.queryExecute(ps);
+                    url.remove(conn);
+                }
+                catch { }
+                persisted = false;
             }
-            catch { }
-            persisted = false;
         }
         // Methods *****************************************************************************************************
         /// <summary>
@@ -348,7 +360,7 @@ namespace CMS.BasicArticles
                 {
                     if (!Directory.Exists(PathThumbnails))
                         Directory.CreateDirectory(PathThumbnails);
-                    img.Save(PathThumbnail, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    img.Save(PathThumbnail, System.Drawing.Imaging.ImageFormat.Png);
                 }
                 catch
                 {
@@ -389,20 +401,39 @@ namespace CMS.BasicArticles
         /// <returns>The status of the operation.</returns>
         public UrlRewriting.PersistStatus move(BasicArticles ba, Connector conn, string urlNew)
         {
-            // Save the old for unpersistence later
-            UrlRewriting urOld = url;
-            // Create new URL
-            UrlRewriting urNew = new UrlRewriting();
-            urNew.PluginOwner = ba.UUID;
-            urNew.FullPath = urlNew;
-            UrlRewriting.PersistStatus ps = urNew.save(conn);
-            if (ps == UrlRewriting.PersistStatus.Success)
+            lock (this)
             {
-                urOld.remove(conn);
-                url = urNew;
-                modified |= Fields.Url;
+                // Save the old for unpersistence later
+                UrlRewriting urOld = url;
+                // Create new URL
+                UrlRewriting urNew = new UrlRewriting();
+                urNew.PluginOwner = ba.UUID;
+                urNew.FullPath = urlNew;
+                UrlRewriting.PersistStatus ps = urNew.save(conn);
+                if (ps == UrlRewriting.PersistStatus.Success)
+                {
+                    urOld.remove(conn);
+                    url = urNew;
+                    modified |= Fields.Url;
+                }
+                return ps;
             }
-            return ps;
+        }
+        /// <summary>
+        /// Updates the description of the thread.
+        /// </summary>
+        /// <param name="value">The new description.</param>
+        /// <returns>True = updated, false = invalid length.</returns>
+        public bool descriptionUpdate(string value)
+        {
+            lock (this)
+            {
+                if (value.Length < Core.Settings[Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MIN].get<int>() || value.Length > Core.Settings[Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MAX].get<int>())
+                    return false;
+                description = value == null || value.Length == 0 ? null : value;
+                modified |= Fields.Description;
+                return true;
+            }
         }
         // Methods - Properties ****************************************************************************************
         /// <summary>
@@ -418,8 +449,11 @@ namespace CMS.BasicArticles
             }
             internal set
             {
-                if(!persisted)
-                    uuidThread = value;
+                lock (this)
+                {
+                    if (!persisted)
+                        uuidThread = value;
+                }
             }
         }
         /// <summary>
@@ -433,8 +467,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                url = value;
-                modified |= Fields.Url;
+                lock (this)
+                {
+                    url = value;
+                    modified |= Fields.Url;
+                }
             }
         }
         /// <summary>
@@ -448,8 +485,11 @@ namespace CMS.BasicArticles
             }
             set
             {
-                uuidArticleCurrent = value;
-                modified |= Fields.ArticleCurrent;
+                lock (this)
+                {
+                    uuidArticleCurrent = value;
+                    modified |= Fields.ArticleCurrent;
+                }
             }
         }
         /// <summary>
@@ -463,8 +503,21 @@ namespace CMS.BasicArticles
             }
             set
             {
-                thumbnail = value;
-                modified |= Fields.Thumbnail;
+                lock (this)
+                {
+                    thumbnail = value;
+                    modified |= Fields.Thumbnail;
+                }
+            }
+        }
+        /// <summary>
+        /// The description of the thread.
+        /// </summary>
+        public string Description
+        {
+            get
+            {
+                return description;
             }
         }
         /// <summary>
@@ -475,7 +528,7 @@ namespace CMS.BasicArticles
         {
             get
             {
-                return thumbnail ? ("/content/basic_articles/thumbnails/" + uuidThread.Hex + ".jpg") : "/content/images/basic_articles/default.png";
+                return thumbnail ? ("/content/basic_articles/thumbnails/" + uuidThread.Hex + ".png") : "/content/images/basic_articles/default.png";
             }
         }
         /// <summary>
@@ -485,7 +538,7 @@ namespace CMS.BasicArticles
         {
             get
             {
-                return PathThumbnails + "/" + uuidThread.Hex + ".jpg";
+                return PathThumbnails + "/" + uuidThread.Hex + ".png";
             }
         }
         /// <summary>
@@ -498,7 +551,9 @@ namespace CMS.BasicArticles
                 return Core.PathContent + "/basic_articles/thumbnails";
             }
         }
-
+        /// <summary>
+        /// Indicates if the model has been persisted.
+        /// </summary>
         public bool IsPersisted
         {
             get
@@ -506,6 +561,9 @@ namespace CMS.BasicArticles
                 return persisted;
             }
         }
+        /// <summary>
+        /// Indicates if the model has been modified.
+        /// </summary>
         public bool IsModified
         {
             get

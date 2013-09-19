@@ -23,6 +23,7 @@
  *                      2013-08-01      ThreadAbortException ignored due to being thrown by Response.Redirect.
  *                      2013-08-22      Added support for new core state (starting and stopping).
  *                                      Added quick-install for debug-mode (for development purposes).
+ *                      2013-09-19      Fixed case-sensitive bug.
  * 
  * *********************************************************************************************************************
  * The entry-point for clients to be served by the main CMS.
@@ -180,7 +181,7 @@ public partial class _Default : System.Web.UI.Page
                 }
             }
             // Check if to specify page
-            if(!data.isKeySet("page"))
+            if(!data.isKeySet("Page"))
                 data["Page"] = Core.Templates.get(data.Connector, "core/page");
 			// Stop timing the request
 			data.timingEnd();

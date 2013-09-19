@@ -1,30 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/article]]></path><description><![CDATA[The template for displaying an article.]]></description><html><![CDATA[<!--IF:article_show_panel|article_thread-->
 <div class="article_header">
 	<div class="buttons">
-		<a href="/article/<!--article_uuid-->">
-			<img src="/content/images/basic_articles/view.png" alt="View" title="View" />
-			View
-		</a>
-		<!--IF:!article_thread-->
-			<!--IF:article_modify-->
-			<a href="/article/edit/<!--article_uuid-->">
-				<img src="/content/images/basic_articles/modify.png" alt="Modify" title="Modify" />
-				Modify
-			</a>
-			<!--ENDIF:article_modify-->
-			<!--IF:article_rebuild-->
-			<a href="/article/<!--article_uuid-->/rebuild">
-				<img src="/content/images/basic_articles/rebuild.png" alt="Rebuild" title="Rebuild" />
-				Rebuild
-			</a>
-			<!--ENDIF:article_rebuild-->
-			<!--IF:article_delete-->
-			<a href="/article/<!--article_uuid-->/delete">
-				<img src="/content/images/basic_articles/delete.png" alt="Delete" title="Delete" />
-				Delete
-			</a>
-			<!--ENDIF:article_delete-->
-		<!--ENDIF:!article_thread-->
 		<span class="thread">
 			<a href="/thread/<!--thread_uuid-->/revisions">
 				<img src="/content/images/basic_articles/revisions.png" alt="Revisions" title="Revisions" />
@@ -55,11 +31,48 @@
 			</a>
 			<!--ENDIF:thread_delete-->
 		</span>
+		<a href="/article/<!--article_uuid-->">
+			<img src="/content/images/basic_articles/view.png" alt="View" title="View" />
+			View
+		</a>
+		<!--IF:!article_thread-->
+			<!--IF:article_modify-->
+			<a href="/article/edit/<!--article_uuid-->">
+				<img src="/content/images/basic_articles/modify.png" alt="Modify" title="Modify" />
+				Modify
+			</a>
+			<!--ENDIF:article_modify-->
+			<!--IF:article_can_publish-->
+			<a href="/article/<!--article_uuid-->/publish">
+				<img src="/content/images/basic_articles/publish.png" alt="Publish" title="Publish" />
+				Publish
+			</a>
+			<!--ENDIF:article_can_publish-->
+			<!--IF:article_rebuild-->
+			<a href="/article/<!--article_uuid-->/rebuild">
+				<img src="/content/images/basic_articles/rebuild.png" alt="Rebuild" title="Rebuild" />
+				Rebuild
+			</a>
+			<!--ENDIF:article_rebuild-->
+			<!--IF:article_delete-->
+			<a href="/article/<!--article_uuid-->/delete">
+				<img src="/content/images/basic_articles/delete.png" alt="Delete" title="Delete" />
+				Delete
+			</a>
+			<!--ENDIF:article_delete-->
+		<!--ENDIF:!article_thread-->
+		<a href="/article/<!--article_uuid-->/print">
+			<img src="/content/images/basic_articles/print.png" alt="Print" title="Print" />
+			Print
+		</a>
 		<div class="clear"></div>
 	</div>
 	<div class="clear"></div>
 </div>
 <!--ENDIF:article_show_panel|article_thread-->
+<div class="article_content">
+<!--article_content-->
+</div>
 <!--IF:article_showpanel_button-->
 <div class="article_show_panel">
 	<a class="BUTTON" href="/article/<!--article_uuid-->?show_panel=1">
@@ -67,9 +80,6 @@
 	</a>
 </div>
 <!--ENDIF:article_showpanel_button-->
-<div class="article_content">
-<!--article_content-->
-</div>
 <!--IF:article_show_panel&!article_thread-->
 <div class="article_footer">
 	<div class="tags">

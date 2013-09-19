@@ -597,7 +597,18 @@ namespace CMS.Base
             switch (action)
             {
                 case ResizeAction.CropEdges:
-                    g.DrawImage(image, (int)(((double)targetWidth / 2.0) - ((double)image.Width / 2.0)), (int)(((double)targetHeight / 2.0) - ((double)image.Height / 2.0)), image.Width, image.Height);
+                    int width, height;
+                    if (image.Width < image.Height)
+                    {
+                        width = targetWidth;
+                        height = (int)(((double)targetWidth / image.Width) * (double)image.Height);
+                    }
+                    else
+                    {
+                        height = targetHeight;
+                        width = (int)(((double)targetHeight / image.Height) * (double)image.Width);
+                    }
+                    g.DrawImage(image, (int)(((double)targetWidth / 2.0) - ((double)width / 2.0)), (int)(((double)targetHeight / 2.0) - ((double)height / 2.0)), width, height);
                     break;
                 case ResizeAction.Resize:
                     int w, h, x, y;

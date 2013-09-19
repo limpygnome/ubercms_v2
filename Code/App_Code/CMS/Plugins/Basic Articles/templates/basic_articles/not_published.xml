@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/not_published]]></path><description><![CDATA[Displayed to non-publishing users when an article is unpublished.]]></description><html><![CDATA[<div class="TABLE">
+	<div class="ROW HEADER">
+		<div class="CELL1">
+			<div class="P">
+				Unavailable
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW">
+		<div class="CELL1">
+			<div class="P">
+				The requested article is not available because it's awaiting publication; please try again later.
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="clear"></div>
+</div>]]></html></template>

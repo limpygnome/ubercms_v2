@@ -8,7 +8,8 @@ CREATE TABLE ba_article_thread
 	FOREIGN KEY(`urlid`)				REFERENCES cms_urlrewriting(`urlid`) ON UPDATE CASCADE ON DELETE SET NULL,
 	uuid_article_current				BINARY(16),
 	FOREIGN KEY(`uuid_article_current`)	REFERENCES ba_article(`uuid_article`) ON UPDATE CASCADE ON DELETE SET NULL,
-	thumbnail							VARCHAR(1) DEFAULT 0
+	thumbnail							VARCHAR(1) DEFAULT 0,
+	description							TEXT
 );
 CREATE TABLE ba_article_thread_permissions
 (
@@ -68,7 +69,7 @@ SET FOREIGN_KEY_CHECKS=1;
 
 -- Create views
 CREATE OR REPLACE VIEW ba_view_load_article_thread AS
-	SELECT bat.uuid_thread AS uuid_thread_raw, HEX(bat.uuid_thread) AS uuid_thread, url.urlid, url.uuid, url.full_path, url.priority, HEX(bat.uuid_article_current) AS uuid_article_current, bat.thumbnail FROM ba_article_thread AS bat LEFT OUTER JOIN cms_urlrewriting AS url ON url.urlid=bat.urlid;
+	SELECT bat.uuid_thread AS uuid_thread_raw, HEX(bat.uuid_thread) AS uuid_thread, url.urlid, url.uuid, url.full_path, url.priority, HEX(bat.uuid_article_current) AS uuid_article_current, bat.thumbnail, bat.description FROM ba_article_thread AS bat LEFT OUTER JOIN cms_urlrewriting AS url ON url.urlid=bat.urlid;
 -- Contains both raw and rendered text.
 CREATE OR REPLACE VIEW ba_view_load_article AS
 	SELECT a.uuid_article AS uuid_article_raw, HEX(a.uuid_article) AS uuid_article, a.uuid_thread AS uuid_thread_raw, HEX(a.uuid_thread) AS uuid_thread, a.title, a.text_raw, a.text_cache, hd.headerdata, a.headerdata_hash, a.datetime_created, a.datetime_modified, a.datetime_published, a.published, a.comments, a.html, a.hide_panel, a.userid_author, a.userid_publisher FROM ba_article AS a LEFT OUTER JOIN ba_article_headerdata AS hd ON hd.hash=a.headerdata_hash;

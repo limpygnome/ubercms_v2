@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/browser_articles]]></path><description><![CDATA[Template for displaying articles.]]></description><html><![CDATA[<!--articles-->
+<div class="tac">
+	<!--IF:articles_page_prev-->
+		<a href="<!--articles_url-->/<!--articles_page_prev-->" class="BUTTON fl">Previous</a>
+	<!--ENDIF:articles_page_prev-->
+	<!--IF:articles_page_next-->
+		<a href="<!--articles_url-->/<!--articles_page_next-->" class="BUTTON fr">Next</a>
+	<!--ENDIF:articles_page_next-->
+	Page <!--articles_page_curr-->
+</div>]]></html></template>

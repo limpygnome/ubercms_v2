@@ -43,8 +43,8 @@
 			<div class="CELL2">
 				<div class="P">
 					<select name="thumbnail_resize">
-						<option value="resize">Resize</option>
 						<option value="crop">Crop Edges</option>
+						<option value="resize">Resize</option>
 						<option value="none">None</option>
 					</select>
 				</div>
@@ -87,6 +87,37 @@
 			<div class="CELL1">
 				<div class="P">
 					<textarea name="tags" class="article_thread_info_ta" rows="3"><!--thread_tags--></textarea>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" value="Update" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<form method="post" action="/thread/<!--thread_uuid-->/info">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Thread Description
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					<textarea name="description" class="article_thread_info_ta" rows="3"><!--thread_description--></textarea>
 				</div>
 			</div>
 			<div class="clear"></div>

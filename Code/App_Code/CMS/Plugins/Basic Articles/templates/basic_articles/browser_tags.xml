@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/browser_tags]]></path><description><![CDATA[The page used to display tags.]]></description><html><![CDATA[<div class="article_tags">
+	<!--articles_tags-->
+</div>
+<div class="tac">
+	<!--IF:articles_page_prev-->
+		<a href="/articles/tags/<!--articles_page_prev-->" class="BUTTON fl">Previous</a>
+	<!--ENDIF:articles_page_prev-->
+	<!--IF:articles_page_next-->
+		<a href="/articles/tags/<!--articles_page_next-->" class="BUTTON fr">Next</a>
+	<!--ENDIF:articles_page_next-->
+	Page <!--articles_page_curr-->
+</div>]]></html></template>

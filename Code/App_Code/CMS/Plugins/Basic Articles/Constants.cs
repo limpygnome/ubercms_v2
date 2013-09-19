@@ -55,6 +55,14 @@ namespace CMS.BasicArticles
         public const string     SETTINGS__THREAD_IMAGE_HEIGHT = "basic_articles/thread_image/height";
         public const string     SETTINGS__THREAD_IMAGE_HEIGHT__DESC = "The height of thread thumbnail images.";
         public const int        SETTINGS__THREAD_IMAGE_HEIGHT__VALUE = 180;
+        // Thread description - length min
+        public const string     SETTINGS__THREAD_DESCRIPTION_LENGTH_MIN = "basic_articles/thread_description/length_min";
+        public const string     SETTINGS__THREAD_DESCRIPTION_LENGTH_MIN__DESC = "The mimimum length of a thread's description.";
+        public const int        SETTINGS__THREAD_DESCRIPTION_LENGTH_MIN__VALUE = 0;
+        // Thread description - length max
+        public const string     SETTINGS__THREAD_DESCRIPTION_LENGTH_MAX = "basic_articles/thread_description/length_max";
+        public const string     SETTINGS__THREAD_DESCRIPTION_LENGTH_MAX__DESC = "The maximum length of a thread's description.";
+        public const int        SETTINGS__THREAD_DESCRIPTION_LENGTH_MAX__VALUE = 256;
         // Constants - Tags ********************************************************************************************
         // Tag keyword length min
         public const string     SETTINGS__THREAD_TAG_LENGTH_MIN = "basic_articles/thread_tags/length_min";
@@ -68,5 +76,18 @@ namespace CMS.BasicArticles
         public const string     SETTINGS__THREAD_TAGS_MAX = "basic_articles/thread_tags/max";
         public const string     SETTINGS__THREAD_TAGS_MAX__DESC = "The maximum number of tags per thread.";
         public const int        SETTINGS__THREAD_TAGS_MAX__VALUE = 32;
+        // Constants - Browsing ****************************************************************************************
+        // Articles per page
+        public const string     SETTINGS__BROWSER_ARTICLES_PER_PAGE = "basic_articles/browser/articlesperpage";
+        public const string     SETTINGS__BROWSER_ARTICLES_PER_PAGE__DESC = "The articles per page displayed when browsing.";
+        public const int        SETTINGS__BROWSER_ARTICLES_PER_PAGE__VALUE = 16;
+        // Most populated tags limit
+        public const string     SETTINGS__BROWSER_TAGS_POPULATED_LIMIT = "basic_articles/browser/populated_tags_limit";
+        public const string     SETTINGS__BROWSER_TAGS_POPULATED_LIMIT__DESC = "The number of populated tags to display on the browser.";
+        public const int        SETTINGS__BROWSER_TAGS_POPULATED_LIMIT__VALUE = 15;
+        // Tags per page
+        public const string     SETTINGS__BROWSER_TAGS_PER_PAGE = "basic_articles/browser/tagsperpage";
+        public const string     SETTINGS__BROWSER_TAGS_PER_PAGE__DESC = "The number of tags displayed per page when viewing all tags via the browser.";
+        public const int        SETTINGS__BROWSER_TAGS_PER_PAGE__VALUE = 20;
     }
 }
