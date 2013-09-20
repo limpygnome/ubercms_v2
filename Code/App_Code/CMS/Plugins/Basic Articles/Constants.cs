@@ -89,5 +89,18 @@ namespace CMS.BasicArticles
         public const string     SETTINGS__BROWSER_TAGS_PER_PAGE = "basic_articles/browser/tagsperpage";
         public const string     SETTINGS__BROWSER_TAGS_PER_PAGE__DESC = "The number of tags displayed per page when viewing all tags via the browser.";
         public const int        SETTINGS__BROWSER_TAGS_PER_PAGE__VALUE = 20;
+        // Constants - Render Stream ***********************************************************************************
+        // Articles per page
+        public const string     SETTINGS__RENDERSTREAM_ARTICLES_PER_PAGE = "basic_articles/render_stream/articlesperpage";
+        public const string     SETTINGS__RENDERSTREAM_ARTICLES_PER_PAGE__DESC = "The number of articles rendered per each page.";
+        public const int        SETTINGS__RENDERSTREAM_ARTICLES_PER_PAGE__VALUE = 5;
+        // Default tag
+        public const string     SETTINGS__RENDERSTREAM_DEFAULT_TAG = "basic_articles/render_stream/default_tag";
+        public const string     SETTINGS__RENDERSTREAM_DEFAULT_TAG__DESC = "The default tag for articles rendered at /articles_home (URL); for use as a home-page/default handler.";
+        public const string     SETTINGS__RENDERSTREAM_DEFAULT_TAG__VALUE = "news";
+        // Default tag's page title
+        public const string     SETTINGS__RENDERSTREAM_DEFAULT_TAG_TITLE = "basic_articles/render_stream/default_title";
+        public const string     SETTINGS__RENDERSTREAM_DEFAULT_TAG_TITLE__DESC = "The title of the page at /articles_home (URL).";
+        public const string     SETTINGS__RENDERSTREAM_DEFAULT_TAG_TITLE__VALUE = "Home";
     }
 }

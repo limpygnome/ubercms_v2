@@ -1,4 +1,6 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/browser_articles]]></path><description><![CDATA[Template for displaying articles.]]></description><html><![CDATA[<!--articles-->
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/renderstream]]></path><description><![CDATA[Render stream page layout.]]></description><html><![CDATA[<div class="articles_renderstream">
+	<!--articles-->
+</div>
 <p class="tac">
 	<!--IF:articles_url_prev-->
 		<a href="<!--articles_url_prev-->" class="BUTTON fl">Previous</a>

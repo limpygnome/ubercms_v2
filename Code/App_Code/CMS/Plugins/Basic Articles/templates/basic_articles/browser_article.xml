@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/browser_article]]></path><description><![CDATA[An article item displayed on the browser page.]]></description><html><![CDATA[<a class="article" href="/<URL>" title="<TITLE>">
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/browser_article]]></path><description><![CDATA[An article item displayed on the browser page.]]></description><html><![CDATA[<a class="article" href="<URL>" title="<TITLE>">
 	<img src="<THUMBNAIL>" alt="<TITLE>'s thumbnail" />
 	<span class="date" title="<DATETIME_PUBLISHED_FULL>">
 		<DATETIME_PUBLISHED>

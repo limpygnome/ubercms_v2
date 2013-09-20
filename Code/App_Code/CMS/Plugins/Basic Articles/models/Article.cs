@@ -32,6 +32,15 @@ namespace CMS.BasicArticles
             TitleAZ,
             TitleZA
         }
+        /// <summary>
+        /// The filter for articles based on their publication status.
+        /// </summary>
+        public enum PublishFilter
+        {
+            Published,
+            NonPublished,
+            Both
+        }
         private enum Fields
         {
             None = 0,
@@ -48,8 +57,7 @@ namespace CMS.BasicArticles
             HidePanel = 1024,
             UserIDAuthor = 2048,
             UserIDPublisher = 4096,
-            HeaderData = 8192,
-            All = 16383 // This should always be: [the next power of 2] - 1
+            HeaderData = 8192
         }
         /// <summary>
         /// The status of the persistence of the model.
@@ -123,7 +131,7 @@ namespace CMS.BasicArticles
         /// <param name="publishedOnly">Indicates if to display only published articles.</param>
         /// <param name="loadExtra">Indicates if to load an extra model on top of the amount and page; this is useful for page systems.</param>
         /// <returns>Array of articles; possibly empty.</returns>
-        public static Article[] load(Connector conn, UUID uuidThread, Sorting sorting, string tagKeyword, string search, int articlesPerPage, int page, Text text, bool singleArticle, bool publishedOnly, bool loadExtra)
+        public static Article[] load(Connector conn, UUID uuidThread, Sorting sorting, string tagKeyword, string search, int articlesPerPage, int page, Text text, bool singleArticle, PublishFilter published, bool loadExtra)
         {
             // Validate input
             if (page < 1 || articlesPerPage < 0)
@@ -132,13 +140,20 @@ namespace CMS.BasicArticles
             PreparedStatement ps = new PreparedStatement();
             StringBuilder query = new StringBuilder();
             query.Append("SELECT v.* FROM ").Append(loadTable(text, singleArticle));
-            if (uuidThread != null || tagKeyword != null || search != null || singleArticle || publishedOnly)
+            if (uuidThread != null || tagKeyword != null || search != null || singleArticle || published != PublishFilter.Both)
             {
                 query.Append(" WHERE ");
                 if (singleArticle)
                     query.Append("t.uuid_thread=v.uuid_thread_raw AND v.uuid_article_raw=t.uuid_article_current AND ");
-                if (publishedOnly)
-                    query.Append("published='1' AND ");
+                switch(published)
+                {
+                    case PublishFilter.NonPublished:
+                        query.Append("published='0' AND ");
+                        break;
+                    case PublishFilter.Published:
+                        query.Append("published='1' AND ");
+                        break;
+                }
                 if (uuidThread != null)
                 {
                     ps["uuid_thread"] = uuidThread.Bytes;
@@ -151,8 +166,8 @@ namespace CMS.BasicArticles
                 }
                 if (search != null)
                 {
-                    ps["search"] = search;
-                    query.Append("(title LIKE '%?search%' OR text_raw LIKE '%?search%') AND ");
+                    ps["sch"] = "%" + search + "%";
+                    query.Append("(title LIKE ?sch OR text_raw LIKE ?sch) AND ");
                 }
                 query.Remove(query.Length - 5, 5);
             }
@@ -306,9 +321,6 @@ namespace CMS.BasicArticles
                         sql.executeInsert(conn, "ba_article");
                         persisted = true;
                     }
-                    // Check if we're inside a transaction, if so commit it
-                    if ((modified & Fields.HeaderData) == Fields.HeaderData)
-                        conn.queryExecute("COMMIT;");
                     // Persist header-data
                     if ((modified & Fields.HeaderData) == Fields.HeaderData)
                         header.persist(conn, uuidArticle);

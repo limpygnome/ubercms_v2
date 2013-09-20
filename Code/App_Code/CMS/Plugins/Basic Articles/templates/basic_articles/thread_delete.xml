@@ -28,4 +28,9 @@
 		<div class="clear"></div>
 	</div>
 	<!--csrf()-->
-</form>]]></html></template>
+</form>
+<!--IF:thread_error-->
+<p class="ERROR">
+	<!--thread_error-->
+</p>
+<!--ENDIF:thread_error-->]]></html></template>

@@ -33,10 +33,6 @@
 			Create Article
 		</a>
 		<!--ENDIF:articles_create-->
-		<a href="/articles/change_log">
-			<img src="/content/images/basic_articles/modify.png" alt="Change-Log" />
-			Change-Log
-		</a>
 		<a href="/articles/tags">
 			<img src="/content/images/basic_articles/tags.png" alt="Tags" />
 			View All Tags

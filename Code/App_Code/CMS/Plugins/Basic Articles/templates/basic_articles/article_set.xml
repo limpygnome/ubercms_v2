@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/article_set]]></path><description><![CDATA[The template for confirming setting an article as the current article.]]></description><html><![CDATA[<form method="post" action="/article/<!--article_uuid-->/set">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Set as Current Article
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					Are you sure you want to set this article as the current article? This will be the main article shown to users accessing this thread.
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<input type="submit" name="article_set" value="Set as Current Article" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>]]></html></template>

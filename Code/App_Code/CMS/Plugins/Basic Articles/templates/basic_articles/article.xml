@@ -60,6 +60,12 @@
 				Delete
 			</a>
 			<!--ENDIF:article_delete-->
+			<!--IF:article_set-->
+			<a href="/article/<!--article_uuid-->/set">
+				<img src="/content/images/basic_articles/set.png" alt="Set As Current Article" title="Set As Current Article" />
+				Set As Current Article
+			</a>
+			<!--ENDIF:article_set-->
 		<!--ENDIF:!article_thread-->
 		<a href="/article/<!--article_uuid-->/print">
 			<img src="/content/images/basic_articles/print.png" alt="Print" title="Print" />

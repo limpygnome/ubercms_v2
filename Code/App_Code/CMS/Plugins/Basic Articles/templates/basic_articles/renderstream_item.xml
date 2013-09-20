@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/renderstream_item]]></path><description><![CDATA[A render-stream item/article.]]></description><html><![CDATA[<div class="item">
+	<h3><a href="<!--url-->"><!--title--></a></h3>
+	<!--IF:description-->
+	<div class="description">
+		<!--IF:thumbnail-->
+		<img src="<!--thumbnail-->" alt="Article thumbnail" />
+		<!--ENDIF:thumbnail-->
+		<b><!--description--></b>
+		<div class="clear"></div>
+	</div>
+	<!--ENDIF:description-->
+	<!--content-->
+	<div class="footer">
+		<span title="<!--datetime_published_full-->"><!--datetime_published--></span>
+	</div>
+</div>]]></html></template>

@@ -23,6 +23,7 @@
  *                      2013-08-29      Hex representation as bytes is now cached when read once via the Bytes property,
  *                                      this is since it's an expensive operation and used often throughout the Core
  *                                      and Plugins (especially when persisting model data).
+ *                      2013-09-19      Added object equals support.
  * 
  * *********************************************************************************************************************
  * A model for representing a universally unique identifier, following the RFC 4122 standard:
@@ -59,7 +60,19 @@ namespace CMS.Base
         public override bool Equals(object obj)
         {
             UUID t = obj as UUID;
-            return t != null && t.hashcode == hashcode && t.hex == hex;
+            return (object)t != null && t.hex == hex;
+        }
+        public bool Equals(UUID obj)
+        {
+            return (object)obj != null && obj.hex == hex;
+        }
+        public static bool operator ==(UUID a, UUID b)
+        {
+            return ((object)a == null && (object)b == null) || ((object)a != null && (object)b != null && a.hex == b.hex);
+        }
+        public static bool operator !=(UUID a, UUID b)
+        {
+            return !(a == b);
         }
         // Methods - Factory Creators **********************************************************************************
         /// <summary>

@@ -90,7 +90,7 @@ namespace CMS.BasicArticles
                 // Delete old data
                 if (hash != null && hash.Length > 0)
                 {
-                    ps = new PreparedStatement("DELETE FROM ba_article_headerdata WHERE hash=?hash AND (SELECT COUNT('') FROM ba_article WHERE headerdata_hash=?hash) = 0;");
+                    ps = new PreparedStatement("DELETE hd FROM ba_article_headerdata AS hd WHERE hash=?hash AND (SELECT COUNT('') FROM ba_article WHERE headerdata_hash=hd.hash) = 0;");
                     ps["hash"] = hash;
                     conn.queryExecute(ps);
                 }

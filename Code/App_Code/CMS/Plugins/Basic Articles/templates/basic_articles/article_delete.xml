@@ -28,4 +28,9 @@
 		<div class="clear"></div>
 	</div>
 	<!--csrf()-->
-</form>]]></html></template>
+</form>
+<!--IF:article_error-->
+<p class="ERROR">
+	<!--article_error-->
+</p>
+<!--ENDIF:article_error-->]]></html></template>

@@ -24,6 +24,7 @@
  *                      2013-07-28      Added direct parameter execution and redone concurrency issues with connector
  *                                      type-switching for cross-platform compatibility.
  *                      2013-08-04      Fixed critical bug in executeUpdate with UpdateAttribute being wrongly compiled.
+ *                      2013-09-19      Added protection against no attributes being updated.
  * 
  * *********************************************************************************************************************
  * A class for compiling large SQL statements.
@@ -74,6 +75,8 @@ namespace CMS.Base
         /// <returns>The compiled insert statement.</returns>
         public string compileInsert(string table, string uniqueAttribute, Connector.ConnectorType ctype)
         {
+            if (attributes.Count == 0)
+                return string.Empty;
             StringBuilder buffer = new StringBuilder();
             buffer.Append("INSERT INTO ").Append(table).Append(" (");
             // Add attributes
@@ -121,6 +124,8 @@ namespace CMS.Base
         /// <returns>The compiled update statement.</returns>
         public string compileUpdate(string table, string whereClauses)
         {
+            if (attributes.Count == 0)
+                return string.Empty;
             StringBuilder buffer = new StringBuilder();
             buffer.Append("UPDATE ").Append(table).Append(" SET");
             // Add attributes with values
@@ -154,9 +159,11 @@ namespace CMS.Base
         /// <param name="conn">Database connector.</param>
         /// <param name="table">The table being inserted to.</param>
         /// <param name="uniqueAttribute">The unique attribute from the operation to be returned; can be left null and ignored.</param>
-        /// <returns>The result returned by the query.</returns>
+        /// <returns>The result returned by the query; may return null.</returns>
         public Result executeInsert(Connector conn, string table, string uniqueAttribute)
         {
+            if (attributes.Count == 0)
+                return null;
             // Switch for connector's both capable and not capable of executing a prepared statement for this type of operation
             switch(conn.Type)
             {
@@ -212,6 +219,8 @@ namespace CMS.Base
         /// <param name="whereClauses">The where-clause part of the query; this is appended between 'WHERE ' and ';'. This can be left null or empty to be ignored.</param>
         public void executeUpdate(Connector conn, string table, string whereClauses)
         {
+            if (attributes.Count == 0)
+                return;
             // Switch for connector's both capable and not capable of executing a prepared statement for this type of operation
             switch(conn.Type)
             {

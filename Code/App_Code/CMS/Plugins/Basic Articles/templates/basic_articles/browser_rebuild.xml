@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[basic_articles/browser_rebuild]]></path><description><![CDATA[The page for rebuilding multiple articles.]]></description><html><![CDATA[<form method="post" action="/articles/rebuild">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Rebuild All Articles
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					This will rebuild all articles held by the system.
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Captcha:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<!--include(captcha/embed)-->
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="submit" name="articles_rebuild_all" value="Rebuild All Articles" />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+
+<form method="post" action="/articles/rebuild">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Rebuild Tag
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					This will rebuild all articles with the specified tag.
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Tag:
+				</div>
+			</div>
+			<div class="CELL2">
+				<input type="text" name="articles_rebuild_tag" value="<!--:articles_rebuild_tag-->" />
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Captcha:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<!--include(captcha/embed)-->
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				&nbsp;
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="submit" value="Rebuild Articles" />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<!--IF:article_error-->
+<p class="ERROR">
+	<!--article_error-->
+</p>
+<!--ENDIF:article_error-->]]></html></template>

@@ -89,3 +89,8 @@ CREATE OR REPLACE VIEW ba_view_tags AS
 -- -- Used for looking up an existing article thread based on the URL
 CREATE OR REPLACE VIEW ba_article_thread_createfetch AS
 	SELECT HEX(at.uuid_thread) AS uuid_thread, rw.urlid, rw.uuid, rw.full_path, rw.priority FROM ba_article_thread AS at LEFT OUTER JOIN cms_urlrewriting AS rw ON rw.urlid=at.urlid;
+-- Rebuilding views
+CREATE OR REPLACE VIEW ba_articles_rebuild_all AS
+	SELECT HEX(a.uuid_article) AS uuid_article FROM ba_article AS a;
+CREATE OR REPLACE VIEW ba_articles_rebuild_tag AS
+	SELECT HEX(a.uuid_article) AS uuid_article, t.keyword FROM ba_tags_thread AS tt LEFT OUTER JOIN ba_tags AS t ON t.tagid=tt.tagid LEFT OUTER JOIN ba_article AS a ON a.uuid_thread=tt.uuid_thread;

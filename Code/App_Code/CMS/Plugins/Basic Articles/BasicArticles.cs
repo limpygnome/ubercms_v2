@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Web;
 using CMS.Base;
 using CMS.BasicSiteAuth;
@@ -20,6 +21,11 @@ namespace CMS.BasicArticles
             Render,
             CreateEdit
         };
+        // Constants ***************************************************************************************************
+        private const string REBUILD_MESSAGE = "The articles system is currently in read-only mode due to article rebuilding!";
+        // Fields ******************************************************************************************************
+        private bool rebuilding = false;        // Indicates if articles are being rebuilt; if this is true, the system
+                                                // is in read-only mode.
         // Methods - Constructors **************************************************************************************
         public BasicArticles(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version, int priority, string classPath)
             : base(uuid, title, directory, state, handlerInfo, version, priority, classPath)
@@ -52,6 +58,9 @@ namespace CMS.BasicArticles
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__BROWSER_ARTICLES_PER_PAGE, Settings.SETTINGS__BROWSER_ARTICLES_PER_PAGE__DESC, Settings.SETTINGS__BROWSER_ARTICLES_PER_PAGE__VALUE);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__BROWSER_TAGS_POPULATED_LIMIT, Settings.SETTINGS__BROWSER_TAGS_POPULATED_LIMIT__DESC, Settings.SETTINGS__BROWSER_TAGS_POPULATED_LIMIT__VALUE);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__BROWSER_TAGS_PER_PAGE, Settings.SETTINGS__BROWSER_TAGS_PER_PAGE__DESC, Settings.SETTINGS__BROWSER_TAGS_PER_PAGE__VALUE);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__RENDERSTREAM_ARTICLES_PER_PAGE, Settings.SETTINGS__RENDERSTREAM_ARTICLES_PER_PAGE__DESC, Settings.SETTINGS__RENDERSTREAM_ARTICLES_PER_PAGE__VALUE);
+            Core.Settings.set(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG__DESC, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG__VALUE);
+            Core.Settings.set(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG_TITLE, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG_TITLE__DESC, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG_TITLE__VALUE);
             Core.Settings.save(conn);
             return true;
         }
@@ -110,26 +119,39 @@ namespace CMS.BasicArticles
                         // -- Viewing
                         case null:
                         case "latest":
-                            return pageArticles_browserArticles(data, Article.Sorting.Latest, null, null, 2);
+                            return pageArticles_browserArticles(data, Article.Sorting.Latest, null, null, 2, false);
                         case "oldest":
-                            return pageArticles_browserArticles(data, Article.Sorting.Oldest, null, null, 2);
+                            return pageArticles_browserArticles(data, Article.Sorting.Oldest, null, null, 2, false);
                         case "title_az":
-                            return pageArticles_browserArticles(data, Article.Sorting.TitleAZ, null, null, 2);
+                            return pageArticles_browserArticles(data, Article.Sorting.TitleAZ, null, null, 2, false);
                         case "title_za":
-                            return pageArticles_browserArticles(data, Article.Sorting.TitleZA, null, null, 2);
+                            return pageArticles_browserArticles(data, Article.Sorting.TitleZA, null, null, 2, false);
                         case "pending":
-                            return pageArticles_browserPending(data);
+                            return pageArticles_browserArticles(data, Article.Sorting.Oldest, null, null, 3, true);
+                        case "render":
+                            Article.Sorting sorting;
+                            switch (data.PathInfo[3])
+                            {
+                                default:
+                                case "latest":
+                                    sorting = Article.Sorting.Latest; break;
+                                case "oldest":
+                                    sorting = Article.Sorting.Oldest; break;
+                                case "title_az":
+                                    sorting = Article.Sorting.TitleAZ; break;
+                                case "title_za":
+                                    sorting = Article.Sorting.TitleZA; break;
+                            }
+                            return pageRenderStream(data, sorting, data.PathInfo[2], false, 4);
                         // -- Operations
-                        case "change_log":
-                            return pageArticles_browserChangelog(data);
                         case "search":
                             if (data.Request.QueryString["query"] != null)
-                                return pageArticles_browserArticles(data, Article.Sorting.TitleZA, data.Request.QueryString["query"], null, 2);
+                                return pageArticles_browserArticles(data, Article.Sorting.TitleZA, data.Request.QueryString["query"], null, 3, false);
                             break;
                         case "rebuild":
                             return pageArticles_browserRebuild(data);
                         case "tag":
-                            return pageArticles_browserArticles(data, Article.Sorting.Latest, null, data.PathInfo[2], 3);
+                            return pageArticles_browserArticles(data, Article.Sorting.Latest, null, data.PathInfo[2], 4, false);
                         case "tags":
                             return pageArticles_browserTags(data);
                         default:
@@ -137,7 +159,7 @@ namespace CMS.BasicArticles
                     }
                     break;
                 case "articles_home":
-                    return pageArticles_render(data, Article.Sorting.Latest, "news");
+                    return pageRenderStream(data, Article.Sorting.Latest, Core.Settings[Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG].get<string>(), true, 1);
                 case "thread":
                     return pageThread(data);
                 default:
@@ -167,7 +189,7 @@ namespace CMS.BasicArticles
             if (!ArticleThreadPermissions.isAuthorised(user, edit ? ArticleThreadPermissions.Action.Edit : ArticleThreadPermissions.Action.Create, null, article))
                 return false;
             // Prepare for postback
-            string error = null;
+            string error = rebuilding ? REBUILD_MESSAGE : null;
             // Check for postback
             ArticleCreatePostback postback;
             if (data.Request.Form["article_display_raw"] != null)
@@ -187,7 +209,7 @@ namespace CMS.BasicArticles
             bool comments = data.Request.Form["article_comments"] != null || (postback == ArticleCreatePostback.None && article != null && article.Comments);
             bool createNew = edit && data.Request.Form["article_create_new"] != null;
             // Handle (possible) postback data
-            if (postback != ArticleCreatePostback.None && title != null && (edit || url != null) && raw != null)
+            if (error == null && postback != ArticleCreatePostback.None && title != null && (edit || url != null) && raw != null)
             {
                 // Check if we're making or modifying an article
                 if (article == null)
@@ -346,6 +368,67 @@ namespace CMS.BasicArticles
                 data["article_error"] = HttpUtility.HtmlEncode(error);
             return true;
         }
+        private bool pageRenderStream(Data data, Article.Sorting sorting, string tagFilter, bool homepage, int pageIndex)
+        {
+            if (tagFilter == null && !homepage)
+                return false;
+            // Check page number
+            int page;
+            if (data.PathInfo[pageIndex] == null || !int.TryParse(data.PathInfo[pageIndex], out page) || page < 1)
+                page = 1;
+            // Load articles
+            int articlesPerPage = Core.Settings[Settings.SETTINGS__RENDERSTREAM_ARTICLES_PER_PAGE].get<int>();
+            Article[] articles = Article.load(data.Connector, null, sorting, tagFilter, null, articlesPerPage, page, Article.Text.Rendered, true, Article.PublishFilter.Published, true);
+            // Display articles
+            StringBuilder content = new StringBuilder();
+            {
+                ArticleThread thread;
+                Article article;
+                Data dataRender;
+                int count = articles.Length > articlesPerPage ? articlesPerPage : articles.Length;
+                StringBuilder buffer;
+                string template = Core.Templates.get(data.Connector, "basic_articles/renderstream_item");
+                for (int i = 0; i < count; i++)
+                {
+                    article = articles[i];
+                    if ((thread = ArticleThread.load(data.Connector, article.UUIDThread)) != null)
+                    {
+                        dataRender = new Data(null, null);
+                        dataRender.Connector = data.Connector;
+                        buffer = new StringBuilder(template);
+                        // Set render parameters
+                        dataRender["article_uuid"] = article.UUIDArticle.Hex;
+                        dataRender["thread_uuid"] = thread.UUIDThread.Hex;
+                        dataRender["title"] = HttpUtility.HtmlEncode(article.Title);
+                        if (thread.Thumbnail)
+                            dataRender["thumbnail"] = thread.UrlThumbnail;
+                        dataRender["url"] = thread.Url != null ? "/" + thread.Url.FullPath : "/thread/" + thread.UUIDThread.Hex;
+                        if (thread.Description != null)
+                            dataRender["description"] = HttpUtility.HtmlEncode(thread.Description);
+                        dataRender["datetime_published"] = HttpUtility.HtmlEncode(BaseUtils.dateTimeToHumanReadable(article.DateTimePublished));
+                        dataRender["datetime_published_full"] = HttpUtility.HtmlEncode(article.DateTimePublished.ToString());
+                        dataRender["content"] = article.TextCache;
+                        // Render and append to content
+                        Core.Templates.render(ref buffer, ref dataRender);
+                        content.Append(buffer.ToString());
+                        // Add header data to page
+                        if (article.HeaderData != null)
+                            BaseUtils.headerAppend(article.HeaderData.compile(), ref data);
+                    }
+                }
+            }
+            // Set page data
+            data["Title"] = homepage ? Core.Settings[Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG_TITLE].get<string>() : tagFilter != null ? (tagFilter.Length > 1 ? tagFilter.Substring(0, 1).ToUpper() + tagFilter.Substring(1) : tagFilter) : "Articles - Stream";
+            data["Content"] = Core.Templates.get(data.Connector, "basic_articles/renderstream");
+            data["articles"] = content.ToString();
+            if (page > 1)
+                data["articles_url_prev"] = homepage ? "/articles_home/" + (page-1) : "/articles/render/" + (tagFilter != null ? HttpUtility.UrlEncode(tagFilter) + "/" : string.Empty) + (sorting == Article.Sorting.Latest ? "latest/" : sorting == Article.Sorting.Oldest ? "oldest/" : sorting == Article.Sorting.TitleAZ ? "title_az/" : sorting == Article.Sorting.TitleZA ? "title_za/" : "latest/") + (page-1);
+            if (page < int.MaxValue && articles.Length > articlesPerPage)
+                data["articles_url_next"] = homepage ? "/articles_home/" + (page+1) : "/articles/render/" + (tagFilter != null ? HttpUtility.UrlEncode(tagFilter) + "/" : string.Empty) + (sorting == Article.Sorting.Latest ? "latest/" : sorting == Article.Sorting.Oldest ? "oldest/" : sorting == Article.Sorting.TitleAZ ? "title_az/" : sorting == Article.Sorting.TitleZA ? "title_za/" : "latest/") + (page+1);
+            data["articles_page_curr"] = page.ToString();
+            BaseUtils.headerAppendCss("/content/css/basic_articles.css", ref data);
+            return true;
+        }
         // Methods - Pages - Articles **********************************************************************************
         private bool pageArticle(Data data, bool urlPath)
         {
@@ -362,6 +445,16 @@ namespace CMS.BasicArticles
                 else if (thread.UUIDArticleCurrent == null)
                     return false;
                 else if ((article = Article.load(data.Connector, thread.UUIDArticleCurrent, action == "rebuild" ? Article.Text.Raw : Article.Text.Rendered)) == null)
+                    return false;
+            }
+            else if (data.PathInfo[0] == "thread")
+            {
+                UUID t = UUID.parse(data.PathInfo[1]);
+                if (t == null)
+                    return false;
+                else if ((thread = ArticleThread.load(data.Connector, t)) == null)
+                    return false;
+                else if (thread.UUIDArticleCurrent == null || (article = Article.load(data.Connector, thread.UUIDArticleCurrent, action == "rebuild" ? Article.Text.Raw : Article.Text.Rendered)) == null)
                     return false;
             }
             else
@@ -394,6 +487,10 @@ namespace CMS.BasicArticles
                     break;
                 case "publish":
                     if (!pageArticle_publish(data, thread, article, user, perms))
+                        return false;
+                    break;
+                case "set":
+                    if (!pageArticle_set(data, thread, article, user, perms))
                         return false;
                     break;
                 case "rebuild":
@@ -436,7 +533,11 @@ namespace CMS.BasicArticles
             if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.EditPermissions, perms, article))
                 data.setFlag("thread_permissions");
             if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.EditThreadInfo, perms, article))
+            {
                 data.setFlag("thread_info");
+                if (thread.UUIDArticleCurrent != article.UUIDArticle)
+                    data.setFlag("article_set");
+            }
             if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.DeleteThread, perms, article))
                 data.setFlag("thread_delete");
             if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.MoveThread, perms, null))
@@ -473,12 +574,35 @@ namespace CMS.BasicArticles
                 data["Page"] = Core.Templates.get(data.Connector, "basic_articles/layout_print");
             return true;
         }
+        private bool pageArticle_set(Data data, ArticleThread thread, Article article, User user, ArticleThreadPermissions perms)
+        {
+            if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.EditThreadInfo, perms, article) || thread.UUIDArticleCurrent == article.UUIDArticle)
+                return false;
+            string error = rebuilding ? REBUILD_MESSAGE : null;
+            if (error == null && data.Request.Form["article_set"] != null)
+            {
+#if CSRFP
+                    if (!CSRFProtection.authenticated(data))
+                        return false;
+#endif
+                thread.UUIDArticleCurrent = article.UUIDArticle;
+                if (!thread.save(data.Connector))
+                    error = "Failed to set this article as the current article!";
+                else
+                    BaseUtils.redirectAbs(data, "/thread/" + thread.UUIDThread.Hex);
+            }
+            data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/article_set");
+            if (error != null)
+                data["article_error"] = HttpUtility.HtmlEncode(error);
+            data.setFlag("article_show_panel");
+            return true;
+        }
         private bool pageArticle_publish(Data data, ArticleThread thread, Article article, User user, ArticleThreadPermissions perms)
         {
-            if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Publish, perms, article))
+            if (article.Published || !ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Publish, perms, article))
                 return false;
-            string error = null;
-            if (data.Request.Form["article_publish"] != null)
+            string error = rebuilding ? REBUILD_MESSAGE : null;
+            if (error == null && data.Request.Form["article_publish"] != null)
             {
 #if CSRFP
                     if (!CSRFProtection.authenticated(data))
@@ -503,8 +627,8 @@ namespace CMS.BasicArticles
         {
             if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Rebuild, perms, article))
                 return false;
-            string error = null;
-            if (data.Request.Form["article_rebuild"] != null)
+            string error = rebuilding ? REBUILD_MESSAGE : null;
+            if (error == null && data.Request.Form["article_rebuild"] != null)
             {
 #if CSRFP
                     if (!CSRFProtection.authenticated(data))
@@ -529,7 +653,8 @@ namespace CMS.BasicArticles
         {
             if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Delete, perms, article))
                 return false;
-            if (data.Request.Form["article_delete"] != null)
+            string error = rebuilding ? REBUILD_MESSAGE : null;
+            if (error == null && data.Request.Form["article_delete"] != null)
             {
 #if CSRFP
                     if (!CSRFProtection.authenticated(data))
@@ -541,14 +666,18 @@ namespace CMS.BasicArticles
                 BaseUtils.redirectAbs(data, "/articles");
             }
             data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/article_delete");
+            if (error != null)
+                data["article_error"] = HttpUtility.HtmlEncode(error);
             data.setFlag("article_show_panel");
             return true;
         }
         // Methods - Pages - Threads ***********************************************************************************
         private bool pageThread(Data data)
         {
-            User user = BasicSiteAuth.BasicSiteAuth.getCurrentUser(data);
             string action = data.PathInfo[2];
+            if (action == null || action.Length == 0)
+                return pageArticle(data, false);
+            User user = BasicSiteAuth.BasicSiteAuth.getCurrentUser(data);
             ArticleThread thread = null;
             // Load the thread
             {
@@ -601,7 +730,7 @@ namespace CMS.BasicArticles
             StringBuilder temp;
             Data tempData;
             int limit = Core.Settings[Settings.SETTINGS__THREAD_REVISIONS_ARTICLES_PER_PAGE].get<int>();
-            Article[] articles = Article.load(data.Connector, thread.UUIDThread, Article.Sorting.Latest, null, null, limit, page, Article.Text.None, false, false, true);
+            Article[] articles = Article.load(data.Connector, thread.UUIDThread, Article.Sorting.Latest, null, null, limit, page, Article.Text.None, false, Article.PublishFilter.Both, true);
             foreach (Article article in articles)
             {
                 temp = new StringBuilder(templateRevision);
@@ -617,6 +746,8 @@ namespace CMS.BasicArticles
                     tempData.setFlag("article_rebuild");
                 if (ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.Delete, perms, article))
                     tempData.setFlag("article_delete");
+                if (article.UUIDArticle == thread.UUIDArticleCurrent)
+                    tempData.setFlag("article_selected");
                 // Render and append
                 Core.Templates.render(ref temp, ref tempData);
                 revisions.Append(temp);
@@ -639,10 +770,10 @@ namespace CMS.BasicArticles
             if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.EditPermissions, perms, null))
                 return false;
             string success = null;
-            string error = null;
+            string error = rebuilding ? REBUILD_MESSAGE : null;
             // Check for postback
             bool postback = data.Request.Form["thread_permissions"] != null;
-            if (postback)
+            if (error == null && postback)
             {
                 BasicSiteAuth.BasicSiteAuth bsa = BasicSiteAuth.BasicSiteAuth.getCurrentInstance();
                 // Clear permissions
@@ -705,13 +836,13 @@ namespace CMS.BasicArticles
                 return false;
             // Load tags
             ArticleThreadTags tags = ArticleThreadTags.load(data.Connector, thread.UUIDThread);
-            string  error = null,
+            string  error = rebuilding ? REBUILD_MESSAGE : null,
                     success = null;
             // Check for postback
             string pbDescription = data.Request.Form["description"];
             string pbTags = data.Request.Form["tags"];
             // -- Thumbnail
-            if (data.Request.Files["thumbnail"] != null && data.Request.Files["thumbnail"].ContentLength > 0)
+            if (error == null && data.Request.Files["thumbnail"] != null && data.Request.Files["thumbnail"].ContentLength > 0)
             {
 #if CSRFP
                 if (!CSRFProtection.authenticated(data))
@@ -833,6 +964,7 @@ namespace CMS.BasicArticles
             if (!ArticleThreadPermissions.isAuthorised(user, ArticleThreadPermissions.Action.DeleteThread, perms, null))
                 return false;
             data["Title"] = "Thread - Delete";
+            string error = rebuilding ? REBUILD_MESSAGE : null;
             if (data.Request.Form["thread_delete"] != null)
             {
 #if CSRFP
@@ -845,6 +977,8 @@ namespace CMS.BasicArticles
                 BaseUtils.redirectAbs(data, "/articles");
             }
             data["article_content"] = Core.Templates.get(data.Connector, "basic_articles/thread_delete");
+            if (error != null)
+                data["thread_error"] = HttpUtility.HtmlEncode(error);
             return true;
         }
         private bool pageThread_move(Data data, ArticleThread thread, User user, ArticleThreadPermissions perms)
@@ -894,8 +1028,7 @@ namespace CMS.BasicArticles
                 data["thread_url"] = HttpUtility.HtmlEncode(threadUrl);
             return true;
         }
-
-
+        // Methods - Pages - Browsing **********************************************************************************
         private bool pageArticles_browserTags(Data data)
         {
             // Set the view
@@ -932,7 +1065,7 @@ namespace CMS.BasicArticles
             data["Title"] = "Articles - Tags";
             return true;
         }
-        private bool pageArticles_browserArticles(Data data, Article.Sorting sorting, string search, string tagFilter, int pageIndex)
+        private bool pageArticles_browserArticles(Data data, Article.Sorting sorting, string search, string tagFilter, int pageIndex, bool pending)
         {
             // Set the view
             if (!pageArticles_browser(data))
@@ -943,14 +1076,19 @@ namespace CMS.BasicArticles
                 page = 1;
             Article[] articles;
             int articlesPerPage = Core.Settings[Settings.SETTINGS__BROWSER_ARTICLES_PER_PAGE].get<int>();
-            if (search != null)
+            if (pending)
             {
-                articles = Article.load(data.Connector, null, sorting, null, search, articlesPerPage, page, Article.Text.Raw, true, true, true);
+                articles = Article.load(data.Connector, null, sorting, null, search, articlesPerPage, page, Article.Text.None, false, Article.PublishFilter.NonPublished, true);
+                data["Title"] = "Articles - Awaiting Publication";
+            }
+            else if (search != null)
+            {
+                articles = Article.load(data.Connector, null, sorting, null, search, articlesPerPage, page, Article.Text.Raw, true, Article.PublishFilter.Published, true);
                 data["Title"] = "Articles - Seach Results for `" + HttpUtility.HtmlEncode(search) + "`";
             }
             else
             {
-                articles = Article.load(data.Connector, null, sorting, tagFilter, null, articlesPerPage, page, Article.Text.None, true, true, true);
+                articles = Article.load(data.Connector, null, sorting, tagFilter, null, articlesPerPage, page, Article.Text.None, true, Article.PublishFilter.Published, true);
                 string title = "Articles - ";
                 if (tagFilter != null)
                     title += "Tag `" + HttpUtility.HtmlEncode(tagFilter) + "` - ";
@@ -992,7 +1130,7 @@ namespace CMS.BasicArticles
                         if (th != null)
                         {
                             item = new StringBuilder(template);
-                            item.Replace("<URL>", th.Url != null ? th.Url.FullPath : "/thread/" + th.UUIDThread.Hex);
+                            item.Replace("<URL>", pending ? "/article/" + a.UUIDArticle.Hex : th.Url != null ? "/" + th.Url.FullPath : "/thread/" + th.UUIDThread.Hex);
                             item.Replace("<TITLE>", HttpUtility.HtmlEncode(a.Title));
                             item.Replace("<THUMBNAIL>", th.UrlThumbnail);
                             item.Replace("<DESCRIPTION>", th.Description == null ? "(none)" : th.Description);
@@ -1009,35 +1147,69 @@ namespace CMS.BasicArticles
             // Set data
             data["articles_page_curr"] = page.ToString();
             data["browser_content"] = Core.Templates.get(data.Connector, "basic_articles/browser_articles");
+            string url = pending ? "/articles/pending/" : search != null ? "/articles/search/" : tagFilter != null ? "/articles/tag/" + HttpUtility.UrlEncode(tagFilter) + "/" : "/articles/";
+            url += sorting == Article.Sorting.Latest ? "latest/" : sorting == Article.Sorting.Oldest ? "oldest/" : sorting == Article.Sorting.TitleAZ ? "title_az/" : sorting == Article.Sorting.TitleZA ? "title_za/" : "";
+            url += "<PAGE>";
+            if (search != null)
+                url += "?query=" + HttpUtility.UrlEncode(search);
             if (page > 1)
-                data["articles_page_prev"] = (page - 1).ToString();
+                data["articles_url_prev"] = url.Replace("<PAGE>", (page - 1).ToString());
             if (page < int.MaxValue && articles.Length > articlesPerPage)
-                data["articles_page_next"] = (page + 1).ToString();
-            data["articles_url"] = search != null ? "/articles/search?query=" + HttpUtility.UrlEncode(search) : tagFilter != null ? "/articles/tag/" + HttpUtility.UrlEncode(tagFilter)  : "/articles/" + (sorting == Article.Sorting.Latest ? "latest" : sorting == Article.Sorting.Oldest ? "oldest" : sorting == Article.Sorting.TitleAZ ? "title_az" : sorting == Article.Sorting.TitleZA ? "title_za" : "");
-            return true;
-        }
-        private bool pageArticles_browserPending(Data data)
-        {
-            // Set the view
-            if (!pageArticles_browser(data))
-                return false;
-
-            // Set data
-            data["Title"] = "Articles - Pending Publication";
+                data["articles_url_next"] = url.Replace("<PAGE>", (page + 1).ToString());
             return true;
         }
         private bool pageArticles_browserRebuild(Data data)
         {
+#if CAPTCHA
+            Captcha.hookPage(data);
+#endif
             // Set the view
             if (!pageArticles_browser(data))
                 return false;
-
+            // Check for postback
+            string error = null;
+            string pbTag = data.Request.Form["articles_rebuild_tag"];
+            bool pbAll = data.Request.Form["articles_rebuild_all"] != null;
+            if (!rebuilding)
+            {
+                // Check for postback
+                if (pbAll || pbTag != null)
+                {
+                    // Check security
+#if CSRFP
+                    if (!CSRFProtection.authenticated(data))
+                        error = "Invalid request; please try again!";
+#endif
+#if CAPTCHA
+                    if (error == null && !Captcha.isCaptchaCorrect(data))
+                        error = "Invalid captcha verification code!";
+#endif
+                    if (error == null)
+                    {
+                        // Fetch articles to rebuild and add to queue
+                        UUID temp;
+                        PreparedStatement ps = new PreparedStatement(pbAll ? "SELECT uuid_article FROM ba_articles_rebuild_all;" : "SELECT uuid_article FROM ba_articles_rebuild_tag WHERE keyword=?keyword");
+                        if (!pbAll)
+                            ps["keyword"] = pbTag;
+                        foreach (ResultRow article in data.Connector.queryRead(ps))
+                        {
+                            if ((temp = UUID.parse(article["uuid_article"])) != null)
+                                rbQueue.Add(temp);
+                        }
+                        // Launch worker
+                        rebuildQueue();
+                    }
+                }
+            }
+            else
+                error = REBUILD_MESSAGE;
             // Set data
             data["Title"] = "Articles - Rebuild";
-            return true;
-        }
-        private bool pageArticles_browserChangelog(Data data)
-        {
+            data["browser_content"] = Core.Templates.get(data.Connector, "basic_articles/browser_rebuild");
+            if (error != null)
+                data["article_error"] = HttpUtility.HtmlEncode(error);
+            if (pbTag != null)
+                data["articles_rebuild_tag"] = HttpUtility.HtmlEncode(pbTag);
             return true;
         }
         private bool pageArticles_browser(Data data)
@@ -1078,11 +1250,44 @@ namespace CMS.BasicArticles
                 data.setFlag("articles_create");
             return true;
         }
-        
-        // for rendering multiple articles like a blog/news-reel
-        private bool pageArticles_render(Data data, Article.Sorting sorting, string tagFilter)
+        // Methods - Rebuilding ****************************************************************************************
+        private static List<UUID> rbQueue = new List<UUID>();       // Identifiers of articles to be rebuilt.
+        private static Thread thRb = null;                          // The thread responsible for rebuilding articles.
+        private void rebuildQueue()
         {
-            return true;
+            lock (this)
+            {
+                if (rebuilding || thRb != null)
+                    return;
+                rebuilding = true;
+                thRb = new Thread(delegate()
+                    {
+                        rebuildQueueThreadWorker();
+                    });
+                thRb.Start();
+            }
+        }
+        private void rebuildQueueThreadWorker()
+        {
+            // Setup worker
+            Connector conn = Core.createConnector(true);
+            // Rebuild each article
+            Article a;
+            Data data;
+            foreach (UUID uuidArticle in rbQueue)
+            {
+                data = new Data(null, null);
+                data.Connector = conn;
+                a = Article.load(conn, uuidArticle, Article.Text.Raw);
+                if (a != null)
+                {
+                    a.rebuild(data);
+                    a.save(conn);
+                }
+            }
+            // Reset flag
+            rebuilding = false;
+            thRb = null;
         }
     }
 }
