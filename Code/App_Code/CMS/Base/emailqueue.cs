@@ -99,7 +99,7 @@ namespace CMS.Base
                 try
                 {
                     // Setup the connector
-                    conn = Core.createConnector(false);
+                    conn = Core.connectorCreate(false);
                     // Fetch the next message
                     msgs = conn.queryRead(queryPollMessages);
                     // Send each message

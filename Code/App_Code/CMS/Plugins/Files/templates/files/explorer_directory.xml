@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[files/explorer_directory]]></path><description><![CDATA[A directory displayed by the explorer.]]></description><html><![CDATA[<div class="row">
+	<div class="c1">
+		<div class="p">
+			<img src="/content/images/files/icons/directory.png" alt="Icon" />
+		</div>
+	</div>
+	<div class="c2">
+		<a class="p" href="<DIRECTORY_URL>">
+			<DIRECTORY_NAME>
+		</a>
+	</div>
+	<div class="c3">
+		<div class="p">
+			<DESCRIPTION>
+		</div>
+	</div>
+	<div class="c4">
+		<div class="p">
+			&nbsp;
+		</div>
+	</div>
+	<div class="c5">
+		<div class="p">
+			&nbsp;
+		</div>
+	</div>
+	<div class="c6">
+		<div class="p">
+			<!--IF:files_explorer_admin-->
+			<a href="<DIRECTORY_URL>?action=rebuild">
+				<img src="/content/images/files/rebuild.png" alt="Rebuild" title="Rebuild" />
+			</a>
+			<a href="<DIRECTORY_URL>?action=edit">
+				<img src="/content/images/files/edit.png" alt="Edit" title="Edit" />
+			</a>
+			<a href="<DIRECTORY_URL>?action=delete">
+				<img src="/content/images/files/delete.png" alt="Delete" title="Delete" />
+			</a>
+			<!--ENDIF:files_explorer_admin-->
+		</div>
+	</div>
+	<div class="clear"></div>
+</div>]]></html></template>

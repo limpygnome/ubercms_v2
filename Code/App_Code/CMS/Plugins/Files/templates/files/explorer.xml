@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[files/explorer]]></path><description><![CDATA[The main template for exploring files.]]></description><html><![CDATA[<div class="files_explorer_desc">
+	<!--IF:files_explorer_description-->
+	<!--files_explorer_description-->
+	<!--ELSE:files_explorer_description-->
+	<i>No description available.</i>
+	<!--ENDIF:files_explorer_description-->
+</div>
+<div class="files_explorer">
+	<div class="header">
+		<div class="c1">
+			&nbsp;
+		</div>
+		<div class="c2">
+			<div class="p">
+				Title
+			</div>
+		</div>
+		<div class="c3">
+			<div class="p">
+				Description
+			</div>
+		</div>
+		<div class="c4">
+			<div class="p">
+				Created
+			</div>
+		</div>
+		<div class="c5">
+			<div class="p">
+				Modified
+			</div>
+		</div>
+		<div class="c6">
+			<div class="p">
+				Options
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--IF:files_explorer_url_top-->
+	<div class="row">
+		<div class="c1">
+			<div class="p">
+				<img src="/content/images/files/icons/directory.png" alt="Icon" />
+			</div>
+		</div>
+		<div class="c2">
+			<a class="p" href="<!--files_explorer_url_top-->">
+				..
+			</a>
+		</div>
+		<div class="c3">
+			<div class="p">
+				&nbsp;
+			</div>
+		</div>
+		<div class="c4">
+			<div class="p">
+				&nbsp;
+			</div>
+		</div>
+		<div class="c5">
+			<div class="p">
+				&nbsp;
+			</div>
+		</div>
+		<div class="c6">
+			<div class="p">
+				&nbsp;
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--ENDIF:files_explorer_url_top-->
+	<!--IF:!files_explorer_dirs&!files_explorer_files-->
+	<div class="text">
+		No files.
+	</div>
+	<!--ENDIF:!files_explorer_dirs&!files_explorer_files-->
+	<!--IF:files_explorer_dirs-->
+		<!--files_explorer_dirs-->
+	<!--ENDIF:files_explorer_dirs-->
+	<!--IF:files_explorer_files-->
+		<!--files_explorer_files-->
+	<!--ENDIF:files_explorer_files-->
+	<div class="clear"></div>
+</div>
+<div class="files_explorer_options">
+	Options:
+	<a href="<!--explorer_url-->">
+		<img src="/content/images/files/view.png" alt="View" title="View" />
+	</a>
+	<!--IF:files_explorer_admin-->
+	<a href="<!--explorer_url-->?action=rebuild">
+		<img src="/content/images/files/rebuild.png" alt="Rebuild" title="Rebuild" />
+	</a>
+	<a href="<!--explorer_url-->?action=edit">
+		<img src="/content/images/files/edit.png" alt="Edit" title="Edit" />
+	</a>
+	<a href="<!--explorer_url-->?action=delete">
+		<img src="/content/images/files/delete.png" alt="Delete" title="Delete" />
+	</a>
+	<!--ENDIF:files_explorer_admin-->
+</div>]]></html></template>

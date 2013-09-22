@@ -180,7 +180,7 @@ namespace CMS.Base
             catch (NotSupportedException) { }
             catch (System.IO.FileNotFoundException) { }
             catch (BadImageFormatException) { }
-            throw new Exception("Could not load class at path '" + data["classpath"] + "'!");
+            throw new Exception("Could not load class at path '" + data["classpath"] + "' - the class either does not exist or lacks the required constructors for instantiation!");
         }
         /// <summary>
         /// Invoked when the plugin should persist its data to the database.

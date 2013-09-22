@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[files/explorer_file]]></path><description><![CDATA[A file displayed by the explorer.]]></description><html><![CDATA[<div class="row">
+	<div class="c1">
+		<div class="p">
+			<img src="<EXTENSION_ICON_URL>" alt="<EXTENSION>" title="<EXTENSION>" />
+		</div>
+	</div>
+	<div class="c2">
+		<a class="p" href="<FILE_URL>">
+			<FILE>
+		</a>
+	</div>
+	<div class="c3">
+		<div class="p">
+			<DESCRIPTION>
+		</div>
+	</div>
+	<div class="c4">
+		<div class="p" title="<DATETIME_CREATED_FULL>">
+			<DATETIME_CREATED>
+		</div>
+	</div>
+	<div class="c5">
+		<div class="p" title="<DATETIME_MODIFIED_FULL>">
+			<DATETIME_MODIFIED>
+		</div>
+	</div>
+	<div class="c6">
+		<div class="p">
+			<a href="<FILE_URL>?action=download">
+				<img src="/content/images/files/download.png" alt="Download" title="Download" />
+			</a>
+			<!--IF:files_explorer_admin-->
+			<a href="<FILE_URL>?action=edit">
+				<img src="/content/images/files/edit.png" alt="Edit" title="Edit" />
+			</a>
+			<a href="<FILE_URL>?action=delete">
+				<img src="/content/images/files/delete.png" alt="Delete" title="Delete" />
+			</a>
+			<!--ENDIF:files_explorer_admin-->
+		</div>
+	</div>
+	<div class="clear"></div>
+</div>]]></html></template>

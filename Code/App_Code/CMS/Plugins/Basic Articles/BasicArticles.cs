@@ -1270,7 +1270,7 @@ namespace CMS.BasicArticles
         private void rebuildQueueThreadWorker()
         {
             // Setup worker
-            Connector conn = Core.createConnector(true);
+            Connector conn = Core.connectorCreate(true);
             // Rebuild each article
             Article a;
             Data data;
@@ -1286,8 +1286,11 @@ namespace CMS.BasicArticles
                 }
             }
             // Reset flag
-            rebuilding = false;
-            thRb = null;
+            lock (this)
+            {
+                thRb = null;
+                rebuilding = false;
+            }
         }
     }
 }

@@ -397,7 +397,7 @@ namespace CMS.BasicSiteAuth
         public override void handler_pluginCycle()
         {
             // Setup connector
-            Connector conn = Core.createConnector(false);
+            Connector conn = Core.connectorCreate(false);
             // Clean old recovery codes
             AccountCode.removeExpired(conn);
             // Delete old failed authentication attempts

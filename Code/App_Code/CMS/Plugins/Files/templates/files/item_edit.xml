@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[files/item_edit]]></path><description><![CDATA[The page used for editing an item's information.]]></description><html><![CDATA[<form method="post" action="<!--files_item_url-->?action=edit">
+	<div class="TABLE files_item">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Description
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					<textarea name="files_item_description"><!--files_item_description--></textarea>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1 tac">
+				<div class="P">
+					<input type="submit" value="Save" /> <a href="<!--files_item_url-->" class="BUTTON">Back</a>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<!--IF:files_error-->
+<p class="ERROR">
+	<!--files_error-->
+</p>
+<!--ENDIF:files_error-->]]></html></template>

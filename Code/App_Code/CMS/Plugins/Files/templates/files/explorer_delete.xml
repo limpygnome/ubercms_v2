@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[files/explorer_delete]]></path><description><![CDATA[The page for confirming the deletion of a directory.]]></description><html><![CDATA[<form method="post" action="<!--explorer_url-->?action=delete">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Confirm Deletion
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					Are you sure you want to delete this directory and all of its contents?
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Captcha:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<!--include(captcha/embed)-->
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1 tac">
+				<div class="P">
+					<input type="submit" name="files_delete" value="Delete" /> <a href="<!--explorer_url-->" class="BUTTON">Back</a>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<!--IF:explorer_error-->
+<p class="ERROR">
+	<!--explorer_error-->
+</p>
+<!--ENDIF:explorer_error-->]]></html></template>

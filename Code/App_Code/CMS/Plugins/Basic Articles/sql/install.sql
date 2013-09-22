@@ -35,9 +35,9 @@ CREATE TABLE ba_article
 	text_cache							TEXT,
 	headerdata_hash						VARCHAR(32),
 	FOREIGN KEY(`headerdata_hash`)		REFERENCES ba_article_headerdata(`hash`) ON UPDATE CASCADE ON DELETE SET NULL,
-	datetime_created					TIMESTAMP NOT NULL,
-	datetime_modified					TIMESTAMP,
-	datetime_published					TIMESTAMP,
+	datetime_created					TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	datetime_modified					TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	datetime_published					TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
 	published							VARCHAR(1) DEFAULT 0,
 	comments							VARCHAR(1) DEFAULT 0,

@@ -49,10 +49,12 @@ namespace CMS.Plugins
         // Constants ***************************************************************************************************
         private const string ERROR_BOX_VARIDENT = "PackageDeveloperError";
         private const string SUCCESS_BOX_VARIDENT = "PackageDeveloperSuccess";
+        // Methods - Constructors **************************************************************************************
         public PackageDeveloper() { }
         public PackageDeveloper(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version, int priority, string classPath)
             : base(uuid, title, directory, state, handlerInfo, version, priority, classPath)
         { }
+        // Methods - Handlers ******************************************************************************************
         public override bool install(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
             return true;
@@ -105,6 +107,7 @@ namespace CMS.Plugins
                     return false;
             }
         }
+        // Methods - Pages *********************************************************************************************
         private bool pageHome(Data data)
         {
             data["Title"] = "Package Developer - Home";

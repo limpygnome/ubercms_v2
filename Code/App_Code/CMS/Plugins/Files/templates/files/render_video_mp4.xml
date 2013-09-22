@@ -1,0 +1,3 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[files/render_video_mp4]]></path><description><![CDATA[Used for rendering an embedded video.]]></description><html><![CDATA[<video controls title="<FILENAME>">
+	<source src="<URL>" type="video/mp4">
+</video>]]></html></template>

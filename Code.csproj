@@ -113,6 +113,12 @@
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Site Auth\models\UserGroups.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Captcha\Captcha.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\CSRF Protection\CSRFProtection.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Files\ExtensionsDefault.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Files\FileRP.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Files\Main.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Files\models\Directory.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Files\models\Extension.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Files\models\File.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Package Developer\PackageDeveloper.cs" />
     <Compile Include="Code\App_Code\CMS\Base\PluginHandlerInfo.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Example\Example.cs" />
@@ -137,6 +143,8 @@
     <Compile Include="Code\App_Code\CMS\Base\BaseUtils.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Code\App_Code\CMS\Plugins\Files\sql\install.sql" />
+    <Content Include="Code\App_Code\CMS\Plugins\Files\sql\uninstall.sql" />
     <Content Include="Code\App_Code\CMS\Plugins\Text Renderer\sql\install.sql" />
     <Content Include="Code\App_Code\CMS\Plugins\Text Renderer\sql\uninstall.sql" />
     <Content Include="Code\Global.asax" />
@@ -161,7 +169,8 @@
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Captcha\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Comments\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\Files\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Files\content\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\Files\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\KeepAlive\" />
     <Folder Include="Code\App_Code\CMS\Plugins\RedirectHTTPS\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Tools\" />
@@ -186,6 +195,8 @@
     <None Include="Code\App_Code\CMS\Plugins\Basic Articles\files.list" />
     <None Include="Code\App_Code\CMS\Plugins\Basic Site Auth\files.list" />
     <Content Include="Code\App_Code\CMS\Plugins\Text Renderer\Plugin.config" />
+    <Content Include="Code\App_Code\CMS\Plugins\Files\Plugin.config" />
+    <None Include="Code\App_Code\CMS\Plugins\Files\files.list" />
     <None Include="Code\App_Code\CMS\Plugins\Text Renderer\files.list" />
     <None Include="Code\installer\files.list" />
   </ItemGroup>

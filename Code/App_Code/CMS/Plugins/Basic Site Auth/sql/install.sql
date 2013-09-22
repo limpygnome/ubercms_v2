@@ -39,7 +39,7 @@ CREATE TABLE bsa_users
 	secret_answer VARCHAR(64),
 	groupid INT NOT NULL,
 	FOREIGN KEY(`groupid`) REFERENCES `bsa_user_groups`(`groupid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	datetime_register TIMESTAMP,
+	datetime_register TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	pending_deletion VARCHAR(1) DEFAULT 0
 );
 CREATE INDEX `bsa_index_username` ON bsa_users(`username`);
@@ -49,8 +49,8 @@ CREATE TABLE bsa_user_bans
 	userid INT NOT NULL,
 	FOREIGN KEY(`userid`) REFERENCES `bsa_users`(`userid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	reason TEXT,
-	datetime_start TIMESTAMP NOT NULL,
-	datetime_end TIMESTAMP,
+	datetime_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	datetime_end TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	banned_by INT,
 	FOREIGN KEY(`banned_by`) REFERENCES `bsa_users`(`userid`) ON UPDATE CASCADE ON DELETE SET NULL
 );
@@ -80,14 +80,14 @@ CREATE TABLE bsa_account_codes
 	code VARCHAR(16) PRIMARY KEY,
 	userid INT NOT NULL,
 	FOREIGN KEY(`userid`) REFERENCES `bsa_users`(`userid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	datetime_created TIMESTAMP NOT NULL,
+	datetime_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	type INT NOT NULL
 );
 CREATE TABLE bsa_authentication_failed_attempts
 (
 	-- 45 characters for ipv4 tunneling with ipv6
 	ip VARCHAR(45) NOT NULL,
-	datetime TIMESTAMP NOT NULL,
+	datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	type VARCHAR(1) NOT NULL
 );
 CREATE INDEX `bsa_index_authentication_failed_attempts` ON bsa_authentication_failed_attempts(`ip`);

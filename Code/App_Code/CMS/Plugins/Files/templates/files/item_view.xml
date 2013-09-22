@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[files/item_view]]></path><description><![CDATA[The page for viewing an item.]]></description><html><![CDATA[<div class="files_render">
+	<!--:files_item_render-->
+</div>
+<div class="TABLE files_item">
+	<div class="ROW">
+		<div class="CELL1">
+			<div class="P">
+				<!--IF:files_item_description-->
+					<!--files_item_description-->
+				<!--ELSE:files_item_description-->
+					<i>No description available.</i>
+				<!--ENDIF:files_item_description-->
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW HEADER">
+		<div class="CELL1">
+			<div class="P">
+				File Information
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW">
+		<div class="CELL2">
+			<div class="P">
+				Path:
+			</div>
+		</div>
+		<div class="CELL2">
+			<div class="P">
+				<a href="<!--files_item_path_url-->"><!--files_item_path--></a>
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW">
+		<div class="CELL2">
+			<div class="P">
+				Size:
+			</div>
+		</div>
+		<div class="CELL2">
+			<div class="P">
+				<!--files_item_size-->
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW">
+		<div class="CELL2">
+			<div class="P">
+				Created:
+			</div>
+		</div>
+		<div class="CELL2">
+			<div class="P" title="<!--files_item_created_full-->">
+				<!--files_item_created-->
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW">
+		<div class="CELL2">
+			<div class="P">
+				Modified:
+			</div>
+		</div>
+		<div class="CELL2">
+			<div class="P" title="<!--files_item_modified_full-->">
+				<!--files_item_modified-->
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW HEADER">
+		<div class="CELL1">
+			<div class="P">
+				Options
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW">
+		<div class="CELL1">
+			<div class="P">
+				<a class="BUTTON" href="<!--files_item_url-->?action=download">Download</a>
+				<!--IF:files_item_admin-->
+				<a class="BUTTON" href="<!--files_item_url-->?action=edit">Edit</a>
+				<a class="BUTTON" href="<!--files_item_url-->?action=delete">Delete</a>
+				<!--ENDIF:files_item_admin-->
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW HEADER">
+		<div class="CELL1">
+			<div class="P">
+				Embed
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW">
+		<div class="CELL2">
+			<div class="P">
+				Link:
+			</div>
+		</div>
+		<div class="CELL2">
+			<div class="P">
+				<textarea>[file=<!--files_item_embed_path-->]</textarea>
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="ROW">
+		<div class="CELL2">
+			<div class="P">
+				Object:
+			</div>
+		</div>
+		<div class="CELL2">
+			<div class="P">
+				<textarea>[file=<!--files_item_embed_path-->][/file]</textarea>
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="clear"></div>
+</div>]]></html></template>

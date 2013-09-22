@@ -158,7 +158,7 @@ namespace CMS.Base
                         else
                         {
                             // Create database connector for starting services
-                            Connector conn = createConnector(true);
+                            Connector conn = connectorCreate(true);
                             if (conn == null)
                             {
                                 fail("Failed to create connector to database server (connection issue)!");
@@ -216,7 +216,7 @@ namespace CMS.Base
                     return;
                 currentState = CoreState.Stopping;
                 // Setup connector
-                Connector conn = createConnector(false);
+                Connector conn = connectorCreate(false);
                 // Invoke handlers
                 if (plugins != null)
                 {
@@ -277,7 +277,7 @@ namespace CMS.Base
         /// </summary>
         /// <param name="persist">Indicates if the connection should be persistent/stay-open for longer (protection against time-outs).</param>
         /// <returns>Database connector.</returns>
-		public static Connector createConnector(bool persist)
+		public static Connector connectorCreate(bool persist)
 		{
             return connectorCreate(persist, ref settingsDisk);
 		}

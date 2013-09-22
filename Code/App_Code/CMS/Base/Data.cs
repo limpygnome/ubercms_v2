@@ -73,7 +73,7 @@ namespace CMS.Base
             this.outputContent = true;
             if (request != null && response != null)
             {
-                this.connector = Core.createConnector(false);
+                this.connector = Core.connectorCreate(false);
                 this.stopwatch = new Stopwatch();
             }
 		}

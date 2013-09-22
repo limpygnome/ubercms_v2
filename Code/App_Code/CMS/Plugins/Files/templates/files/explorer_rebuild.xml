@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[files/explorer_rebuild]]></path><description><![CDATA[The page for confirming the rebuild of a directory]]></description><html><![CDATA[<form method="post" action="<!--explorer_url-->?action=rebuild">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Confirm Rebuild
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					Are you sure you want to rebuild the structure of this folder?
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1 tac">
+				<div class="P">
+					<input type="submit" name="files_rebuild" value="Rebuild" /> <a href="<!--explorer_url-->" class="BUTTON">Back</a>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<!--IF:explorer_error-->
+<p class="ERROR">
+	<!--explorer_error-->
+</p>
+<!--ENDIF:explorer_error-->]]></html></template>

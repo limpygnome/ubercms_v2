@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[files/explorer_edit]]></path><description><![CDATA[The page for editing a folder's information.]]></description><html><![CDATA[<form method="post" action="<!--explorer_url-->?action=edit">
+	<div class="TABLE files_item">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Description
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1">
+				<div class="P">
+					<textarea name="explorer_description"><!--directory_description--></textarea>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1 tac">
+				<div class="P">
+					<input type="submit" value="Save" /> <a href="<!--explorer_url-->" class="BUTTON">Back</a>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<!--IF:explorer_error-->
+<p class="ERROR">
+	<!--explorer_error-->
+</p>
+<!--ENDIF:explorer_error-->]]></html></template>

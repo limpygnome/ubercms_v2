@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?><template><path><![CDATA[files/upload]]></path><description><![CDATA[The page for uploading new files.]]></description><html><![CDATA[<form class="files_upload" method="post" action="/files/upload" enctype="multipart/form-data">
+	<div class="TABLE">
+		<div class="ROW HEADER">
+			<div class="CELL1">
+				<div class="P">
+					Upload New File
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Destination:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="text" name="files_destination" value="<!--files_destination-->" />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Upload:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="file" name="files_upload" />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					Options:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<span class="checkbox">
+						<input type="checkbox" id="files_options_overwrite" name="files_options_overwrite" <!--IF:files_options_overwrite-->checked="checked"<!--ENDIF:files_options_overwrite-->/>
+						<label for="files_options_overwrite">Overwrite</label>
+					</span>
+					<span class="checkbox">
+						<input type="checkbox" id="files_options_redirect" name="files_options_redirect" <!--IF:files_options_redirect-->checked="checked"<!--ENDIF:files_options_redirect-->/>
+						<label for="files_options_redirect">Redirect to File</label>
+					</span>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="ROW">
+			<div class="CELL1 tac">
+				<div class="P">
+					<input type="submit" value="Save" /> <a href="/files" class="BUTTON">Back</a>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<!--csrf()-->
+</form>
+<p>
+	Note: if you're redirected to the file after upload, the file may not exist immediately - simply refresh whilst the structure is rebuilt!
+</p>
+<!--IF:files_error-->
+<p class="ERROR">
+	<!--files_error-->
+</p>
+<!--ENDIF:files_error-->
+<!--IF:files_success-->
+<p class="SUCCESS">
+	<!--files_success-->
+</p>
+<!--ENDIF:files_success-->]]></html></template>
