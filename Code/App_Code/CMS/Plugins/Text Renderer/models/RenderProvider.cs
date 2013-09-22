@@ -113,7 +113,7 @@ namespace CMS.Plugins
         public bool save(TextRenderer tr, Connector conn)
         {
             // Check the model has been modified and the UUID is not null
-            if (modified == Fields.None || uuid == null)
+            if (modified == Fields.None || uuid == null || tr == null)
                 return false;
             // Compile SQL
             SQLCompiler sql = new SQLCompiler();

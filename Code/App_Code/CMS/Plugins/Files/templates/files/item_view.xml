@@ -110,7 +110,7 @@
 		</div>
 		<div class="CELL2">
 			<div class="P">
-				<textarea>[file=<!--files_item_embed_path-->]</textarea>
+				<textarea>[file_link=<!--files_item_embed_path-->]</textarea>
 			</div>
 		</div>
 		<div class="clear"></div>

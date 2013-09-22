@@ -100,5 +100,8 @@
 	<a href="<!--explorer_url-->?action=delete">
 		<img src="/content/images/files/delete.png" alt="Delete" title="Delete" />
 	</a>
+	<a href="/files/upload?dest=<!--explorer_path-->">
+		<img src="/content/images/files/upload.png" alt="Upload" title="Upload" />
+	</a>
 	<!--ENDIF:files_explorer_admin-->
 </div>]]></html></template>

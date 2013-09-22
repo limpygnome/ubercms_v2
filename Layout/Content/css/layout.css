@@ -220,6 +220,11 @@ body
 {
 	margin: 0em 1em;
 }
+.AREA_CONTENT img
+{
+	max-width: 90%;
+	max-height: 90%;
+}
 .FOOTER
 {
 	font: normal small Arial;

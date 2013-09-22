@@ -37,6 +37,19 @@ namespace CMS.Plugins.Files
 
             // Install extensions
             ExtensionsDefault.install(this, conn);
+            // Install text-renderer provider
+#if TextRenderer
+            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
+            if (tr != null)
+            {
+                RenderProvider rp = new FileRP(UUID.parse("eea4cf35-2d32-4238-b0f2-9bf5aea45b3a"), this.UUID, "Files Embedding", "Allows embedding of files from the files-plugin.", true, 0);
+                if (!rp.save(tr, conn))
+                {
+                    messageOutput.AppendLine("Failed to create '" + rp.Title + "' text renderer provider!");
+                    return false;
+                }
+            }
+#endif
             return true;
         }
         public override bool uninstall(Connector conn, ref StringBuilder messageOutput)
@@ -46,6 +59,12 @@ namespace CMS.Plugins.Files
                 return false;
             // Uninstall settings
             Core.Settings.remove(conn, this);
+            // Remove text-renderer
+#if TextRenderer
+            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
+            if (tr != null)
+                tr.providersRemove(conn, UUID);
+#endif
             return true;
         }
         public override bool enable(Connector conn, ref StringBuilder messageOutput)
@@ -322,6 +341,7 @@ namespace CMS.Plugins.Files
             }
             if (dir.Description != null && dir.Description.Length > 0)
                 data["files_explorer_description"] = formatDescription(dir.Description);
+            data["explorer_path"] = path;
             return true;
         }
         private bool pageExplorer_edit(Data data, User user, Directory dir, string path, string pathRaw)
@@ -494,7 +514,7 @@ namespace CMS.Plugins.Files
             // Fetch media renderer for displaying the content
             if (file.Extension != null && file.Extension.Renderer != null)
             {
-                string obj = (string)file.Extension.Renderer.Invoke(null, new object[] { data, user, dir, file, path, pathRaw, null });
+                string obj = (string)file.Extension.Renderer.Invoke(null, new object[] { data, dir, file, path, pathRaw, null });
                 if (obj != null)
                     data["files_item_render"] = obj;
             }
@@ -668,14 +688,14 @@ namespace CMS.Plugins.Files
             return true;
         }
         // Methods - File Renderer's ************************************************************************************
-        public static string fileRender_image(Data data, User user, Directory dir, File file, string path, string pathRaw, string options)
+        public static string fileRender_image(Data data, Directory dir, File file, string path, string pathRaw, string options)
         {
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "files/render_image"));
             buffer.Replace("<FILENAME>", HttpUtility.HtmlEncode(file.Filename));
             buffer.Replace("<URL>", HttpUtility.HtmlEncode("/files/item" + path + "?action=stream"));
             return buffer.ToString();
         }
-        public static string fileRender_videoMP4(Data data, User user, Directory dir, File file, string path, string pathRaw, string options)
+        public static string fileRender_videoMP4(Data data, Directory dir, File file, string path, string pathRaw, string options)
         {
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "files/render_video_mp4"));
             buffer.Replace("<FILENAME>", HttpUtility.HtmlEncode(file.Filename));
@@ -683,6 +703,21 @@ namespace CMS.Plugins.Files
             return buffer.ToString();
         }
         // Methods - Static ********************************************************************************************
+        /// <summary>
+        /// Cleans-up a raw relative path.
+        /// 
+        /// Note: can be used for files and directories.
+        /// </summary>
+        /// <param name="path">Raw relative path (no URL encoding etc).</param>
+        /// <returns>Formatted path.</returns>
+        public static string formatPath(string path)
+        {
+            if (!path.StartsWith("/"))
+                path = "/" + path;
+            if (path.Length > 1 && path.EndsWith("/"))
+                path = path.Substring(0, path.Length - 1);
+            return path;
+        }
         /// <summary>
         /// Formats a description, including HTML encoding.
         /// </summary>
@@ -742,6 +777,12 @@ namespace CMS.Plugins.Files
                 try
                 {
                     System.IO.Directory.Delete(dir.PhysicalPath, true);
+                }
+                catch { }
+                try
+                {
+                    if (dir.DirectoryPath == "/")
+                        System.IO.Directory.CreateDirectory(PathFiles);
                 }
                 catch { }
                 // Rebuild parent directory

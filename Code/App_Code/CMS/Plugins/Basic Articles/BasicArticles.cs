@@ -37,7 +37,16 @@ namespace CMS.BasicArticles
             if (!BaseUtils.executeSQL(PathSQL + "/install.sql", conn, ref messageOutput))
                 return false;
 #if TextRenderer
-            RenderProvider tr = new ArticleTextRenderer(UUID.parse("da38909c-d348-478f-9add-45be7847695c"), this.UUID, "Basic Articles - General Formatting", "Provides general markup for interacting with the basic articles plugin.", true, 0);
+            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
+            if (tr != null)
+            {
+                RenderProvider rp = new ArticleTextRenderer(UUID.parse("da38909c-d348-478f-9add-45be7847695c"), this.UUID, "Basic Articles - General Formatting", "Provides general markup for interacting with the basic articles plugin.", true, 0);
+                if (!rp.save(tr, conn))
+                {
+                    messageOutput.AppendLine("Failed to create '" + rp.Title + "' text renderer provider!");
+                    return false;
+                }
+            }
 #endif
             // Install settings
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__ARTICLE_THREAD_URL_MIN, Settings.SETTINGS__ARTICLE_THREAD_URL_MIN__DESC, Settings.SETTINGS__ARTICLE_THREAD_URL_MIN__DEFAULT);
@@ -71,6 +80,12 @@ namespace CMS.BasicArticles
                 return false;
             // Uninstall settings
             Core.Settings.remove(conn, this);
+            // Remove text-renderer
+#if TextRenderer
+            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
+            if (tr != null)
+                tr.providersRemove(conn, UUID);
+#endif
             return true;
         }
         public override bool enable(Connector conn, ref System.Text.StringBuilder messageOutput)
@@ -173,13 +188,14 @@ namespace CMS.BasicArticles
             // Fetch the current user model
             User user = BasicSiteAuth.BasicSiteAuth.getCurrentUser(data);
             // Check if we're in edit-mode; if so, fetch the article
+            Article articleOriginal = null;
             Article article = null;
             if (edit)
             {
                 UUID temp = UUID.parse(data.PathInfo[2]);
                 if (temp == null)
                     return false;
-                else if ((article = Article.load(data.Connector, temp, Article.Text.Raw)) == null)
+                else if ((article = articleOriginal = Article.load(data.Connector, temp, Article.Text.Raw)) == null)
                     return false;
             }
 #if CAPTCHA
@@ -351,8 +367,7 @@ namespace CMS.BasicArticles
             data["article_title"] = HttpUtility.HtmlEncode(title != null ? title : article != null ? article.Title : string.Empty);
             if (!edit)
                 data["article_url"] = HttpUtility.HtmlEncode(url);
-            else
-                data["article_edit"] = article.UUIDArticle.Hex;
+                data["article_edit"] = createNew ? articleOriginal.UUIDArticle.Hex : article.UUIDArticle.Hex;
             data["article_raw"] = HttpUtility.HtmlEncode(raw != null ? raw : article != null ? article.TextRaw : null);
             if (postback == ArticleCreatePostback.Render)
                 data["article_rendered"] = article.TextCache;
@@ -363,6 +378,8 @@ namespace CMS.BasicArticles
                 data.setFlag("article_hide_panel");
             if (comments)
                 data.setFlag("article_comments");
+            if (createNew)
+                data.setFlag("article_create_new");
             // Set error message
             if (error != null)
                 data["article_error"] = HttpUtility.HtmlEncode(error);
