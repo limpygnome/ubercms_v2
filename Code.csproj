@@ -87,6 +87,8 @@
     <Compile Include="Code\App_Code\CMS\Base\SettingsNode.cs" />
     <Compile Include="Code\App_Code\CMS\Base\SQLCompiler.cs" />
     <Compile Include="Code\App_Code\CMS\Base\Version.cs" />
+    <Compile Include="Code\App_Code\CMS\InstallScripts\Base.cs" />
+    <Compile Include="Code\App_Code\CMS\InstallScripts\Quick.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic 404 Page\Basic404Page.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\ArticleTextRenderer.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Basic Articles\BasicArticles.cs" />

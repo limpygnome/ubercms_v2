@@ -44,52 +44,11 @@ public partial class _Default : System.Web.UI.Page
 #if DEBUG
         // Check if we want to fast-install the CMS (using pre-existing settings)
         PathInfo pi = new PathInfo(Request);
-        if (pi.ModuleHandler == "debug_install")
+        if (pi.ModuleHandler == "quick_install")
         {
-            // Start only the absolute base of the CMS
-            Core.start(true);
-            // Check the base has started
-            if (Core.State == Core.CoreState.Failed)
-            {
-                Response.Write("Debug install cannot continue; base core failure occurred: " + Core.ErrorMessage);
-                return;
-            }
-            // Prepare message output and base path
             StringBuilder messageOutput = new StringBuilder();
-            // Load settings from disk
-            Settings settings = Settings.loadFromDisk(Core.CmsConfigPath);
-            // Create connector
-            Connector conn = Core.connectorCreate(true, ref settings);
-            // Install CMS database
-            if (!BaseUtils.executeSQL(Core.BasePath + "/installer/sql/mysql/install.sql", conn, ref messageOutput))
-            {
-                Response.Write("Debug install cannot continue; failed to execute base SQL!");
-                return;
-            }
-            // Restart core to load as usual
-            Core.stop();
-            Core.start();
-            // Check the core has started
-            if (Core.State != Core.CoreState.Started)
-            {
-                Response.Write("Debug install cannot continue; core has not started (state: " + Core.State.ToString() + "): " + (Core.ErrorMessage ?? "(no error message)"));
-                return;
-            }
-            // Install core templates
-            if (!Core.Templates.install(conn, null, Core.BasePath + "/installer/templates", ref messageOutput))
-            {
-                Response.Write("Debug install cannot continue; failed to install templates!");
-                return;
-            }
-            // Install package developer
-            Plugin p = null;
-            if (Core.Plugins.createFromDirectory(conn, Core.BasePath + "/App_Code/CMS/Plugins/Package Developer", ref p, ref messageOutput) && p != null)
-            {
-                Core.Plugins.install(conn, p, ref messageOutput);
-                Core.Plugins.enable(conn, p, ref messageOutput);
-            }
-            // Output status
-            Response.Write("CMS fast-install called successful! Output:<br />");
+            CMS.InstallScripts.Quick script = new CMS.InstallScripts.Quick();
+            script.install(ref messageOutput);
             Response.Write(messageOutput.ToString());
             return;
         }

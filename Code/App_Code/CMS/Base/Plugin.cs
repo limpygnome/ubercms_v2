@@ -35,7 +35,7 @@ namespace CMS.Base
     /// Base class for all plugins. This contains information about the plugin and methods to be implemented as
     /// handlers.
     /// </summary>
-	public abstract class Plugin
+	public class Plugin
 	{
 		// Enums *******************************************************************************************************
         /// <summary>

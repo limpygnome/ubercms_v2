@@ -322,7 +322,7 @@ namespace CMS.Base
                 // Create and persist model
                 try
                 {
-                    Plugin p = new PackageDeveloper();
+                    Plugin p = new Plugin();
                     p.UUID = uuid;
                     p.Title = title;
                     p.RelativeDirectory = directory;
@@ -336,13 +336,11 @@ namespace CMS.Base
                         messageOutput.Append("Failed to persist plugin (UUID: '" + uuid.HexHyphens + "') or plugin handler model!");
                         return false;
                     }
-                    // Successfully persisted - set the plugin parameter
-                    plugin = p;
-                    // Load the plugin into the runtime (non-critical operation - may require app-pool restart)
-                    if (!load(p, false, ref messageOutput))
-                        messageOutput.AppendLine("Warning: could not load a new plugin (UUID: " + (uuid != null ? uuid.HexHyphens : "invalid/null UUID") + ") into the virtual runtime of the CMS. If the plugin files have been added during this operation, ignore this message; else restart the application pool!");
-                    else
+                    // Attempt to load the plugin from the persisted data; this may not work since the app-pool might need a restart i.e. zip upload
+                    p = Plugin.load(uuid, conn);
+                    if (p != null && load(p, false, ref messageOutput))
                     {
+                        plugin = p;
                         // Success - rebuild the handler cache!
                         try
                         {
@@ -352,8 +350,10 @@ namespace CMS.Base
                         {
                             messageOutput.Append("Warning: failed to reload plugin handler cache for pluginUUID '").Append(uuid.HexHyphens).Append("'; exception: '").Append(ex.Message).Append("; stack-trace: '").Append(ex.StackTrace).Append("'").AppendLine("'!");
                         }
-                        return true;
                     }
+                    else
+                        messageOutput.AppendLine("Warning: could not load a new plugin (UUID: " + (uuid != null ? uuid.HexHyphens : "invalid/null UUID") + ") into the virtual runtime of the CMS. If the plugin files have been added during this operation, ignore this message; else restart the application pool!");
+                    return true;
                 }
                 catch (Exception ex)
                 {
