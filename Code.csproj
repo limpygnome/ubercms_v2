@@ -171,6 +171,7 @@
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Captcha\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Comments\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\CSS Stripper\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Files\content\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Files\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\KeepAlive\" />
