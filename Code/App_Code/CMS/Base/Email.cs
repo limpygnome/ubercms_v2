@@ -17,7 +17,7 @@
  *      Path:           /App_Code/CMS/Base/Email.cs
  * 
  *      Change-Log:
- *                      2013-08-26      Created and finished initial class.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A model for representing an e-mail handled by the e-mail queue.
@@ -29,6 +29,9 @@ using UberLib.Connector;
 
 namespace CMS.Base
 {
+    /// <summary>
+    /// A model for representing an e-mail handled by the e-mail queue.
+    /// </summary>
     public class Email
     {
         // Enums *******************************************************************************************************

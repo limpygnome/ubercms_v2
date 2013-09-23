@@ -17,7 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/AET_Render.cs
  * 
  *      Change-Log:
- *                      2013-08-05      Created initial class.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A class for rendering account events based on their types.

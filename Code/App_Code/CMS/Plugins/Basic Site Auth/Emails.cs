@@ -17,8 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/Email.cs
  * 
  *      Change-Log:
- *                      2013-08-02      Created initial class.
- *                      2013-08-22      Changed Data model parameters.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A class used for creating and deploying e-mails.

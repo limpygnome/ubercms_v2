@@ -17,7 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/BasicSiteAuth.cs
  * 
  *      Change-Log:
- *                      2013-07-06      Created initial class.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A basic authentication plugin, featuring user-groups and banning.

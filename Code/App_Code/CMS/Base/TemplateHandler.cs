@@ -17,7 +17,7 @@
  *      Path:           /App_Code/CMS/Base/TemplateHandler.cs
  * 
  *      Change-Log:
- *                      2013-07-31      Created and finished initial class.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A model for template handler functions, apart of the templating system.
@@ -31,6 +31,9 @@ using UberLib.Connector;
 
 namespace CMS.Base
 {
+    /// <summary>
+    /// A model for template handler functions, apart of the templating system.
+    /// </summary>
     public class TemplateHandler
     {
         // Delegates ***************************************************************************************************

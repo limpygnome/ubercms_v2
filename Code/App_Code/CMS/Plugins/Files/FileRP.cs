@@ -1,4 +1,29 @@
-﻿using CMS.Base;
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ * 
+ *      Path:           /App_Code/CMS/Plugins/Files/FileRP.cs
+ * 
+ *      Change-Log:
+ *                      2013-09-23      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * A text-renderer provider class for embedding files in documents.
+ * *********************************************************************************************************************
+ */
+using CMS.Base;
 using CMS.BasicSiteAuth;
 using CMS.BasicSiteAuth.Models;
 using System;
@@ -8,6 +33,9 @@ using System.Web;
 
 namespace CMS.Plugins.Files
 {
+    /// <summary>
+    /// A text-renderer provider class for embedding files in documents.
+    /// </summary>
     public class FileRP : CMS.Plugins.RenderProvider
     {
         // Methods - Constructors **************************************************************************************
@@ -40,6 +68,7 @@ namespace CMS.Plugins.Files
                     embed(data, ref text, m, Main.formatPath(m.Groups[1].Value), null);
             }
         }
+        // Methods *****************************************************************************************************
         private void embed(Data data, ref StringBuilder text, Match m, string path, string options)
         {
             File f;

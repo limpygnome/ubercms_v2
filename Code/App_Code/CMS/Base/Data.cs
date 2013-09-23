@@ -17,15 +17,7 @@
  *      Path:           /App_Code/CMS/Base/Data.cs
  * 
  *      Change-Log:
- *                      2013-06-25      Created initial class.
- *                      2013-06-29      Finished initial class.
- *                      2013-07-07      Added userid field/property for universal authentication systems.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                      2013-07-31      Added flag-setting (sets a key with a null value).
- *                      2013-08-02      Connector is now optional, allowing the class to be used for general exchange
- *                                      of data between plugins.
- *                      2013-08-22      PathInfo parsing now uses the HttpRequest ASP.NET object in-case of future
- *                                      changes.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Used for passing data between the controller and plugins; this may also be used for non-request exchange of

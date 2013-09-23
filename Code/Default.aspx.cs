@@ -14,16 +14,10 @@
  *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
  *                      http://creativecommons.org/licenses/by-sa/3.0/
  * 
- *      File:           Default.aspx.cs
  *      Path:           /Default.aspx.cs
  * 
  *      Change-Log:
- *                      2013-06-25      Created initial class.
- *                      2013-06-30      Finished initial class.
- *                      2013-08-01      ThreadAbortException ignored due to being thrown by Response.Redirect.
- *                      2013-08-22      Added support for new core state (starting and stopping).
- *                                      Added quick-install for debug-mode (for development purposes).
- *                      2013-09-19      Fixed case-sensitive bug.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * The entry-point for clients to be served by the main CMS.
@@ -40,6 +34,9 @@ using System.Threading;
 using UberLib.Connector;
 using UberLib.Connector.Connectors;
 
+/// <summary>
+/// The entry-point for clients to be served by the main CMS.
+/// </summary>
 public partial class _Default : System.Web.UI.Page
 {
     protected void Page_Load(object sender, EventArgs e)

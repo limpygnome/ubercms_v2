@@ -1,4 +1,29 @@
-﻿using CMS.Base;
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ * 
+ *      Path:           /App_Code/CMS/Plugins/Files/Main.cs
+ * 
+ *      Change-Log:
+ *                      2013-09-23      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * A plugin for providing public files for download.
+ * *********************************************************************************************************************
+ */
+using CMS.Base;
 using CMS.BasicSiteAuth;
 using CMS.BasicSiteAuth.Models;
 using System;
@@ -11,6 +36,9 @@ using UberLib.Connector;
 
 namespace CMS.Plugins.Files
 {
+    /// <summary>
+    /// A plugin for providing public files for download.
+    /// </summary>
     public class Main : Plugin
     {
         // Enums *******************************************************************************************************

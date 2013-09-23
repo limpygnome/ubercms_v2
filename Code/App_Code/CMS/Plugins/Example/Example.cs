@@ -17,11 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Example/Example.cs
  * 
  *      Change-Log:
- *                      2013-06-28      Created initial class.
- *                      2013-06-29      Updated name to Example.
- *                      2013-07-05      Updated HTML output to use paragraphs and set titles.
- *                      2013-07-06      Added output for install/uninstall/enable/disable.
- *                      2013-07-07      Error handler now outputs a stack-trace, useful for development.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Example/debugging plugin.
@@ -34,6 +30,9 @@ using CMS.Base;
 
 namespace CMS.Plugins
 {
+    /// <summary>
+    /// Example/debugging plugin.
+    /// </summary>
     public class Example : Plugin
     {
         public Example(UUID uuid, string title, string directory, PluginState state, PluginHandlerInfo handlerInfo, Base.Version version, int priority, string classPath)

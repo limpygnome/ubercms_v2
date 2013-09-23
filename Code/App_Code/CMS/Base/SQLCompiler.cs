@@ -17,14 +17,7 @@
  *      Path:           /App_Code/CMS/Base/SQLCompiler.cs
  * 
  *      Change-Log:
- *                      2013-07-07      Created initial class.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                      2013-07-23      compileInsert method now uses transactions when selecting the max identifier.
- *                      2013-07-24      Support for null values.
- *                      2013-07-28      Added direct parameter execution and redone concurrency issues with connector
- *                                      type-switching for cross-platform compatibility.
- *                      2013-08-04      Fixed critical bug in executeUpdate with UpdateAttribute being wrongly compiled.
- *                      2013-09-19      Added protection against no attributes being updated.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A class for compiling large SQL statements.

@@ -17,16 +17,7 @@
  *      Path:           /App_Code/CMS/Base/PluginHandlerInfo.cs
  * 
  *      Change-Log:
- *                      2013-06-28      Created initial class.
- *                      2013-06-30      Added setting and saving.
- *                      2013-07-01      Properties can now be set.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                                      Changed plugin identifier to support UUID.
- *                      2013-07-30      Changed handler properties to reflect changes in plugin class (CMS to plguin
- *                                      handler changes).
- *                                      General major overhaul of class.
- *                      2013-08-27      Improved efficiency of persisting data, introduced fields enum, save now returns
- *                                      a boolean, added remove, now thread-safe.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Stores information about a plugin's handler's, indicating if they should invoked and any parameters.

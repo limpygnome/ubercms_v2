@@ -1,10 +1,38 @@
-﻿using CMS.Base;
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ * 
+ *      Path:           /App_Code/CMS/Plugins/Files/models/Extension.cs
+ * 
+ *      Change-Log:
+ *                      2013-09-23      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * A model for representing extension data, used by files for displaying and rendering content.
+ * *********************************************************************************************************************
+ */
+using CMS.Base;
 using System;
 using System.Reflection;
 using UberLib.Connector;
 
 namespace CMS.Plugins.Files
 {
+    /// <summary>
+    /// A model for representing extension data, used by files for displaying and rendering content.
+    /// </summary>
     public class Extension
     {
         // Enums *******************************************************************************************************
@@ -26,6 +54,9 @@ namespace CMS.Plugins.Files
                             renderMethod;           // The method for rendering the media-type.
         private MethodInfo  miRendering;            // The object used for invoking the renderer method.
         // Methods - Constructors **************************************************************************************
+        /// <summary>
+        /// Creates a new unpersisted and unmodified extension model.
+        /// </summary>
         public Extension()
         {
             this.persisted = false;

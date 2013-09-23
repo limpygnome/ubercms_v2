@@ -17,11 +17,7 @@
  *      Path:           /App_Code/CMS/Base/Settings.cs
  * 
  *      Change-Log:
- *                      2013-06-27      Moved this class, as a sub-class, from Settings to its own class.
- *                                      Finished initial class.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                                      Added changes for pluginid to UUID and more comments.
- *                      2013-07-25      Moved parsing of values to a public static method, for usage elsewhere.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Represents a setting stored in a settings (CMS.Base.Settings) collection.

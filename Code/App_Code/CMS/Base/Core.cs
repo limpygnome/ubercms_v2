@@ -17,25 +17,7 @@
  *      Path:           /App_Code/CMS/Base/Core.cs
  * 
  *      Change-Log:
- *                      2013-06-25      Created initial class.
- *                      2013-06-29      Finished initial class.
- *                      2013-06-30      Added temporary directory creation.
- *                      2013-07-01      Added web.config path property.
- *                                      Added PathContent property.
- *                                      Modified core-start to use CmsConfigPath property.
- *                      2013-07-05      Modified content path property to be lower-case.
- *                      2013-07-06      Updated temp-path to also be lower-case.
- *                                      Added install paths properties.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                      2013-07-23      Updated the way settings are handled.
- *                      2013-08-01      Added DefaultHandler property.
- *                      2013-08-02      Improved error handling.
- *                      2013-08-05      Core connector no longer contnued; likely to cause issues.
- *                      2013-08-22      Few core improvements upon existing code (commenting, new-states, better
- *                                      protection against invalid configuration and objects).
- *                                      Added generateBasePathString method; start now returns a boolean.
- *                                      Removal of database properties (this should be hidden and treated
- *                                      abstractly).
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * The fundamental core of the CMS, used for loading any data etc when the application starts.
@@ -49,6 +31,9 @@ using CMS.Plugins;
 
 namespace CMS.Base
 {
+    /// <summary>
+    /// The fundamental core of the CMS, used for loading any data etc when the application starts.
+    /// </summary>
 	public static class Core
 	{
 		// Enums *******************************************************************************************************

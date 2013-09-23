@@ -17,8 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Captcha/Captcha.cs
  * 
  *      Change-Log:
- *                      2013-07-06      Created initial class.
- *                      2013-07-23      Updated the way settings are handled.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A custom captcha plugin for verifying a human user, as protection against automated/machine requests.
@@ -32,6 +31,9 @@ using UberLib.Connector;
 
 namespace CMS.Plugins
 {
+    /// <summary>
+    /// A custom captcha plugin for verifying a human user, as protection against automated/machine requests.
+    /// </summary>
     public class Captcha : Plugin
     {
         // Constants ***************************************************************************************************

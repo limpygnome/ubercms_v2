@@ -22,7 +22,7 @@
 					</a>
 					<div class="SEP"></div>
 					<!--IF:Administrator-->
-					<a href="/my_account">
+					<a href="/admin">
 						<img src="/content/images/layout/admin.png" alt="Admin" />
 						Admin
 					</a>
@@ -64,6 +64,9 @@
 			</div>
 		</div>
 		<div class="AREA_CONTENT">
+			<!---IF:Title-->
+			<h2><!--Title--></h2>
+			<!--ENDIF:Title-->
 			<!--Content-->
 		</div>
 		<div class="clear"></div>

@@ -17,14 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic 404 Page/Basic404Page.cs
  * 
  *      Change-Log:
- *                      2013-07-01      Created initial class.
- *                      2013-07-05      Added templates and content variables.
- *                      2013-07-06      Added plugin actions (install/uninstall/remove/enable/disable).
- *                                      Minor tweaks due to testing.
- *                                      Added more core functions and core syncing.
- *                                      Syncing now overwrites files.
- *                                      Added plugin versioning.
- *                      2013-09-04      Fixed file sync bug.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A plugin to help developers produce plugins and deployable packages.

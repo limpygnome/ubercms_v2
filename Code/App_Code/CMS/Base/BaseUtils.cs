@@ -17,18 +17,7 @@
  *      Path:           /App_Code/CMS/Base/BaseUtils.cs
  * 
  *      Change-Log:
- *                      2013-06-25      Created initial class.
- *                      2013-06-29      Updated header and namespace.
- *                      2013-07-01      Added many functions from the old CMS plugins library.
- *                                      Added URL reservation methods.
- *                                      Fixed critical URL reservation uninstall bug.
- *                                      Added generateRandomString method.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                      2013-07-23      Changed executeSQL parameters and return-type from CMS v1 to v2 format.
- *                      2013-09-02      Added protection from CSS and JS files being appended multiple times.
- *                      2013-09-03      Added appending to StringBuilder for CSS and JS; headerAppend method public
- *                                      and no longer performs checking.
- *                      2013-09-17      Added resizeImage method and ResizeAction enum.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A utility class of commonly used code.

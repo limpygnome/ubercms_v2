@@ -17,8 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/models/AccountEventTypes.cs
  * 
  *      Change-Log:
- *                      2013-07-29      Finished initial class.
- *                      2013-08-01      Moved to UUID for type identifiers.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Stores a collection of account event type models.

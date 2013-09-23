@@ -17,7 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/models/UserBan.cs
  * 
  *      Change-Log:
- *                      2013-07-24      Finished initial class.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Used as a model to represent user bans. Infinite bans should set the datetime-end to null; this will be set to

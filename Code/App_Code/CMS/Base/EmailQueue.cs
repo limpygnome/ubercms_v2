@@ -17,15 +17,7 @@
  *      Path:           /App_Code/CMS/Base/EmailQueue.cs
  * 
  *      Change-Log:
- *                      2013-06-25      Created initial class.
- *                      2013-06-29      Finished initial class.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                      2013-07-23      Updated retrieval of settings.
- *                      2013-08-02      Fixed the possibility of infinite postponement with a message never being
- *                                      sent. If a message cannot be sent, it's put at the bottom of the queue.
- *                                      Additionally e-mails with errors will not be reattempted for 15 minutes.
- *                                      E-mails failing more than 3000 times (nearly 32 days) are automatically
- *                                      deleted from the queue (by default).
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * An email-queue service for mass-sending e-mails in a seperate thread. This system also saves the buffer of e-mails,
@@ -44,6 +36,11 @@ using UberLib.Connector;
 
 namespace CMS.Base
 {
+    /// <summary>
+    /// An email-queue service for mass-sending e-mails in a seperate thread. This system also saves the buffer of
+    /// e-mails, to be sent, in the database in-case the web application is interrupted (failure, shutdown, etc). The
+    /// general idea is to ensure any e-mails deployed by a plugin are delivered to the mail-server.
+    /// </summary>
 	public class EmailQueue
 	{
 		// Fields ******************************************************************************************************

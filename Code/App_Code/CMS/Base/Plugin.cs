@@ -17,23 +17,7 @@
  *      Path:           /App_Code/CMS/Base/Plugin.cs
  * 
  *      Change-Log:
- *                      2013-06-27      Created initial class.
- *                      2013-06-28      Added handler information.
- *                      2013-06-29      Finished initial class.
- *                      2013-06-30      Made changes to message param type of install/uninstall/enable/disable.
- *                                      Added directory data from database.
- *                                      Added properties for some default paths.
- *                                      Renamed Plugin property to avoid conflict with System.IO.
- *                      2013-07-05      Modified default directory paths to be lower-case.
- *                      2013-06-07      Added plugin versioning.
- *                      2013-07-20      Changed pluginid to uuid (universally unique identifier).
- *                                      Moved namespace to Core.Base.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                      2013-07-29      Refactored FullPath to Path.
- *                      2013-08-06      Versioning redone to be database based, less effort when updating.
- *                      2013-08-22      Removed dispose method - superseded by pluginStart handler.
- *                                      More fields are now modifiable with bitwise for efficient updating.
- *                                      Added thread safety.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Base class for all plugins. This contains information about the plugin and methods to be implemented as handlers.

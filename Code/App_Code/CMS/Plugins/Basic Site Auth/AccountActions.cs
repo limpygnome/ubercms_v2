@@ -17,7 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/AccountActions.cs
  * 
  *      Change-Log:
- *                      2013-08-05      Finished initial class.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A class of methods for applying actions to accounts, using a share of models.

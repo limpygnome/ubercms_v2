@@ -17,7 +17,7 @@
  *      Path:           /CMS/Base/Version.cs
  * 
  *      Change-Log:
- *                      2013-08-06      Finished initial class.
+ *                      2013-09-23      Finished initial class.
  *                      
  * *********************************************************************************************************************
  * A model for version information.
@@ -27,6 +27,9 @@ using System;
 
 namespace CMS.Base
 {
+    /// <summary>
+    /// A model for version information.
+    /// </summary>
     public class Version
     {
         // Fields ******************************************************************************************************

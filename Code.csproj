@@ -153,8 +153,8 @@
     <Content Include="Code\CMS.config">
       <SubType>Designer</SubType>
     </Content>
-    <Content Include="Code\installer\SQL\MySQL\install.sql" />
-    <Content Include="Code\installer\SQL\MySQL\uninstall.sql" />
+    <Content Include="Code\installer\sql\mysql\install.sql" />
+    <Content Include="Code\installer\sql\mysql\uninstall.sql" />
     <Content Include="README" />
     <Content Include="TODO" />
     <Content Include="LICENSE" />
@@ -174,7 +174,6 @@
     <Folder Include="Code\App_Code\CMS\Plugins\KeepAlive\" />
     <Folder Include="Code\App_Code\CMS\Plugins\RedirectHTTPS\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Tools\" />
-    <Folder Include="Code\Content\CSS\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\Plugin.config" />

@@ -17,20 +17,7 @@
  *      Path:           /App_Code/CMS/Base/Templates.cs
  * 
  *      Change-Log:
- *                      2013-06-25      Created initial class.
- *                      2013-06-29      Finished initial class.
- *                      2013-07-01      Added template install/uninstall/dump methods.
- *                                      Added include template handler.
- *                                      Added uninstall by plugin method.
- *                                      Added dump for plugin method.
- *                      2013-07-06      Fixed dump bug.
- *                                      Fixed major multi-level rendering bug with replacementOccurred variable.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                      2013-07-23      Updated the way settings are handled.
- *                      2013-07-31      Added the ability for variables to be nully embedded into templates.
- *                      2013-09-05      Fixed a "bug" where ELSE inside a double-nested IF (custom syntax) of template
- *                                      rendering would be picked up by the parent IF; this has been resolved by
- *                                      adding the ability to specify <!--ELSE:<expression>--> - like with ENDIF syntax.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Used to load, and possibly cache, HTML templates from the database; this class also transforms the custom markup

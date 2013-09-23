@@ -1,4 +1,29 @@
-﻿using System;
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ *
+ *      Path:           /App_Code/CMS/Plugins/Basic Articles/models/Tag.cs
+ * 
+ *      Change-Log:
+ *                      2013-09-23      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * A model to represent a tag, which belongs to one or more thread(s).
+ * *********************************************************************************************************************
+ */
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -8,7 +33,7 @@ using UberLib.Connector;
 namespace CMS.BasicArticles
 {
     /// <summary>
-    /// A read-only model; persisted by ArticleThreadTags model. Represents a tag shared by many articles.
+    /// A model to represent a tag, which belongs to one or more thread(s).
     /// </summary>
     public class Tag
     {
@@ -94,7 +119,7 @@ namespace CMS.BasicArticles
             if (page < 1 || tagsPerPage < 0)
                 return new Tag[] { };
             // Build query
-            PreparedStatement ps = new PreparedStatement("SELECT (SELECT COUNT('') FROM ba_tags_thread AS tt, ba_article_thread AS t, ba_article AS a WHERE tt.tagid=bt.tagid AND t.uuid_thread=tt.uuid_thread AND a.uuid_article=t.uuid_article_current AND a.published='1') AS count, bt.* FROM ba_tags AS bt ORDER BY " + (sorting == Sorting.Population ? "count DESC, bt.keyword ASC" : "bt.keyword ASC") + " LIMIT ?limit OFFSET ?offset");
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM (SELECT (SELECT COUNT('') FROM ba_tags_thread AS tt, ba_article_thread AS t, ba_article AS a WHERE tt.tagid=bt.tagid AND t.uuid_thread=tt.uuid_thread AND a.uuid_article=t.uuid_article_current AND a.published='1') AS count, bt.* FROM ba_tags AS bt) AS t WHERE t.count > 0 ORDER BY " + (sorting == Sorting.Population ? "count DESC, t.keyword ASC" : "t.keyword ASC") + " LIMIT ?limit OFFSET ?offset");
             ps["limit"] = tagsPerPage + (loadExtra ? 1 : 0);
             ps["offset"] = (page * tagsPerPage) - tagsPerPage;
             // Execute query and parse data

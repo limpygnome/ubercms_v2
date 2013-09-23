@@ -1,8 +1,36 @@
-﻿using System;
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ * 
+ *      Path:           /App_Code/CMS/Plugins/Files/ExtensionsDefault.cs
+ * 
+ *      Change-Log:
+ *                      2013-09-23      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * A static class used for initially creating file extension models.
+ * *********************************************************************************************************************
+ */
+using System;
 using UberLib.Connector;
 
 namespace CMS.Plugins.Files
 {
+    /// <summary>
+    /// A static class used for initially creating file extension models.
+    /// </summary>
     public static class ExtensionsDefault
     {
         public static void install(Main main, Connector conn)

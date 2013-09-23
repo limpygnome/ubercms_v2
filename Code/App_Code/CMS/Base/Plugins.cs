@@ -17,28 +17,7 @@
  *      Path:           /App_Code/CMS/Base/Plugins.cs
  * 
  *      Change-Log:
- *                      2013-06-25      Created initial class.
- *                      2013-06-30      Finished initial class.
- *                                      Added install/uninstall/enable/disable exception catching for safety.
- *                                      Added remove method.
- *                                      Improved general safety of install/uninstall/enable/disable and cycling.
- *                      2013-07-01      Invoking uninstall will now invoke disable if the plugin is enabled.
- *                                      Added getPlugin methods.
- *                                      Fixed incorrect enum value being set in install method (enabled instead of
- *                                      disabled).
- *                      2013-07-08      Added rcability to fetch plugins by unique identifiers.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                                      Added changes to support pluginid to UUID changes.
- *                      2013-07-22      Added and modified plugin loading/unloading; loading plugins can now be done
- *                                      during runtime.
- *                      2013-08-01      UUIDs are now stored as non-hyphen strings for better performance.
- *                      2013-08-23      Changed the way loading/unloading works with start/stop handlers of plugins, as
- *                                      well as general improvements.
- *                                      Plugins are now stored based on UUID hex, rather than hex-with-hyphens, for less
- *                                      space complexity.
- *                      2013-08-27      Bug-fixes, general improvements.
- *                      2013-09-02      pluginLoad and pluginUnload are invoked when the plugin is either loaded when
- *                                      enabled or when the plugin is enabled.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A data-collection for managing and interacting with plugin models.

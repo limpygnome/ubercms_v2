@@ -17,13 +17,7 @@
  *      Path:           /App_Code/CMS/Base/PathInfo.cs
  * 
  *      Change-Log:
- *                      2013-06-25      Created initial class.
- *                      2013-06-29      Finished initial class.
- *                      2013-07-01      Modified this property to something more sensible (module handler at index zero).
- *                      2013-07-05      Fixed this property bug.
- *                      2013-07-06      Fixed tailing slash bug where it would create an empty token.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                      2013-08-22      Path parsing can now be carried out by passing the HttpRequest ASP.NET model.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Used to parse url-rewriting/request data. Plugins are invoked based on either the first directory in the URL, the
@@ -37,6 +31,11 @@ using System.Web;
 
 namespace CMS.Base
 {
+    /// <summary>
+    /// Used to parse url-rewriting/request data. Plugins are invoked based on either the first directory in the URL,
+    /// the module-handler variable, being matched or the full-path. Thus a plugin A could own /exmaple and plugin B
+    /// could own /exmaple/test by having a higher priority.
+    /// </summary>
 	public class PathInfo
 	{
 		// Fields ******************************************************************************************************

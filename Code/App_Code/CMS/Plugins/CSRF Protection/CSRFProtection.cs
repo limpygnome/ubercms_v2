@@ -17,8 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/CSRF Protection/CSRFProtection.cs
  * 
  *      Change-Log:
- *                      2013-07-31      Created and finished initial class.
- *                      2013-08-06      Added query-string support.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A plugin for offering cross-site request forgery (CSRF) protection. This mechanism works by placing a token as a
@@ -37,6 +36,14 @@ using CMS.Base;
 
 namespace CMS.Plugins
 {
+    /// <summary>
+    /// A plugin for offering cross-site request forgery (CSRF) protection. This mechanism works by placing a token as a
+    /// hidden field in forms and setting the same token as a cookie (with the token remaining the same throughout the session). For more information on CSRF exploits:
+    /// https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)
+    /// 
+    /// Templates can embed a hidden field by calling/embedding '<!--csrf()-->' (without quotations); this plugin can
+    /// also be made completely optional using the pre-processor directive 'CSRFP'.
+    /// </summary>
     public class CSRFProtection : Plugin
     {
         // Constants ***************************************************************************************************

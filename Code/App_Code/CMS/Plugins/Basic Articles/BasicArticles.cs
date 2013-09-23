@@ -1,4 +1,30 @@
-﻿using System;
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ *
+ *      Path:           /App_Code/CMS/Plugins/Basic Articles/BasicArticles.cs
+ * 
+ *      Change-Log:
+ *                      2013-09-23      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * A plugin which allows multiple articles/threads for creating, editing and deleting content; useful as a wikipedia,
+ * for general web-pages and note storage.
+ * *********************************************************************************************************************
+ */
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -11,6 +37,10 @@ using UberLib.Connector;
 
 namespace CMS.BasicArticles
 {
+    /// <summary>
+    /// A plugin which allows multiple articles/threads for creating, editing and deleting content; useful as a
+    /// wikipedia, for general web-pages and note storage.
+    /// </summary>
     public partial class BasicArticles : Plugin
     {
         // Enums *******************************************************************************************************

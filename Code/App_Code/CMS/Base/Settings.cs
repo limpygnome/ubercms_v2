@@ -17,21 +17,7 @@
  *      Path:           /App_Code/CMS/Base/Settings.cs
  * 
  *      Change-Log:
- *                      2013-06-27      Created initial class.
- *                      2013-06-29      Finished initial class.
- *                      2013-06-06      Added ability to just add keys, without update.
- *                                      Added ability to remove settings by plugin, pluginid and path.
- *                      2013-06-07      Fixed critical bug in save method, where new nodes could not be saved.
- *                                      Fixed critical bug in load from database method.
- *                      2013-07-21      Code format changes and UberLib.Connector upgrade.
- *                                      Added changes to support pluginid to UUID for plugins.
- *                      2013-07-23      add and updateOrAdd methods take a plugin model instead of a UUID, in-case of
- *                                      future changes to identifying plugins.
- *                                      Major change: settings now have types for efficiency and easier editing;
- *                                      add and updateOrAdd have been replaced by set methods. Removal of get<...>
- *                                      methods.
- *                      2013-07-31      Bug-fix (upadting nodes which exist and not parsing the value to the internal
- *                                      type) and improvements.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Handles settings which can be stored on disk or in a database. Thread-safe.

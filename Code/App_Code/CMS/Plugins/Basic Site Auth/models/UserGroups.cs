@@ -17,8 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/models/UserGroups.cs
  * 
  *      Change-Log:
- *                      2013-07-07      Created initial class.
- *                      2013-07-23      Changed way user-groups are added, added contains method.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A data-structure for managing the collection of user-groups for the basic site authentication plugin.

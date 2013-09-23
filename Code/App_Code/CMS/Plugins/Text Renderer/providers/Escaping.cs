@@ -1,10 +1,38 @@
-﻿using System;
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ * 
+ *      Path:           /App_Code/CMS/Plugins/Text Renderer/providers/Escaping.cs
+ * 
+ *      Change-Log:
+ *                      2013-09-23      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * A text-renderer provider for escaping common markup.
+ * *********************************************************************************************************************
+ */
+using System;
 using System.Text;
 using System.Text.RegularExpressions;
 using CMS.Base;
 
 namespace CMS.Plugins.TRProviders
 {
+    /// <summary>
+    /// A text-renderer provider for escaping common markup.
+    /// </summary>
     public class Escaping : CMS.Plugins.RenderProvider
     {
         // Methods - Constructors **************************************************************************************

@@ -1,4 +1,29 @@
-﻿#if TextRenderer
+﻿/*                       ____               ____________
+ *                      |    |             |            |
+ *                      |    |             |    ________|
+ *                      |    |             |   |
+ *                      |    |             |   |    
+ *                      |    |             |   |    ____
+ *                      |    |             |   |   |    |
+ *                      |    |_______      |   |___|    |
+ *                      |            |  _  |            |
+ *                      |____________| |_| |____________|
+ *                        
+ *      Author(s):      limpygnome (Marcus Craske)              limpygnome@gmail.com
+ * 
+ *      License:        Creative Commons Attribution-ShareAlike 3.0 Unported
+ *                      http://creativecommons.org/licenses/by-sa/3.0/
+ *
+ *      Path:           /App_Code/CMS/Plugins/Basic Articles/ArticleTextRenderer.cs
+ * 
+ *      Change-Log:
+ *                      2013-09-23      Finished initial class.
+ * 
+ * *********************************************************************************************************************
+ * A text-renderer provider class for the articles system.
+ * *********************************************************************************************************************
+ */
+#if TextRenderer
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -8,6 +33,9 @@ using UberLib.Connector;
 
 namespace CMS.BasicArticles
 {
+    /// <summary>
+    /// A text-renderer provider class for the articles system.
+    /// </summary>
     public class ArticleTextRenderer : RenderProvider
     {
         // Methods - Constructors **************************************************************************************

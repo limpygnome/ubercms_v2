@@ -17,9 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/models/User.cs
  * 
  *      Change-Log:
- *                      2013-07-06      Created initial class.
- *                      2013-07-24      Modified password mechanism for automatic hashing.
- *                                      Increased security with a third salt for every user.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A model to represent a user of the basic site authentication plugin. Modifying the settings of a user can be dirty,

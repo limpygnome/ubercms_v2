@@ -17,7 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/models/AuthFailedAttempt.cs
  * 
  *      Change-Log:
- *                      2013-07-28      Created initial class.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A model for representing failed authentication attempts.

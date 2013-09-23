@@ -17,8 +17,7 @@
  *      Path:           /App_Code/CMS/Plugins/Basic Site Auth/models/AccountEventType.cs
  * 
  *      Change-Log:
- *                      2013-07-24      Created initial class.
- *                      2013-08-01      Finished initial class.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * A model for account event types.

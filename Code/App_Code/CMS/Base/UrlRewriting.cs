@@ -17,8 +17,7 @@
  *      Path:           /App_Code/CMS/Base/UrlRewriting.cs
  * 
  *      Change-Log:
- *                      2013-08-08      Created initial class.
- *                      2013-09-04      UUID is now optional when loading a model.
+ *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
  * Used for handling URL rewriting.
