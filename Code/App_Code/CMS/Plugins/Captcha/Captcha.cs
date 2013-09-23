@@ -100,6 +100,9 @@ namespace CMS.Plugins
             // Install templates
             if (!Core.Templates.install(conn, this, PathTemplates, ref messageOutput))
                 return false;
+            // Install content
+            if (!BaseUtils.contentInstall(PathContent, Core.PathContent, true, ref messageOutput))
+                return false;
             // Install directives
             if (!Base.BaseUtils.preprocessorDirective_Add("CAPTCHA", ref messageOutput))
                 return false;
@@ -112,6 +115,9 @@ namespace CMS.Plugins
         {
             // Unreserve URLs
             if (!BaseUtils.urlRewritingUninstall(conn, this, ref messageOutput))
+                return false;
+            // Uninstall content
+            if (!BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput))
                 return false;
             // Remove directives
             if (!BaseUtils.preprocessorDirective_Remove("CAPTCHA", ref messageOutput))

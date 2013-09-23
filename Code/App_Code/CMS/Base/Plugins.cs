@@ -169,7 +169,7 @@ namespace CMS.Base
                 {
                 }
                 // Remove from internal storage
-                plugins.Remove(plugin.UUID.NumericHexString);
+                plugins.Remove(plugin.UUID.Hex);
             }
         }
         /// <summary>
@@ -671,6 +671,9 @@ namespace CMS.Base
                 }
                 lock (plugin)
                 {
+                    // Uninstall the plugin
+                    if (plugin.State != Plugin.PluginState.NotInstalled && !uninstall(conn, plugin, ref messageOutput))
+                        return false;
                     // Remove from runtime
                     unload(conn, plugin);
                     // Unpersist

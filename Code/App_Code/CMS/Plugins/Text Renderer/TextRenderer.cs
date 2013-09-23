@@ -71,6 +71,9 @@ namespace CMS.Plugins
         }
         public override bool enable(Connector conn, ref StringBuilder messageOutput)
         {
+            // Install content
+            if (!BaseUtils.contentInstall(PathContent, Core.PathContent, true, ref messageOutput))
+                return false;
             // Add pre-processing directives
             if (!BaseUtils.preprocessorDirective_Add("TextRenderer", ref messageOutput))
                 return false;
@@ -80,6 +83,9 @@ namespace CMS.Plugins
         {
             // Remove pre-processing directives
             if (!BaseUtils.preprocessorDirective_Remove("TextRenderer", ref messageOutput))
+                return false;
+            // Uninstall content
+            if (!BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput))
                 return false;
             return true;
         }

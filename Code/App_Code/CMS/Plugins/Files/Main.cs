@@ -62,9 +62,21 @@ namespace CMS.Plugins.Files
             if (!BaseUtils.executeSQL(PathSQL + "/install.sql", conn, ref messageOutput))
                 return false;
             // Install settings
-
             // Install extensions
             ExtensionsDefault.install(this, conn);
+            return true;
+        }
+        public override bool uninstall(Connector conn, ref StringBuilder messageOutput)
+        {
+            // Uninstall SQL
+            if (!BaseUtils.executeSQL(PathSQL + "/uninstall.sql", conn, ref messageOutput))
+                return false;
+            // Uninstall settings
+            Core.Settings.remove(conn, this);
+            return true;
+        }
+        public override bool enable(Connector conn, ref StringBuilder messageOutput)
+        {
             // Install text-renderer provider
 #if TextRenderer
             TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
@@ -78,32 +90,13 @@ namespace CMS.Plugins.Files
                 }
             }
 #endif
-            return true;
-        }
-        public override bool uninstall(Connector conn, ref StringBuilder messageOutput)
-        {
-            // Uninstall SQL
-            if (!BaseUtils.executeSQL(PathSQL + "/uninstall.sql", conn, ref messageOutput))
-                return false;
-            // Uninstall settings
-            Core.Settings.remove(conn, this);
-            // Remove text-renderer
-#if TextRenderer
-            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
-            if (tr != null)
-                tr.providersRemove(conn, UUID);
-#endif
-            return true;
-        }
-        public override bool enable(Connector conn, ref StringBuilder messageOutput)
-        {
             // Install templates
             if (!Core.Templates.install(conn, this, PathTemplates, ref messageOutput))
                 return false;
             // Install content
             if (!BaseUtils.contentInstall(PathContent, Core.PathContent, true, ref messageOutput))
                 return false;
-            // Install URLs
+            // Install URL rewriting
             if (!BaseUtils.urlRewritingInstall(conn, this, new string[] { "files" }, ref messageOutput))
                 return false;
             // Check files dir exists
@@ -122,6 +115,12 @@ namespace CMS.Plugins.Files
             // Uninstall templates
             if (!Core.Templates.uninstall(conn, this, ref messageOutput))
                 return false;
+            // Remove text-renderer
+#if TextRenderer
+            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
+            if (tr != null)
+                tr.providersRemove(conn, UUID);
+#endif
             return true;
         }
         public override bool handler_handleRequest(Data data)

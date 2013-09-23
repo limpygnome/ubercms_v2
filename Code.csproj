@@ -195,6 +195,7 @@
     <None Include="Code\App_Code\CMS\Plugins\Basic Site Auth\files.list" />
     <Content Include="Code\App_Code\CMS\Plugins\Text Renderer\Plugin.config" />
     <Content Include="Code\App_Code\CMS\Plugins\Files\Plugin.config" />
+    <None Include="Code\App_Code\CMS\Plugins\Captcha\files.list" />
     <None Include="Code\App_Code\CMS\Plugins\Files\files.list" />
     <None Include="Code\App_Code\CMS\Plugins\Text Renderer\files.list" />
     <None Include="Code\installer\files.list" />

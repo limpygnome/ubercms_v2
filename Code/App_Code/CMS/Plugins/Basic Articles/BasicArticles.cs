@@ -66,18 +66,9 @@ namespace CMS.BasicArticles
             // Install SQL
             if (!BaseUtils.executeSQL(PathSQL + "/install.sql", conn, ref messageOutput))
                 return false;
-#if TextRenderer
-            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
-            if (tr != null)
-            {
-                RenderProvider rp = new ArticleTextRenderer(UUID.parse("da38909c-d348-478f-9add-45be7847695c"), this.UUID, "Basic Articles - General Formatting", "Provides general markup for interacting with the basic articles plugin.", true, 0);
-                if (!rp.save(tr, conn))
-                {
-                    messageOutput.AppendLine("Failed to create '" + rp.Title + "' text renderer provider!");
-                    return false;
-                }
-            }
-#endif
+            // Install URL rewriting
+            if (!BaseUtils.urlRewritingInstall(conn, this, new string[] { "articles_home", "articles", "article", "thread" }, ref messageOutput))
+                return false;
             // Install settings
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__ARTICLE_THREAD_URL_MIN, Settings.SETTINGS__ARTICLE_THREAD_URL_MIN__DESC, Settings.SETTINGS__ARTICLE_THREAD_URL_MIN__DEFAULT);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__ARTICLE_THREAD_URL_MAX, Settings.SETTINGS__ARTICLE_THREAD_URL_MAX__DESC, Settings.SETTINGS__ARTICLE_THREAD_URL_MAX__DEFAULT);
@@ -105,43 +96,62 @@ namespace CMS.BasicArticles
         }
         public override bool uninstall(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
+            // Attempt to delete thumbnails
+            try
+            {
+                System.IO.Directory.Delete(ArticleThread.PathThumbnails, true);
+            }
+            catch (Exception ex)
+            {
+                messageOutput.Append("Warning: could not remove article thumbnails at '").Append(ArticleThread.PathThumbnails).Append("', exception: '").Append(ex.Message).AppendLine("'!");
+            }
             // Uninstall SQL
             if (!BaseUtils.executeSQL(PathSQL + "/uninstall.sql", conn, ref messageOutput))
                 return false;
+            // Uninstall URL rewriting
+            if (!BaseUtils.urlRewritingUninstall(conn, this, ref messageOutput))
+                return false;
             // Uninstall settings
             Core.Settings.remove(conn, this);
-            // Remove text-renderer
-#if TextRenderer
-            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
-            if (tr != null)
-                tr.providersRemove(conn, UUID);
-#endif
             return true;
         }
         public override bool enable(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
+            // Install text-renderer provider
+#if TextRenderer
+            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
+            if (tr != null)
+            {
+                RenderProvider rp = new ArticleTextRenderer(UUID.parse("da38909c-d348-478f-9add-45be7847695c"), this.UUID, "Basic Articles - General Formatting", "Provides general markup for interacting with the basic articles plugin.", true, 0);
+                if (!rp.save(tr, conn))
+                {
+                    messageOutput.AppendLine("Failed to create '" + rp.Title + "' text renderer provider!");
+                    return false;
+                }
+            }
+#endif
             // Install templates
             if (!Core.Templates.install(conn, this, PathTemplates, ref messageOutput))
                 return false;
             // Install content
             if (!BaseUtils.contentInstall(PathContent, Core.PathContent, true, ref messageOutput))
                 return false;
-            // Install URL rewriting
-            if (!BaseUtils.urlRewritingInstall(conn, this, new string[] { "articles_home", "articles", "article", "thread" }, ref messageOutput))
-                return false;
             return true;
         }
         public override bool disable(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
-            // Uninstall URL rewriting
-            if (!BaseUtils.urlRewritingUninstall(conn, this, ref messageOutput))
-                return false;
             // Uninstall content
             if (!BaseUtils.contentUninstall(PathContent, Core.PathContent, ref messageOutput))
                 return false;
             // Uninstall templates
             if (!Core.Templates.uninstall(conn, this, ref messageOutput))
                 return false;
+            // Remove text-renderer
+#if TextRenderer
+            TextRenderer tr = (TextRenderer)Core.Plugins[UUID.parse(TextRenderer.TR_UUID)];
+            if (tr != null)
+                tr.providersRemove(conn, UUID);
+#endif
             return true;
         }
         public override bool handler_handleRequest(Data data)
