@@ -1,18 +1,12 @@
 > test e-mail queue service.
 -- needs attack testing
-> test e-mail class
 > plugin.refresh -> either conn or resultrow - do we really need this?
 > change plugins.cs findhandlers to be view ?????!!!!!
 > add confirmation of uninstall to package developer.
 -- warn data loss users etc
-> cycler needs restarting when enable/disable/uni/inst/load/unload etc due to caching...
-
 
 remove dispose from plugin??!?
 -- find usage.
-
-
-pluginLoad should not be done by UUID but by plugin model
 
 
 
@@ -22,9 +16,6 @@ Thus only n characters would be scanned, as opposed to e.g. 3n as well as the pa
 theory, be far more efficient and faster.
 --> We could just scan for <!--....--> manually and apply regex to the ... part.
 
-> add create method to models for short factory construction (with bool or custom return).
-
-
 
 > comments addon -> comments for a path (based on pathinfo)
 --> allows universal comments system across multiple plugins
@@ -32,11 +23,6 @@ theory, be far more efficient and faster.
 --> fetch page, place data variables in response, only update containers with the same name as the variables
 ----> ability to send response requiring full redirect
 ------> would save bandwidth wasted on sending the full page.
-> basic image store
---> upload imagery
---> compressed
---> ability to embed in articles; hooks/adds article render table
---> html5 drag+drop etc
 > add ability for account user log to be used for articles system
 --> add universal hooks to BSA for account event loading by types etc - specify array of uuids?
 > add ability to convert articles to pdf's using wkhtmltopdf as a separate plugin.
