@@ -82,15 +82,21 @@ namespace CMS.BasicArticles
             Core.Settings.set(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_IMAGE_ALLOWED_EXTENSIONS, Settings.SETTINGS__THREAD_IMAGE_ALLOWED_EXTENSIONS__DESC, Settings.SETTINGS__THREAD_IMAGE_ALLOWED_EXTENSIONS__VALUE);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_IMAGE_WIDTH, Settings.SETTINGS__THREAD_IMAGE_WIDTH__DESC, Settings.SETTINGS__THREAD_IMAGE_WIDTH__VALUE);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_IMAGE_HEIGHT, Settings.SETTINGS__THREAD_IMAGE_HEIGHT__DESC, Settings.SETTINGS__THREAD_IMAGE_HEIGHT__VALUE);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MIN, Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MIN__DESC, Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MIN__VALUE);
+            Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MAX, Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MAX__DESC, Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MAX__VALUE);
+            
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_TAG_LENGTH_MIN, Settings.SETTINGS__THREAD_TAG_LENGTH_MIN__DESC, Settings.SETTINGS__THREAD_TAG_LENGTH_MIN__VALUE);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_TAG_LENGTH_MAX, Settings.SETTINGS__THREAD_TAG_LENGTH_MAX__DESC, Settings.SETTINGS__THREAD_TAG_LENGTH_MAX__VALUE);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__THREAD_TAGS_MAX, Settings.SETTINGS__THREAD_TAGS_MAX__DESC, Settings.SETTINGS__THREAD_TAGS_MAX__VALUE);
+            
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__BROWSER_ARTICLES_PER_PAGE, Settings.SETTINGS__BROWSER_ARTICLES_PER_PAGE__DESC, Settings.SETTINGS__BROWSER_ARTICLES_PER_PAGE__VALUE);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__BROWSER_TAGS_POPULATED_LIMIT, Settings.SETTINGS__BROWSER_TAGS_POPULATED_LIMIT__DESC, Settings.SETTINGS__BROWSER_TAGS_POPULATED_LIMIT__VALUE);
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__BROWSER_TAGS_PER_PAGE, Settings.SETTINGS__BROWSER_TAGS_PER_PAGE__DESC, Settings.SETTINGS__BROWSER_TAGS_PER_PAGE__VALUE);
+            
             Core.Settings.setInt(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__RENDERSTREAM_ARTICLES_PER_PAGE, Settings.SETTINGS__RENDERSTREAM_ARTICLES_PER_PAGE__DESC, Settings.SETTINGS__RENDERSTREAM_ARTICLES_PER_PAGE__VALUE);
             Core.Settings.set(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG__DESC, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG__VALUE);
             Core.Settings.set(this, Base.Settings.SetAction.AddOrUpdate, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG_TITLE, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG_TITLE__DESC, Settings.SETTINGS__RENDERSTREAM_DEFAULT_TAG_TITLE__VALUE);
+            
             Core.Settings.save(conn);
             return true;
         }
@@ -407,6 +413,7 @@ namespace CMS.BasicArticles
             data["article_title"] = HttpUtility.HtmlEncode(title != null ? title : article != null ? article.Title : string.Empty);
             if (!edit)
                 data["article_url"] = HttpUtility.HtmlEncode(url);
+            else
                 data["article_edit"] = createNew ? articleOriginal.UUIDArticle.Hex : article.UUIDArticle.Hex;
             data["article_raw"] = HttpUtility.HtmlEncode(raw != null ? raw : article != null ? article.TextRaw : null);
             if (postback == ArticleCreatePostback.Render)

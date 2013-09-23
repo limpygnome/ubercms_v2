@@ -102,6 +102,8 @@ namespace CMS.Plugins.Files
             // Check files dir exists
             if (!System.IO.Directory.Exists(PathFiles))
                 System.IO.Directory.CreateDirectory(PathFiles);
+            // Launch rebuilder
+            rebuild("/");
             return true;
         }
         public override bool disable(Connector conn, ref StringBuilder messageOutput)

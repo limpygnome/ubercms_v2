@@ -456,7 +456,7 @@ namespace CMS.BasicArticles
         {
             lock (this)
             {
-                if (value.Length < Core.Settings[Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MIN].get<int>() || value.Length > Core.Settings[Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MAX].get<int>())
+                if (value != null && (value.Length < Core.Settings[Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MIN].get<int>() || value.Length > Core.Settings[Settings.SETTINGS__THREAD_DESCRIPTION_LENGTH_MAX].get<int>()))
                     return false;
                 description = value == null || value.Length == 0 ? null : value;
                 modified |= Fields.Description;
