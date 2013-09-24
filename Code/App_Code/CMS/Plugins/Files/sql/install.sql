@@ -4,7 +4,7 @@ CREATE TABLE fi_dir
 	dirid							INT PRIMARY KEY AUTO_INCREMENT,
 	parent_dirid					INT,
 	FOREIGN KEY(`parent_dirid`)		REFERENCES `fi_dir`(`dirid`) ON UPDATE CASCADE ON DELETE CASCADE,
-	dir_path						VARCHAR(512) UNIQUE,
+	dir_path						VARCHAR(512),
 	dir_name						VARCHAR(256),
 	flags							INT NOT NULL DEFAULT 0,
 	
@@ -18,26 +18,12 @@ CREATE TABLE fi_file
 	dirid							INT,
 	FOREIGN KEY(`dirid`)			REFERENCES `fi_dir`(`dirid`) ON UPDATE CASCADE ON DELETE CASCADE,
 	flags							INT NOT NULL DEFAULT 0,
-	UNIQUE(file, dirid),
 
 	description						TEXT,
 	size							INT,
 	datetime_created				DATETIME NOT NULL,
 	datetime_modified				DATETIME NOT NULL
 );
---CREATE TABLE fi_ips
---(
---	ipid							INT PRIMARY KEY AUTO_INCREMENT,
---	ip								VARCHAR(60) NOT NULL
---);
---CREATE TABLE fi_uniquedownloads
---(
---	fileid							INT NOT NULL,
---	FOREIGN KEY(`fileid`)			REFERENCES `fi_file`(`fileid`) ON UPDATE CASCADE ON DELETE CASCADE,
---	ipid							INT NOT NULL,
---	FOREIGN KEY(`ipid`)				REFERENCES `fi_ips`(`ipid`) ON UPDATE CASCADE ON DELETE CASCADE,
---	PRIMARY KEY(fileid, ipid)
---);
 CREATE TABLE fi_extensions
 (
 	extension						VARCHAR(256) PRIMARY KEY,
