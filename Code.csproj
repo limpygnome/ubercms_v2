@@ -177,6 +177,7 @@
     <Folder Include="Code\App_Code\CMS\Plugins\_ideas\KeepAlive\" />
     <Folder Include="Code\App_Code\CMS\Plugins\_ideas\RedirectHTTPS\" />
     <Folder Include="Code\App_Code\CMS\Plugins\_ideas\Tools\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\_ideas\TR - References\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\Plugin.config" />

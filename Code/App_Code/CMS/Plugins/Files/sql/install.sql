@@ -26,7 +26,7 @@ CREATE TABLE fi_file
 );
 CREATE TABLE fi_extensions
 (
-	extension						VARCHAR(256) PRIMARY KEY,
+	extension						VARCHAR(16) PRIMARY KEY,
 	title							VARCHAR(64),
 	url_icon						TEXT,
 	render_classpath				TEXT,

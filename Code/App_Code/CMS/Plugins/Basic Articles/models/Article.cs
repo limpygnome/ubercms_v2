@@ -304,7 +304,7 @@ namespace CMS.BasicArticles
                     if (datetimeCreated == DateTime.MinValue)
                         sql["datetime_created"] = null;
                     else
-                        sql["datetime_created"] = datetimeCreated;
+                        sql["datetime_created"] = datetimeCreated;//.ToString("yyyy-MM-dd HH:mm:ss");
                 }
                 if ((modified & Fields.DateTimeModified) == Fields.DateTimeModified)
                 {
@@ -608,7 +608,7 @@ namespace CMS.BasicArticles
                 lock (this)
                 {
                     datetimePublished = value;
-                    modified |= Fields.DateTimeModified;
+                    modified |= Fields.DateTimePublished;
                 }
             }
         }

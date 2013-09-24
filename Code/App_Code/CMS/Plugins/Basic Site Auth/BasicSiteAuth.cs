@@ -322,19 +322,6 @@ namespace CMS.BasicSiteAuth
         }
         public override bool uninstall(Connector conn, ref System.Text.StringBuilder messageOutput)
         {
-            // Check if the user table exists; if so, abort and inform the user to manually remove it
-#if !DEBUG
-            switch(conn.Type)
-            {
-                case Connector.ConnectorType.MySQL:
-                    if (conn.queryCount("SELECT COUNT('') FROM information_schema.tables WHERE table_schema='" + SQLUtils.escape(Core.DatabaseSchema) + "' AND table_name='bsa_users';") > 0)
-                    {
-                        messageOutput.AppendLine("Basic site authentication cannot be uninstalled until you remove the users table (bsa_users) from the database! This is protection against accidental uninstallation of the user data.");
-                        return false;
-                    }
-                    break;
-            }
-#endif
             // Remove SQL
             if (!BaseUtils.executeSQL(PathSQL + "/uninstall.sql", conn, ref messageOutput))
                 return false;

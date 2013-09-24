@@ -269,18 +269,22 @@ namespace CMS.BasicArticles
             bool html = data.Request.Form["article_html"] != null || (postback == ArticleCreatePostback.None && article != null && article.HTML);
             bool hidePanel = data.Request.Form["article_hide_panel"] != null || (postback == ArticleCreatePostback.None && article != null && article.HidePanel);
             bool comments = data.Request.Form["article_comments"] != null || (postback == ArticleCreatePostback.None && article != null && article.Comments);
-            bool createNew = edit && data.Request.Form["article_create_new"] != null;
+            bool createNewFromOld = edit && data.Request.Form["article_create_new"] != null;
             // Handle (possible) postback data
             if (error == null && postback != ArticleCreatePostback.None && title != null && (edit || url != null) && raw != null)
             {
                 // Check if we're making or modifying an article
                 if (article == null)
+                {
                     article = new Article();
-                else if (createNew)
+                    article.DateTimeCreated = DateTime.Now;
+                }
+                else if (createNewFromOld)
                 {
                     Article temp = article;
                     article = new Article();
                     article.UUIDThread = temp.UUIDThread;
+                    article.DateTimeCreated = DateTime.Now;
                 }
                 else
                     article.DateTimeModified = DateTime.Now;
@@ -386,7 +390,7 @@ namespace CMS.BasicArticles
                                     }
                                 }
                             }
-                            else if (createNew && canPublish)
+                            else if (createNewFromOld && canPublish)
                             {
                                 // Set the current article for the thread
                                 ArticleThread at = ArticleThread.load(data.Connector, article.UUIDThread);
@@ -414,7 +418,7 @@ namespace CMS.BasicArticles
             if (!edit)
                 data["article_url"] = HttpUtility.HtmlEncode(url);
             else
-                data["article_edit"] = createNew ? articleOriginal.UUIDArticle.Hex : article.UUIDArticle.Hex;
+                data["article_edit"] = createNewFromOld ? articleOriginal.UUIDArticle.Hex : article.UUIDArticle.Hex;
             data["article_raw"] = HttpUtility.HtmlEncode(raw != null ? raw : article != null ? article.TextRaw : null);
             if (postback == ArticleCreatePostback.Render)
                 data["article_rendered"] = article.TextCache;
@@ -425,7 +429,7 @@ namespace CMS.BasicArticles
                 data.setFlag("article_hide_panel");
             if (comments)
                 data.setFlag("article_comments");
-            if (createNew)
+            if (createNewFromOld)
                 data.setFlag("article_create_new");
             // Set error message
             if (error != null)

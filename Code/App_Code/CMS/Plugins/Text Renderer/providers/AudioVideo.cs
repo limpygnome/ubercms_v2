@@ -45,7 +45,7 @@ namespace CMS.Plugins.TRProviders
             if ((renderTypes & RenderType.Objects) == RenderType.Objects)
             {
                 // YouTube
-                foreach (Match m in Regex.Matches(text.ToString(), @"\[youtube\](?:http|https):\/\/(?:it.|www.)?youtube\.(?:com|.co.uk|.com.br|.fr|.jp|.nl|.pl|.es|.ie)\/watch\?(?:[A-Za-z0-9\&\=_\-]+)?(v=([A-Za-z0-9_\-]+))(?:&[A-Za-z0-9\&\=_\-]+)?\[\/youtube\]", RegexOptions.Singleline))
+                foreach (Match m in Regex.Matches(text.ToString(), @"\[youtube\](?:http|https):\/\/(?:it|www)\.youtube\.(?:com|co\.uk|com\.br|fr|jp|nl|pl|es|ie)\/watch\?(?:[A-Za-z0-9\&\=_\-]+)?(?:v=([A-Za-z0-9_\-]+))(?:&[A-Za-z0-9\&\=_\-]+)?\[\/youtube\]", RegexOptions.Singleline))
                     text.Replace(m.Value, @"<iframe width=""420"" height=""315"" src=""//www.youtube.com/embed/" + m.Groups[1].Value + @""" frameborder=""0"" allowfullscreen></iframe>");
                 // Vimeo
                 foreach (Match m in Regex.Matches(text.ToString(), @"\[vimeo\](?:http|https):\/\/(?:www.)?vimeo.com/([0-9]+)\[\/vimeo\]", RegexOptions.Singleline))
