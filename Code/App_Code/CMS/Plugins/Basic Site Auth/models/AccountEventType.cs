@@ -77,13 +77,13 @@ namespace CMS.BasicSiteAuth.Models
                     return at;
                 else
                 {
-                    messageOutput.Append("Failed to persist account event type model '").Append(title).Append("' (UUID: ").Append(typeUUID.HexHyphens).AppendLine(")!");
+                    messageOutput.Append("Failed to persist account event type model '").Append(title).Append("' (UUID: ").Append(typeUUID != null ? typeUUID.HexHyphens : "none").AppendLine(")!");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                messageOutput.Append("Failed to create account event type model due to exception: '").Append(ex.Message).AppendLine("'!");
+                messageOutput.Append("Failed to create account event type model (UUID: ").Append(typeUUID != null ? typeUUID.HexHyphens : "none").Append(", title: ").Append(title).Append(") due to exception: '").Append(ex.Message).AppendLine("'!");
                 return null;
             }
         }

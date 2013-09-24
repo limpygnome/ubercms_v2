@@ -81,6 +81,19 @@
 			</div>
 			<div class="clear"></div>
 		</div>
+		<div class="ROW">
+			<div class="CELL2">
+				<div class="P">
+					E-mail:
+				</div>
+			</div>
+			<div class="CELL2">
+				<div class="P">
+					<input type="text" name="email" placeholder="E-mail..." value="<!--bsa_ma_email-->" />
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
 		<div class="ROW HEADER">
 			<div class="CELL1">
 				<div class="P">

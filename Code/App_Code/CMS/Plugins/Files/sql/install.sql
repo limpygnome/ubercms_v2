@@ -22,8 +22,8 @@ CREATE TABLE fi_file
 
 	description						TEXT,
 	size							INT,
-	datetime_created				TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	datetime_modified				TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+	datetime_created				DATETIME NOT NULL,
+	datetime_modified				DATETIME NOT NULL
 );
 --CREATE TABLE fi_ips
 --(

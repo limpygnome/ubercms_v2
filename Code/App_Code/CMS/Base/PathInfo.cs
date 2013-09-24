@@ -45,11 +45,11 @@ namespace CMS.Base
 		// Methods - Constructors **************************************************************************************
 		public PathInfo(HttpRequest request)
 		{
-			parse(request.QueryString["path"]);
+			parse(request, request.QueryString["path"]);
 		}
-        public PathInfo(string pathData)
+        public PathInfo(HttpRequest request, string pathData)
         {
-            parse(pathData);
+            parse(request, pathData);
         }
 		// Methods *****************************************************************************************************
         /// <summary>
@@ -59,11 +59,11 @@ namespace CMS.Base
         /// configuration).
         /// </summary>
         /// <param name="pathData">The data for the current request path.</param>
-		public void parse(string pathData)
+		public void parse(HttpRequest request, string pathData)
 		{
-            parse(pathData, false);
+            parse(request, pathData, false);
 		}
-        private void parse(string pathData, bool usingDefaultUrl)
+        private void parse(HttpRequest request, string pathData, bool usingDefaultUrl)
         {
             // Check against null reference
             if (pathData == null)
@@ -74,6 +74,32 @@ namespace CMS.Base
             // Remove starting /
             if (pathData.Length > 0 && pathData[0] == '/')
                 pathData = pathData.Substring(1);
+            // Check against query-string (apache/linux)
+            {
+                int qsi = pathData.IndexOf('?');
+                if (qsi != -1)
+                {
+                    if (qsi > 1)
+                    {
+                        //string[] qsd = pathData.Substring(qsi).Split('&');
+                        pathData = pathData.Substring(0, qsi);
+                        //// Parse query-string data
+                        //int ei;
+                        //string k;
+                        //foreach (string s in qsd)
+                        //{
+                        //    ei = s.IndexOf('=');
+                        //    if (ei > 1 && ei != s.Length - 1 && request.QueryString[(k = s.Substring(0, ei))] == null)
+                        //        request.QueryString[k] = s.Substring(ei + 1);
+                        //}
+                    }
+                    else
+                    {
+                        pathData = Core.DefaultURL;
+                        usingDefaultUrl = true;
+                    }
+                }
+            }
             // Process tokens
             string[] exp = pathData.Split('/');
             if (exp.Length > 0)
@@ -89,11 +115,11 @@ namespace CMS.Base
                     if (usingDefaultUrl)
                         throw new Exception("Invalid default URL '" + pathData + "' specified for CMS!");
                     else
-                        parse(Core.DefaultURL, true);
+                        parse(request, Core.DefaultURL, true);
                 }
             }
             else
-                parse(Core.DefaultURL, true);
+                parse(request, Core.DefaultURL, true);
             // Build full-path
             StringBuilder sb = new StringBuilder();
             sb.Append(moduleHandler).Append("/");

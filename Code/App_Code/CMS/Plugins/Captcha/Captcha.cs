@@ -178,6 +178,8 @@ namespace CMS.Plugins
             // Begin rendering
             Bitmap temp = new Bitmap(width, height);
             Graphics gi = Graphics.FromImage(temp);
+            // -- Background
+            gi.FillRectangle(new SolidBrush(Color.White), 0, 0, width, height);
             // -- Initial strike-through
             pageCaptchaStrikeThrough(ref rand, strikesA, ref gi, width, height, 1, 2);
             // -- Render text

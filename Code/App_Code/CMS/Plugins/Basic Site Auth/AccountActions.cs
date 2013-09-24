@@ -296,11 +296,12 @@ namespace CMS.BasicSiteAuth
         /// <param name="user">The current user of the session.</param>
         /// <param name="currentPassword">The user's current password.</param>
         /// <param name="password">The new password; can be left null or empty.</param>
+        /// <param name="email">The e-mail of the account; can be left null.</param>
         /// <param name="secretQuestion">The new secret question; can be left null.</param>
         /// <param name="secretAnswer">The new secret answer; can be left null.</param>
         /// <param name="persistStatus">If the returned status of this operation is FailedUserPersist or FailedCurrentPassword, the persistence issue is outputted to this parameter.</param>
         /// <returns>The status of the operation.</returns>
-        public static AccountUpdate updateAccount(Data data, BasicSiteAuth bsa, User user, string currentPassword, string password, string secretQuestion, string secretAnswer, ref User.UserCreateSaveStatus persistStatus)
+        public static AccountUpdate updateAccount(Data data, BasicSiteAuth bsa, User user, string currentPassword, string password, string email, string secretQuestion, string secretAnswer, ref User.UserCreateSaveStatus persistStatus)
         {
             // Check the required parameters are valid
             if (data == null || user == null)
@@ -324,6 +325,9 @@ namespace CMS.BasicSiteAuth
                     persistStatus = up;
                     return AccountUpdate.FailedPassword;
                 }
+                // -- E-mail
+                if (email != null)
+                    user.Email = email;
                 // -- Secret question
                 if (secretQuestion != null)
                     user.SecretQuestion = secretQuestion;

@@ -310,7 +310,7 @@ namespace CMS.BasicSiteAuth
             User userRoot = new User();
             userRoot.Username = "root";
             userRoot.setPassword(this, "helloworld");
-            userRoot.Email = "admin@localhost";
+            userRoot.Email = "admin@localhost.com";
             userRoot.SecretQuestion = null;
             userRoot.SecretAnswer = null;
             userRoot.UserGroup = ugAdministrator;
@@ -875,11 +875,12 @@ namespace CMS.BasicSiteAuth
             string  currentPassword = data.Request.Form["password"],
                     newPassword = data.Request.Form["new_password"],
                     newPasswordConfirm = data.Request.Form["new_password_confirm"],
+                    email = data.Request.Form["email"],
                     secretQuestion = data.Request.Form["secret_question"],
                     secretAnswer = data.Request.Form["secret_answer"],
                     secretAnswerConfirm = data.Request.Form["secret_answer_confirm"];
-            if (currentPassword != null && newPassword != null && newPasswordConfirm != null && secretQuestion != null &&
-                secretAnswer != null && secretAnswerConfirm != null)
+            if (currentPassword != null && newPassword != null && newPasswordConfirm != null && email != null &&
+                secretQuestion != null && secretAnswer != null && secretAnswerConfirm != null)
             {
 #if CSRFP
                 if (!CSRFProtection.authenticated(data))
@@ -901,7 +902,7 @@ namespace CMS.BasicSiteAuth
                     {
                         // Attempt to update the account
                         User.UserCreateSaveStatus ps = User.UserCreateSaveStatus.Error_Regisration;
-                        AccountActions.AccountUpdate t = AccountActions.updateAccount(data, this, u, currentPassword, newPassword, secretQuestion, secretAnswer, ref ps);
+                        AccountActions.AccountUpdate t = AccountActions.updateAccount(data, this, u, currentPassword, newPassword, email, secretQuestion, secretAnswer, ref ps);
                         switch (t)
                         {
                             case AccountActions.AccountUpdate.Failed:
@@ -922,12 +923,16 @@ namespace CMS.BasicSiteAuth
                             case AccountActions.AccountUpdate.FailedUserPersist:
                                 switch (ps)
                                 {
+                                    case User.UserCreateSaveStatus.InvalidEmail_Format:
+                                        error = "Invalid e-mail address!"; break;
+                                    case User.UserCreateSaveStatus.InvalidEmail_Length:
+                                        error = "E-mail must be between " + Core.Settings[SETTINGS_EMAIL_MIN].get<int>() + " and " + Core.Settings[SETTINGS_EMAIL_MAX].get<int>() + " characters in length!"; break;
                                     case User.UserCreateSaveStatus.InvalidSecretQuestion_Length:
-                                        error = "Your secret question must be between x to x characters in length!"; break;
+                                        error = "Your secret question must be between " + Core.Settings[SETTINGS_SECRETQUESTION_MIN].get<int>() + " to " + Core.Settings[SETTINGS_SECRETQUESTION_MAX].get<int>() + " characters in length!"; break;
                                     case User.UserCreateSaveStatus.InvalidSecretAnswer_Length:
-                                        error = "Your secret answer must be between x to x characters in length!"; break;
+                                        error = "Your secret answer must be between " + Core.Settings[SETTINGS_SECRETANSWER_MIN].get<int>() + " to " + Core.Settings[SETTINGS_SECRETANSWER_MAX].get<int>() + " characters in length!"; break;
                                     default:
-                                        error = "An unknown issue occurred updating your secret question/answer, please try again later!"; break;
+                                        error = "An unknown issue occurred updating your account (" + ps.ToString() + "), please try again later!"; break;
                                 }
                                 break;
                             case AccountActions.AccountUpdate.Success:
@@ -940,6 +945,7 @@ namespace CMS.BasicSiteAuth
             data["Content"] = Core.Templates.get(data.Connector, "bsa/my_account");
             data["Title"] = "My Account";
             data["bsa_ma_username"] = HttpUtility.HtmlEncode(u.Username);
+            data["bsa_ma_email"] = HttpUtility.HtmlEncode(email ?? u.Email);
             data["bsa_ma_secret_question"] = HttpUtility.HtmlEncode(secretQuestion ?? u.SecretQuestion);
             data["bsa_ma_secret_answer"] = HttpUtility.HtmlEncode(secretAnswer ?? u.SecretAnswer);
             data["bsa_ma_secret_answer_confirm"] = HttpUtility.HtmlEncode(secretAnswerConfirm ?? u.SecretAnswer);

@@ -162,21 +162,21 @@
     <Content Include="LICENSE" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Code\App_Code\CMS\Plugins\Admin Panel\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\AdultCatFinder\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\AJAX Navigation\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Articles\content\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Articles\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\content\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Basic Site Auth\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Captcha\templates\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\Comments\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\CSS Stripper\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Files\content\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Files\templates\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\KeepAlive\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\RedirectHTTPS\" />
-    <Folder Include="Code\App_Code\CMS\Plugins\Tools\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\_ideas\Admin Panel\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\_ideas\AdultCatFinder\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\_ideas\AJAX Navigation\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\_ideas\Comments\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\_ideas\CSS Stripper\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\_ideas\KeepAlive\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\_ideas\RedirectHTTPS\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\_ideas\Tools\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Code\App_Code\CMS\Plugins\Basic Site Auth\Plugin.config" />

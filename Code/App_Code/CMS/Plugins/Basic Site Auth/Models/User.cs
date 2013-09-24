@@ -124,6 +124,18 @@ namespace CMS.BasicSiteAuth.Models
             /// </summary>
             Success
         };
+        private enum Fields
+        {
+            None = 0,
+            Username = 1,
+            Password = 2,
+            Email = 4,
+            SecretQuestion = 8,
+            SecretAnswer = 16,
+            UserGroup = 32,
+            Registered = 64,
+            PendingDeletion = 128
+        }
         // Fields **************************************************************************************************
         int         userID;             // The identifier of the user.
         string      username,           // The username of the user.
@@ -135,12 +147,17 @@ namespace CMS.BasicSiteAuth.Models
         UserGroup   userGroup;          // The user's role/group.
         DateTime    registered;         // The date and time of when the user registered.
         bool        pendingDeletion;    // Indicates if the user is pending deletion.
-        bool        persisted,          // Indicates if this model has been persisted to the database.
-                    modified;           // Indicates if the data has been modified.
+        bool        persisted;          // Indicates if this model has been persisted to the database.
+        Fields      modified;           // Indicates which fields have been modified.
         // Methods - Constructors **********************************************************************************
         public User()
         {
-            modified = persisted = false;
+            this.persisted = this.pendingDeletion = false;
+            this.modified = Fields.None;
+            this.userID = -1;
+            this.username = this.password = this.passwordSalt = this.email = this.secretQuestion = this.secretAnswer = null;
+            this.userGroup = null;
+            this.registered = DateTime.MinValue;
         }
         // Methods *************************************************************************************************
         /// <summary>
@@ -160,32 +177,35 @@ namespace CMS.BasicSiteAuth.Models
         /// <returns>True if authenticated, false if authentication failed.</returns>
         public AuthenticationStatus authenticate(BasicSiteAuth bsa, string password, Data requestData, ref UserBan ban)
         {
-            // Check the user has not exceeded the maximum amount of authentication attempts
-            if (AuthFailedAttempt.isIpBanned(requestData.Connector, requestData.Request.UserHostAddress))
-                return AuthenticationStatus.FailedTempBanned;
-            // Check the password is correct
-            else if (!validPassword(bsa, password))
+            lock (this)
             {
-                // Log the failed attempt
-                AccountEvent.create(requestData.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__INCORRECT_AUTH__UUID, DateTime.Now, userID, requestData.Request.UserHostAddress, SettingsNode.DataType.String, requestData.Request.UserAgent, SettingsNode.DataType.String);
-                AuthFailedAttempt.create(requestData, AuthFailedAttempt.AuthType.Login);
-                return AuthenticationStatus.FailedIncorrect;
-            }
-            // Check the user is not banned
-            UserBan ub = UserBan.getLatestBan(requestData.Connector, this);
-            if (ub != null)
-            {
-                ban = ub;
-                return AuthenticationStatus.FailedBanned;
-            }
-            // Check the user-group does not disable the user from logging-in or if the account is pending deletion
-            else if (!userGroup.Login || pendingDeletion)
-                return AuthenticationStatus.FailedDisabled;
-            else
-            {
-                // Log the success
-                AccountEvent.create(requestData.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__AUTH__UUID, DateTime.Now, userID, requestData.Request.UserHostAddress, SettingsNode.DataType.String, requestData.Request.UserAgent, SettingsNode.DataType.String);
-                return AuthenticationStatus.Success;
+                // Check the user has not exceeded the maximum amount of authentication attempts
+                if (AuthFailedAttempt.isIpBanned(requestData.Connector, requestData.Request.UserHostAddress))
+                    return AuthenticationStatus.FailedTempBanned;
+                // Check the password is correct
+                else if (!validPassword(bsa, password))
+                {
+                    // Log the failed attempt
+                    AccountEvent.create(requestData.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__INCORRECT_AUTH__UUID, DateTime.Now, userID, requestData.Request.UserHostAddress, SettingsNode.DataType.String, requestData.Request.UserAgent, SettingsNode.DataType.String);
+                    AuthFailedAttempt.create(requestData, AuthFailedAttempt.AuthType.Login);
+                    return AuthenticationStatus.FailedIncorrect;
+                }
+                // Check the user is not banned
+                UserBan ub = UserBan.getLatestBan(requestData.Connector, this);
+                if (ub != null)
+                {
+                    ban = ub;
+                    return AuthenticationStatus.FailedBanned;
+                }
+                // Check the user-group does not disable the user from logging-in or if the account is pending deletion
+                else if (!userGroup.Login || pendingDeletion)
+                    return AuthenticationStatus.FailedDisabled;
+                else
+                {
+                    // Log the success
+                    AccountEvent.create(requestData.Connector, bsa, BasicSiteAuth.ACCOUNT_EVENT__AUTH__UUID, DateTime.Now, userID, requestData.Request.UserHostAddress, SettingsNode.DataType.String, requestData.Request.UserAgent, SettingsNode.DataType.String);
+                    return AuthenticationStatus.Success;
+                }
             }
         }
         /// <summary>
@@ -196,9 +216,12 @@ namespace CMS.BasicSiteAuth.Models
         /// <returns></returns>
         public bool validPassword(BasicSiteAuth bsa, string password)
         {
-            if (password == null || password.Length == 0)
-                return false;
-            return Utils.generateHash(bsa, password, passwordSalt) == this.password;
+            lock (this)
+            {
+                if (password == null || password.Length == 0)
+                    return false;
+                return Utils.generateHash(bsa, password, passwordSalt) == this.password;
+            }
         }
         // Mehods - Database Persistence ***************************************************************************
         /// <summary>
@@ -393,15 +416,25 @@ namespace CMS.BasicSiteAuth.Models
                     }
                     // Compile SQL
                     SQLCompiler sql = new SQLCompiler();
-                    sql["username"] = username;
-                    sql["password"] = password;
-                    sql["password_salt"] = passwordSalt;
-                    sql["email"] = email;
-                    sql["secret_question"] = secretQuestion;
-                    sql["secret_answer"] = secretAnswer;
-                    sql["groupid"] = userGroup.GroupID.ToString();
-                    sql["datetime_register"] = registered;
-                    sql["pending_deletion"] = pendingDeletion ? "1" : "0";
+                    if((modified & Fields.Username) == Fields.Username)
+                        sql["username"] = username;
+                    if ((modified & Fields.Password) == Fields.Password)
+                    {
+                        sql["password"] = password;
+                        sql["password_salt"] = passwordSalt;
+                    }
+                    if((modified & Fields.Email) == Fields.Email)
+                        sql["email"] = email;
+                    if((modified & Fields.SecretQuestion) == Fields.SecretQuestion)
+                        sql["secret_question"] = secretQuestion;
+                    if((modified & Fields.SecretAnswer) == Fields.SecretAnswer)
+                        sql["secret_answer"] = secretAnswer;
+                    if((modified & Fields.UserGroup) == Fields.UserGroup)
+                        sql["groupid"] = userGroup.GroupID.ToString();
+                    if((modified & Fields.Registered) == Fields.Registered)
+                        sql["datetime_register"] = registered;
+                    if((modified & Fields.PendingDeletion) == Fields.PendingDeletion)
+                        sql["pending_deletion"] = pendingDeletion ? "1" : "0";
                     // Execute SQL
                     if (persisted)
                     {
@@ -415,7 +448,7 @@ namespace CMS.BasicSiteAuth.Models
                         persisted = true;
                     }
                     // Success! Reset flags and return status
-                    modified = false;
+                    modified = Fields.None;
                     return UserCreateSaveStatus.Success;
                 }
                 catch (DuplicateEntryException ex)
@@ -438,11 +471,14 @@ namespace CMS.BasicSiteAuth.Models
         /// <param name="conn">Database connector.</param>
         public void remove(Connector conn)
         {
-            PreparedStatement ps = new PreparedStatement("DELETE FROM bsa_users WHERE userid=?userid;");
-            ps["userid"] = userID;
-            conn.queryExecute(ps);
-            persisted = false;
-            modified = true;
+            lock (this)
+            {
+                PreparedStatement ps = new PreparedStatement("DELETE FROM bsa_users WHERE userid=?userid;");
+                ps["userid"] = userID;
+                conn.queryExecute(ps);
+                persisted = false;
+                modified |= Fields.None;
+            }
         }
         // Methods - Mutators **************************************************************************************
         /// <summary>
@@ -455,16 +491,20 @@ namespace CMS.BasicSiteAuth.Models
         /// <returns>The status of changing the password - either Success, InvalidPassword_Length or InvalidPassword_Security.</returns>
         public UserCreateSaveStatus setPassword(BasicSiteAuth bsa, string newPassword)
         {
-            if (newPassword == null || newPassword.ToLower() == "password" || newPassword == "123456" || newPassword == "12345678" || newPassword == "abc123" || newPassword == "qwerty")
-                return UserCreateSaveStatus.InvalidPassword_Security;
-            else if (newPassword.Length < Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() || newPassword.Length > Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>())
-                return UserCreateSaveStatus.InvalidPassword_Length;
-            else
+            lock (this)
             {
-                Random rand = new Random((int)DateTime.Now.Ticks);
-                this.passwordSalt = BaseUtils.generateRandomString(rand.Next(BasicSiteAuth.BSA_UNIQUE_USER_HASH_MIN, BasicSiteAuth.BSA_UNIQUE_USER_HASH_MAX));
-                this.password = Utils.generateHash(bsa, newPassword, this.passwordSalt);
-                return UserCreateSaveStatus.Success;
+                if (newPassword == null || newPassword.ToLower() == "password" || newPassword == "123456" || newPassword == "12345678" || newPassword == "abc123" || newPassword == "qwerty")
+                    return UserCreateSaveStatus.InvalidPassword_Security;
+                else if (newPassword.Length < Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MIN].get<int>() || newPassword.Length > Core.Settings[BasicSiteAuth.SETTINGS_PASSWORD_MAX].get<int>())
+                    return UserCreateSaveStatus.InvalidPassword_Length;
+                else
+                {
+                    Random rand = new Random((int)DateTime.Now.Ticks);
+                    this.passwordSalt = BaseUtils.generateRandomString(rand.Next(BasicSiteAuth.BSA_UNIQUE_USER_HASH_MIN, BasicSiteAuth.BSA_UNIQUE_USER_HASH_MAX));
+                    this.password = Utils.generateHash(bsa, newPassword, this.passwordSalt);
+                    this.modified |= Fields.Password;
+                    return UserCreateSaveStatus.Success;
+                }
             }
         }
         // Methods - Properties ************************************************************************************
@@ -489,8 +529,14 @@ namespace CMS.BasicSiteAuth.Models
             }
             set
             {
-                modified = true;
-                username = value;
+                lock (this)
+                {
+                    if (username != value)
+                    {
+                        modified |= Fields.Username;
+                        username = value;
+                    }
+                }
             }
         }
         /// <summary>
@@ -524,8 +570,14 @@ namespace CMS.BasicSiteAuth.Models
             }
             set
             {
-                modified = true;
-                email = value;
+                lock (this)
+                {
+                    if (email != value)
+                    {
+                        modified |= Fields.Email;
+                        email = value;
+                    }
+                }
             }
         }
         /// <summary>
@@ -539,8 +591,14 @@ namespace CMS.BasicSiteAuth.Models
             }
             set
             {
-                modified = true;
-                secretQuestion = value;
+                lock (this)
+                {
+                    if (secretQuestion != value)
+                    {
+                        modified |= Fields.SecretQuestion;
+                        secretQuestion = value;
+                    }
+                }
             }
         }
         /// <summary>
@@ -554,8 +612,14 @@ namespace CMS.BasicSiteAuth.Models
             }
             set
             {
-                modified = true;
-                secretAnswer = value;
+                lock (this)
+                {
+                    if (secretAnswer != value)
+                    {
+                        modified |= Fields.SecretAnswer;
+                        secretAnswer = value;
+                    }
+                }
             }
         }
         /// <summary>
@@ -569,8 +633,14 @@ namespace CMS.BasicSiteAuth.Models
             }
             set
             {
-                modified = true;
-                userGroup = value;
+                lock (this)
+                {
+                    if (userGroup != value)
+                    {
+                        modified |= Fields.UserGroup;
+                        userGroup = value;
+                    }
+                }
             }
         }
         /// <summary>
@@ -584,8 +654,14 @@ namespace CMS.BasicSiteAuth.Models
             }
             set
             {
-                registered = value;
-                modified = true;
+                lock (this)
+                {
+                    if (registered != value)
+                    {
+                        modified |= Fields.Registered;
+                        registered = value;
+                    }
+                }
             }
         }
         /// <summary>
@@ -599,8 +675,14 @@ namespace CMS.BasicSiteAuth.Models
             }
             set
             {
-                pendingDeletion = value;
-                modified = true;
+                lock (this)
+                {
+                    if (pendingDeletion != value)
+                    {
+                        pendingDeletion = value;
+                        modified |= Fields.PendingDeletion;
+                    }
+                }
             }
         }
         /// <summary>
@@ -620,7 +702,7 @@ namespace CMS.BasicSiteAuth.Models
         {
             get
             {
-                return modified;
+                return modified != Fields.None;
             }
         }
     }

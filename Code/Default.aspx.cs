@@ -49,7 +49,7 @@ public partial class _Default : System.Web.UI.Page
             StringBuilder messageOutput = new StringBuilder();
             CMS.InstallScripts.Quick script = new CMS.InstallScripts.Quick();
             script.install(ref messageOutput);
-            Response.Write(messageOutput.ToString());
+            Response.Write(messageOutput.Replace("\r", string.Empty).Replace("\n", "<br />").ToString());
             return;
         }
 #endif
@@ -62,7 +62,7 @@ public partial class _Default : System.Web.UI.Page
 				Response.Write("The website failed to start; error-message: '" + HttpUtility.HtmlEncode(Core.ErrorMessage) + "'.");
 				break;
 			case Core.CoreState.NotInstalled:
-				Response.Redirect("/install");
+                Response.Write("CMS not installed; please visit <a href=\"/install\">/install</a>.");
 				break;
             case Core.CoreState.Stopping:
 			case Core.CoreState.Stopped:
@@ -75,6 +75,7 @@ public partial class _Default : System.Web.UI.Page
 				Response.Write("Unknown website/core state; website is not running!");
 				break;
 			}
+            return;
 		}
 		else
 		{
