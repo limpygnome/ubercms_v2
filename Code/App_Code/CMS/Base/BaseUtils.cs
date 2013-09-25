@@ -360,12 +360,36 @@ namespace CMS.Base
             // Link the file
             header.Append("<script src=\"").Append(webPath).AppendLine("\"></script>");
         }
+        /// <summary>
+        /// Appends header data (not uniquely).
+        /// </summary>
+        /// <param name="headerData">Header data to be appended.</param>
+        /// <param name="data">Data object for the current request.</param>
         public static void headerAppend(string headerData, ref Data data)
         {
             if (!data.isKeySet("Header"))
                 data["Header"] = headerData;
             else
                 data["Header"] += "\n" + headerData;
+        }
+        /// <summary>
+        /// Appends unique header data.
+        /// </summary>
+        /// <param name="webPath">Path to CSS file.</param>
+        /// <param name="headerData">The header data to be appended.</param>
+        /// <param name="data">Data object for the current request.</param>
+        /// <param name="header">The place to output header data.</param>
+        /// <param name="uniqueKey">A unique string to identify the header-data being added e.g. a name or hash.</param>
+        public static void headerAppend(string headerData, ref Data data, ref StringBuilder header, string uniqueKey)
+        {
+            // Check it has already not been linked
+            string key = "__header_raw_" + uniqueKey;
+            if (data.isKeySet(key))
+                return;
+            else
+                data.setFlag(key);
+            // Link the data
+            header.Append(headerData);
         }
         /// <summary>
         /// Returns the human-readable format of a date-time string, which converts a date into the nearest time

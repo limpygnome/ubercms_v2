@@ -721,14 +721,14 @@ namespace CMS.Plugins.Files
         {
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "files/render_image"));
             buffer.Replace("<FILENAME>", HttpUtility.HtmlEncode(file.Filename));
-            buffer.Replace("<URL>", HttpUtility.HtmlEncode("/files/item" + path + "?action=stream"));
+            buffer.Replace("<URL>", HttpUtility.HtmlEncode("/files/item" + path));
             return buffer.ToString();
         }
         public static string fileRender_videoMP4(Data data, Directory dir, File file, string path, string pathRaw, string options)
         {
             StringBuilder buffer = new StringBuilder(Core.Templates.get(data.Connector, "files/render_video_mp4"));
             buffer.Replace("<FILENAME>", HttpUtility.HtmlEncode(file.Filename));
-            buffer.Replace("<URL>", HttpUtility.HtmlEncode("/files/item" + path + "?action=stream"));
+            buffer.Replace("<URL>", HttpUtility.HtmlEncode("/files/item" + path));
             return buffer.ToString();
         }
         // Methods - Static ********************************************************************************************
@@ -769,6 +769,21 @@ namespace CMS.Plugins.Files
             string[] parts = path.Split('/');
             foreach (string p in parts)
                 buffer.Append(HttpUtility.UrlEncode(p)).Append('/');
+            if (buffer.Length > 0)
+                buffer.Remove(buffer.Length - 1, 1);
+            return buffer.ToString();
+        }
+		/// <summary>
+        /// Decodes a url-encoded path to raw path.
+        /// </summary>
+        /// <param name="path">The url-encoded relative path.</param>
+        /// <returns>Raw relative path.</returns>
+        public static string urlDecodePath(string path)
+        {
+            StringBuilder buffer = new StringBuilder();
+            string[] parts = path.Split('/');
+            foreach (string p in parts)
+                buffer.Append(HttpUtility.UrlDecode(p)).Append('/');
             if (buffer.Length > 0)
                 buffer.Remove(buffer.Length - 1, 1);
             return buffer.ToString();

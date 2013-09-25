@@ -128,8 +128,11 @@
     <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\providers\AudioVideo.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\providers\Code.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\providers\Escaping.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\providers\Navigation.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\providers\Text.cs" />
     <Compile Include="Code\App_Code\CMS\Plugins\Text Renderer\TextRenderer.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\TR - MathJax\providers\MathJax.cs" />
+    <Compile Include="Code\App_Code\CMS\Plugins\TR - MathJax\Main.cs" />
     <Compile Include="Code\Default.aspx.cs">
       <DependentUpon>Code\Default.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -169,6 +172,7 @@
     <Folder Include="Code\App_Code\CMS\Plugins\Captcha\templates\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Files\content\" />
     <Folder Include="Code\App_Code\CMS\Plugins\Files\templates\" />
+    <Folder Include="Code\App_Code\CMS\Plugins\TR - MathJax\content\" />
     <Folder Include="Code\App_Code\CMS\Plugins\_ideas\Admin Panel\" />
     <Folder Include="Code\App_Code\CMS\Plugins\_ideas\AdultCatFinder\" />
     <Folder Include="Code\App_Code\CMS\Plugins\_ideas\AJAX Navigation\" />
@@ -202,6 +206,7 @@
     <None Include="Code\App_Code\CMS\Plugins\Captcha\files.list" />
     <None Include="Code\App_Code\CMS\Plugins\Files\files.list" />
     <None Include="Code\App_Code\CMS\Plugins\Text Renderer\files.list" />
+    <Content Include="Code\App_Code\CMS\Plugins\TR - MathJax\Plugin.config" />
     <None Include="Code\installer\files.list" />
   </ItemGroup>
 </Project>

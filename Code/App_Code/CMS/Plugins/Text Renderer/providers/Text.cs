@@ -47,14 +47,28 @@ namespace CMS.Plugins.TRProviders
                 text.Replace("\r", string.Empty); // Incase we're running on Windows
                 // -- Exclude [nobreaks]...[/nobreaks] regions
                 // -- -- Replace \n with <brnb /> (our own entity we'll replace later with \n again)
-                const string replaceChars = "<brnb />";
+                const string replaceChars = "<brnb--/>";
                 foreach (Match m in Regex.Matches(text.ToString(), @"\[nobreaks\](.*?)\[\/nobreaks\]", RegexOptions.Singleline))
                     text.Replace(m.Value, m.Groups[1].Value.Replace("\n", replaceChars));
+				// Replace h<int>,table,div,blockquote,ul,ol,pre with paragraph
+				// -- Start
+				text.Replace("<pre", "</p><pre").Replace("</pre>", "</pre><p>");
+				text.Replace("<h1", "</p><h1").Replace("</h1>", "</h1><p>");
+				text.Replace("<h2", "</p><h2").Replace("</h2>", "</h2><p>");
+				text.Replace("<h3", "</p><h3").Replace("</h3>", "</h3><p>");
+				text.Replace("<h4", "</p><h4").Replace("</h4>", "</h4><p>");
+				text.Replace("<h5", "</p><h5").Replace("</h5>", "</h5><p>");
+				text.Replace("<h6", "</p><h6").Replace("</h6>", "</h6><p>");
+				text.Replace("<div", "</p><div").Replace("</div>", "</div><p>");
+				text.Replace("<blockquote", "</p><blockquote").Replace("</blockquote>", "</blockquote><p>");
+				text.Replace("<ul", "</p><ul").Replace("</ul>", "</ul><p>");
+				text.Replace("<ol", "</p><ol").Replace("</ol>", "</ol><p>");
+				// -- End
                 // Wrap areas with \n\n with paragraph tags
                 text.Insert(0, "<p>");
                 text.Append("</p>");
                 // Remove new lines
-                text.Replace(">\n", ">" + replaceChars).Replace("]\n", "]").Replace("\n[/", "[/").Replace("\n\n", "</p><p>").Replace("\n", "<br />").Replace(replaceChars, "\n");
+                text.Replace(">\n", ">" + replaceChars).Replace("]\n", "]").Replace("\n[/", "[/").Replace("\n\n", "</p><p>").Replace(replaceChars, "\n");
             }
             // Text formatting
             if ((renderTypes & RenderType.TextFormatting) == RenderType.TextFormatting)
@@ -100,11 +114,16 @@ namespace CMS.Plugins.TRProviders
                 foreach (Match m in Regex.Matches(text.ToString(), @"\[center\](.*?)\[\/center\]", RegexOptions.Singleline))
                     text.Replace(m.Value, "</p><p class=\"tac\">" + m.Groups[1].Value + "</p><p>");
                 // Hyper-link
+				// - Full URL with custom text
                 foreach (Match m in Regex.Matches(text.ToString(), @"\[url=([a-zA-Z0-9]+)\:\/\/([a-zA-Z0-9\/\._\-\=\?]+)\](.*?)\[\/url\]", RegexOptions.Singleline))
                     text.Replace(m.Value, "<a href=\"" + m.Groups[1].Value + "://" + m.Groups[2].Value + "\">" + m.Groups[3].Value + "</a>");
-                foreach (Match m in Regex.Matches(text.ToString(), @"\[url\]([a-zA-Z0-9]+)\:\/\/([a-zA-Z0-9\/\._\-\=\?]+)\[\/url\]", RegexOptions.Singleline))
+                // -- Full URL
+				foreach (Match m in Regex.Matches(text.ToString(), @"\[url\]([a-zA-Z0-9]+)\:\/\/([a-zA-Z0-9\/\._\-\=\?]+)\[\/url\]", RegexOptions.Singleline))
                     text.Replace(m.Value, "<a href=\"" + m.Groups[1].Value + "://" + m.Groups[2].Value + "\">" + m.Groups[1].Value + "://" + m.Groups[2].Value + "</a>");
-                // E-mail hyper-link
+                // -- Relative URL with custom text
+				foreach (Match m in Regex.Matches(text.ToString(), @"\[url=\/([a-zA-Z0-9\/\._\-\=\?\+\%]+)\](.*?)\[\/url\]", RegexOptions.Singleline))
+                    text.Replace(m.Value, "<a href=\"/" + m.Groups[1].Value + "\">" + m.Groups[2].Value + "</a>");
+				// E-mail hyper-link
                 foreach (Match m in Regex.Matches(text.ToString(), @"\[email\]([a-zA-Z0-9\.@_\-]+)\[\/email\]", RegexOptions.Singleline))
                     text.Replace(m.Value, "<a href=\"mailto://" + m.Groups[1].Value + "\">" + m.Groups[1].Value + "</a>");
                 // Lists
@@ -131,7 +150,7 @@ namespace CMS.Plugins.TRProviders
                 // -- Remove empty paragraph blocks
                 text.Replace("<p></p>", string.Empty);
                 // -- Remove any paragraphs starting with a line-break
-                text.Replace("<p><br />", "<p>");
+                text.Replace("<p><br />", "<p>").Replace("<br /></p>", "</p>");
             }
         }
         private static void blockquote(ref StringBuilder text)

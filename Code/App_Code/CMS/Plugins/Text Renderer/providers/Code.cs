@@ -20,18 +20,18 @@
  *                      2013-09-23      Finished initial class.
  * 
  * *********************************************************************************************************************
- * A text-renderer provider code content.
+ * A text-renderer provider for code content.
  * *********************************************************************************************************************
  */
+using CMS.Base;
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
-using CMS.Base;
 
 namespace CMS.Plugins.TRProviders
 {
     /// <summary>
-    /// A text-renderer provider code content.
+    /// A text-renderer provider for code content.
     /// </summary>
     public class Code : CMS.Plugins.RenderProvider
     {
@@ -67,8 +67,8 @@ namespace CMS.Plugins.TRProviders
                 // Strip to avoid re-rendering of code by other providers by accident
                 Escaping.strip(ref code);
                 // Append start and end tags
-                code.Insert(0, "<pre class=\"brush: " + m.Groups[1].Value + "\">");
-                code.Append("</pre>");
+                code.Insert(0, "<div class=\"code\"><pre class=\"brush: " + m.Groups[1].Value + "\">");
+                code.Append("</pre></div>");
                 // Include language core
                 string path;
                 switch (m.Groups[1].Value)

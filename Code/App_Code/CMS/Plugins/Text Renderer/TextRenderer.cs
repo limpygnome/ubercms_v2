@@ -54,10 +54,17 @@ namespace CMS.Plugins
                 return false;
             }
             // -- Text
-            temp = new TRProviders.Text(UUID.parse("C42FAE9D-3E0C-4D4D-8D4F-F2CAF72FB1C6"), this.UUID, "Text Formatting", "General BBCode text-formatting.", true, int.MaxValue / 8);
+            temp = new TRProviders.Text(UUID.parse("C42FAE9D-3E0C-4D4D-8D4F-F2CAF72FB1C6"), this.UUID, "Text Formatting", "General BBCode text-formatting.", true, -1);
             if (!temp.save(this, conn))
             {
                 messageOutput.AppendLine("Failed to create 'Text Formatting' text renderer provider!");
+                return false;
+            }
+            // -- Navigation
+            temp = new TRProviders.Navigation(UUID.parse("A8777D66-E940-476C-ACD6-6D4AEDBA89CD"), this.UUID, "Navigation", "Navigation features and additions.", true, 0);
+            if (!temp.save(this, conn))
+            {
+                messageOutput.AppendLine("Failed to create 'Navigation' text renderer provider!");
                 return false;
             }
             return true;

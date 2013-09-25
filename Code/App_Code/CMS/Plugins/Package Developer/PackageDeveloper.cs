@@ -74,6 +74,9 @@ namespace CMS.Plugins
         }
         public override bool handler_handleRequest(Data data)
         {
+#if !DEBUG
+            return false;
+#endif
             switch (data.PathInfo[1])
             {
                 case null:

@@ -71,19 +71,32 @@ namespace CMS.Plugins.Files
         // Methods *****************************************************************************************************
         private void embed(Data data, ref StringBuilder text, Match m, string path, string options)
         {
+			path = Main.urlDecodePath(path);
             File f;
             Directory d;
-            // Load file and directory
-            if ((f = File.load(data.Connector, path)) != null && (d = Directory.load(data.Connector, f.DirectoryID)) != null)
+            // Load file
+            if ((f = File.load(data.Connector, path)) != null)
             {
-                // Render embed
-                if (f.Extension != null && f.Extension.Renderer != null)
-                {
-                    string obj = (string)f.Extension.Renderer.Invoke(null, new object[] { data, d, f, Main.urlEncodePath(path), path, options });
-                    if (obj != null)
-                        text.Replace(m.Value, obj);
-                }
+				// Load directory
+				if((d = Directory.load(data.Connector, f.DirectoryID)) != null)
+				{
+					// Render embed
+					if (f.Extension != null && f.Extension.Renderer != null)
+					{
+						string obj = (string)f.Extension.Renderer.Invoke(null, new object[] { data, d, f, Main.urlEncodePath(path), path, options });
+						if (obj != null)
+							text.Replace(m.Value, obj);
+						else
+							text.Replace(m.Value, "<b>Extension handler is unable to embed file at '" + path + "'!</b>");
+					}
+					else
+						text.Replace(m.Value, "<b>No extension handler available for embedding file at '" + path + "'!</b>");
+				}
+				else
+					text.Replace(m.Value, "<b>Could not embed file at '" + path + "' - directory could not be loaded!</b>");	
             }
+			else
+				text.Replace(m.Value, "<b>Could not embed file at '" + path + "' - file not found!</b>");				
         }
     }
 }
