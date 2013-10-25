@@ -35,6 +35,8 @@ namespace CMS.Plugins.TRProviders
     /// </summary>
     public class Text : CMS.Plugins.RenderProvider
     {
+		// Page-breaks/new-lines should be preserved by replacing them with the following entity instead.
+		public const string replaceChars = "<brnb--/>";
         // Methods - Constructors **************************************************************************************
         public Text(UUID uuid, UUID uuidPlugin, string title, string description, bool enabled, int priority)
             : base(uuid, uuidPlugin, title, description, enabled, priority) { }
@@ -47,7 +49,6 @@ namespace CMS.Plugins.TRProviders
                 text.Replace("\r", string.Empty); // Incase we're running on Windows
                 // -- Exclude [nobreaks]...[/nobreaks] regions
                 // -- -- Replace \n with <brnb /> (our own entity we'll replace later with \n again)
-                const string replaceChars = "<brnb--/>";
                 foreach (Match m in Regex.Matches(text.ToString(), @"\[nobreaks\](.*?)\[\/nobreaks\]", RegexOptions.Singleline))
                     text.Replace(m.Value, m.Groups[1].Value.Replace("\n", replaceChars));
 				// Replace h<int>,table,div,blockquote,ul,ol,pre with paragraph

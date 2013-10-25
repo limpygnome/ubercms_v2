@@ -62,10 +62,10 @@ namespace CMS.Plugins.TRProviders
             foreach (Match m in Regex.Matches(text.ToString(), @"\[code=(applescript|as3|bash|coldfusion|cpp|csharp|c#|css|delphi|diff|erlang|groovy|java|javafx|jscript|perl|php|plain|powershell|python|ruby|sass|scala|sql|vb|xml)\](.*?)\[\/code\]", RegexOptions.Singleline))
             {
                 code = new StringBuilder(m.Groups[2].Value);
-                // Replace line breaks
-                code.Replace("<br />", "\n");
                 // Strip to avoid re-rendering of code by other providers by accident
                 Escaping.strip(ref code);
+				// Preserve line-breaks
+                code.Replace("\n", CMS.Plugins.TRProviders.Text.replaceChars);
                 // Append start and end tags
                 code.Insert(0, "<div class=\"code\"><pre class=\"brush: " + m.Groups[1].Value + "\">");
                 code.Append("</pre></div>");
