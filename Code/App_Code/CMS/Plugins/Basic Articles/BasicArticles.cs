@@ -18,6 +18,8 @@
  * 
  *      Change-Log:
  *                      2013-09-23      Finished initial class.
+ *						2013-10-25		Administrators and moderators no longer need to fill-in a captcha when
+ *										editing articles.
  * 
  * *********************************************************************************************************************
  * A plugin which allows multiple articles/threads for creating, editing and deleting content; useful as a wikipedia,
@@ -309,7 +311,7 @@ namespace CMS.BasicArticles
                         error = "Invalid request; please try again!";
 #endif
 #if CAPTCHA
-                    if (error == null && !Captcha.isCaptchaCorrect(data))
+                    if (error == null && (!Captcha.isCaptchaCorrect(data) && !(user.UserGroup.Administrator || user.UserGroup.Moderator)))
                         error = "Invalid captcha verification code!";
 #endif
                     // Check no errors have occurred thus far with security/validation

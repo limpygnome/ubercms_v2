@@ -18,6 +18,7 @@
  * 
  *      Change-Log:
  *                      2013-09-23      Finished initial class.
+ *						2013-10-25		General bug-fixes with paragraph tags and line-breaks, made replaceChars public.
  * 
  * *********************************************************************************************************************
  * A text-renderer provider for common and general text markup features.
@@ -51,25 +52,6 @@ namespace CMS.Plugins.TRProviders
                 // -- -- Replace \n with <brnb /> (our own entity we'll replace later with \n again)
                 foreach (Match m in Regex.Matches(text.ToString(), @"\[nobreaks\](.*?)\[\/nobreaks\]", RegexOptions.Singleline))
                     text.Replace(m.Value, m.Groups[1].Value.Replace("\n", replaceChars));
-				// Replace h<int>,table,div,blockquote,ul,ol,pre with paragraph
-				// -- Start
-				text.Replace("<pre", "</p><pre").Replace("</pre>", "</pre><p>");
-				text.Replace("<h1", "</p><h1").Replace("</h1>", "</h1><p>");
-				text.Replace("<h2", "</p><h2").Replace("</h2>", "</h2><p>");
-				text.Replace("<h3", "</p><h3").Replace("</h3>", "</h3><p>");
-				text.Replace("<h4", "</p><h4").Replace("</h4>", "</h4><p>");
-				text.Replace("<h5", "</p><h5").Replace("</h5>", "</h5><p>");
-				text.Replace("<h6", "</p><h6").Replace("</h6>", "</h6><p>");
-				text.Replace("<div", "</p><div").Replace("</div>", "</div><p>");
-				text.Replace("<blockquote", "</p><blockquote").Replace("</blockquote>", "</blockquote><p>");
-				text.Replace("<ul", "</p><ul").Replace("</ul>", "</ul><p>");
-				text.Replace("<ol", "</p><ol").Replace("</ol>", "</ol><p>");
-				// -- End
-                // Wrap areas with \n\n with paragraph tags
-                text.Insert(0, "<p>");
-                text.Append("</p>");
-                // Remove new lines
-                text.Replace(">\n", ">" + replaceChars).Replace("]\n", "]").Replace("\n[/", "[/").Replace("\n\n", "</p><p>").Replace(replaceChars, "\n");
             }
             // Text formatting
             if ((renderTypes & RenderType.TextFormatting) == RenderType.TextFormatting)
@@ -147,11 +129,34 @@ namespace CMS.Plugins.TRProviders
                     text.Replace(m.Value, "<a title=\"Click to open the image...\" href=\"" + m.Groups[2].Value + "://" + m.Groups[3].Value + "\"><img style=\"width: " + m.Groups[1].Value + "; height: " + m.Groups[1].Value + ";\" src=\"" + m.Groups[2].Value + "://" + m.Groups[3].Value + "\" /></a>");
                 foreach (Match m in Regex.Matches(text.ToString(), @"\[img=([0-9]{4}px|[0-9]{3}px|[0-9]{2}px|[0-9]{1}px|[0-9]{4}em|[0-9]{3}em|[0-9]{2}em|[0-9]{1}em),([0-9]{4}px|[0-9]{3}px|[0-9]{2}px|[0-9]{1}px|[0-9]{4}em|[0-9]{3}em|[0-9]{2}em|[0-9]{1}em)\]([a-zA-Z0-9]+)\:\/\/([a-zA-Z0-9\/\._\-\+]+)\[\/img\]", RegexOptions.Singleline))
                     text.Replace(m.Value, "<a title=\"Click to open the image...\" href=\"" + m.Groups[3].Value + "://" + m.Groups[4].Value + "\"><img style=\"width: " + m.Groups[1].Value + "; height: " + m.Groups[2].Value + ";\" src=\"" + m.Groups[3].Value + "://" + m.Groups[4].Value + "\" /></a>");
-                // Finish line break related things
+                
+				// Finish line break related things
+				// -- Replace h<int>,table,div,blockquote,ul,ol,pre with paragraph
+				text.Replace("<pre", "</p><pre").Replace("</pre>", "</pre><p>");
+				text.Replace("<h1", "</p><h1").Replace("</h1>", "</h1><p>");
+				text.Replace("<h2", "</p><h2").Replace("</h2>", "</h2><p>");
+				text.Replace("<h3", "</p><h3").Replace("</h3>", "</h3><p>");
+				text.Replace("<h4", "</p><h4").Replace("</h4>", "</h4><p>");
+				text.Replace("<h5", "</p><h5").Replace("</h5>", "</h5><p>");
+				text.Replace("<h6", "</p><h6").Replace("</h6>", "</h6><p>");
+				text.Replace("<div", "</p><div").Replace("</div>", "</div><p>");
+				text.Replace("<blockquote", "</p><blockquote").Replace("</blockquote>", "</blockquote><p>");
+				text.Replace("<ul", "</p><ul").Replace("</ul>", "</ul><p>");
+				text.Replace("<ol", "</p><ol").Replace("</ol>", "</ol><p>");
+                // -- Wrap areas with \n\n with paragraph tags
+                text.Insert(0, "<p>");
+                text.Append("</p>");
+                // -- Remove new lines
+                text.Replace(">\n", ">" + replaceChars).Replace("]\n", "]").Replace("\n[/", "[/").Replace("\n\n", "</p><p>").Replace("\n", "<br />").Replace(replaceChars, "\n");
                 // -- Remove empty paragraph blocks
                 text.Replace("<p></p>", string.Empty);
-                // -- Remove any paragraphs starting with a line-break
-                text.Replace("<p><br />", "<p>").Replace("<br /></p>", "</p>");
+				// -- Remove empty paragraph blocks with just white-space
+				foreach (Match m in Regex.Matches(text.ToString(), @"<p>(\s+|\n+)</p>", RegexOptions.Singleline))
+					text.Replace(m.Value, string.Empty);
+                // -- Remove any paragraphs starting with a line-break or new-line
+                text.Replace("<p><br />", "<p>").Replace("<br /></p>", "</p>").Replace("<p>\n", "<p>").Replace("\n</p>", "</p>");
+				// -- Add new lines to paragraph tags so the source looks pretty
+				text.Replace("<p>", "\n<p>\n").Replace("</p>", "\n</p>\n");
             }
         }
         private static void blockquote(ref StringBuilder text)
@@ -241,14 +246,14 @@ namespace CMS.Plugins.TRProviders
                 {
                     // Append starting tag
                     list.Insert(0, "<" + tag + ">");
+					// Add closing tag
+                    list.Append("</li>");
                     // Close the list
                     for (int i = 0; i < currentTree; i++)
                         list.Append("</").Append(tag).Append(">");
                     // Check for tailing <br />
                     if (list[list.Length - 6] == '<' && list[list.Length - 5] == 'b' && list[list.Length - 4] == 'r' && list[list.Length - 3] == ' ' && list[list.Length - 2] == '/' && list[list.Length - 1] == '>')
                         list.Remove(list.Length - 6, 6);
-                    // Add closing tag
-                    list.Append("</li>");
                     // Replace source text
                     text.Replace(m.Value, list.ToString());
                 }

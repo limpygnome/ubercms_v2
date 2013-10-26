@@ -18,6 +18,7 @@
  * 
  *      Change-Log:
  *                      2013-09-23      Finished initial class.
+ *						2013-10-26		Fixed critical security bug where thread permissions were loaded incorrectly.
  * 
  * *********************************************************************************************************************
  * A model and management class of thread permissions.
@@ -83,8 +84,8 @@ namespace CMS.BasicArticles
             ArticleThreadPermissions p = new ArticleThreadPermissions();
             p.uuidThread = uuidThread;
             p.persisted = true;
-            PreparedStatement ps = new PreparedStatement("SELECT groupid FROM ba_article_thread_permissions;");
-            ps["uuid_thread"] = uuidThread;
+            PreparedStatement ps = new PreparedStatement("SELECT groupid FROM ba_article_thread_permissions WHERE uuid_thread=?uuid_thread;");
+            ps["uuid_thread"] = uuidThread.Bytes;
             foreach (ResultRow r in conn.queryRead(ps))
                 p.groups.Add(r.get2<int>("groupid"));
             return p;

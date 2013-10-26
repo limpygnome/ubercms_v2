@@ -18,6 +18,7 @@
  * 
  *      Change-Log:
  *                      2013-09-23      Finished initial class.
+ *						2013-10-25		Pre-tags no longer wrapped in divs.
  * 
  * *********************************************************************************************************************
  * A text-renderer provider for code content.
@@ -67,8 +68,8 @@ namespace CMS.Plugins.TRProviders
 				// Preserve line-breaks
                 code.Replace("\n", CMS.Plugins.TRProviders.Text.replaceChars);
                 // Append start and end tags
-                code.Insert(0, "<div class=\"code\"><pre class=\"brush: " + m.Groups[1].Value + "\">");
-                code.Append("</pre></div>");
+                code.Insert(0, "<pre class=\"code brush: " + m.Groups[1].Value + "\">");
+                code.Append("</pre>");
                 // Include language core
                 string path;
                 switch (m.Groups[1].Value)

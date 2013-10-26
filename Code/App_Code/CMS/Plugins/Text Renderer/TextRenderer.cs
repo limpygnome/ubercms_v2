@@ -61,7 +61,7 @@ namespace CMS.Plugins
                 return false;
             }
             // -- Navigation
-            temp = new TRProviders.Navigation(UUID.parse("A8777D66-E940-476C-ACD6-6D4AEDBA89CD"), this.UUID, "Navigation", "Navigation features and additions.", true, 0);
+            temp = new TRProviders.Navigation(UUID.parse("A8777D66-E940-476C-ACD6-6D4AEDBA89CD"), this.UUID, "Navigation", "Navigation features and additions.", true, -2);
             if (!temp.save(this, conn))
             {
                 messageOutput.AppendLine("Failed to create 'Navigation' text renderer provider!");

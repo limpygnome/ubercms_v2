@@ -18,6 +18,7 @@
  * 
  *      Change-Log:
  *                      2013-09-23      Finished initial class.
+ *						2013-10-25		Content text removed, general bug-fixes and improvements.
  * 
  * *********************************************************************************************************************
  * A text-renderer provider for navigation related features and additions.
@@ -105,7 +106,7 @@ namespace CMS.Plugins.TRProviders
                     // Reserve the title
                     titlesReserved.Add(titleFormatted);
                     // Insert a hyper-link at the position of the heading
-                    anchor = "<a id=\"" + titleFormatted + "\"></a>";
+                    anchor = "<a id=\"" + titleFormatted + "\"></a>\n";
                     text.Insert(m.Index + matchOffset, anchor);
                     matchOffset += anchor.Length;
                     // Increment node count
@@ -117,7 +118,7 @@ namespace CMS.Plugins.TRProviders
                 for (int i = headingParent; i <= currentTreeLevel; i++)
                     contentBox.Append("</ol>");
                 // Add content-box wrapper
-                contentBox.Insert(0, "<div class=\"navigation\"><span>Contents:</span>").Append("</div>");
+                contentBox.Insert(0, "<div class=\"navigation\">").Append("</div>");
                 // Add the content boxes
                 string contentBoxFinalized = contentBox.ToString();
                 foreach (Match m in contentBoxes)
