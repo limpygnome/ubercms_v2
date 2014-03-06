@@ -69,7 +69,7 @@ namespace CMS.Plugins.Files
         public Directory[] getSubDirs(Connector conn)
         {
             List<Directory> buffer = new List<Directory>();
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM view_fi_dir WHERE parent_dirid=?parent;");
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM view_fi_dir WHERE parent_dirid=?parent ORDER BY dir_name ASC;");
             ps["parent"] = dirID;
             Result dirs = conn.queryRead(ps);
             Directory d;
@@ -88,7 +88,7 @@ namespace CMS.Plugins.Files
         public File[] getFiles(Connector conn)
         {
             List<File> buffer = new List<File>();
-            PreparedStatement ps = new PreparedStatement("SELECT * FROM view_fi_file WHERE dirid=?dir;");
+            PreparedStatement ps = new PreparedStatement("SELECT * FROM view_fi_file WHERE dirid=?dir ORDER BY file ASC;");
             ps["dir"] = dirID;
             Result files = conn.queryRead(ps);
             File f;

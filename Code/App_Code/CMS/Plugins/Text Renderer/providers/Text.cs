@@ -123,11 +123,11 @@ namespace CMS.Plugins.TRProviders
                 // Blockquote
                 blockquote(ref text);
                 // Image
-                foreach (Match m in Regex.Matches(text.ToString(), @"\[img\]([a-zA-Z0-9]+)\:\/\/([a-zA-Z0-9\/\._\-\+]+)\[\/img\]", RegexOptions.Singleline))
+                foreach (Match m in Regex.Matches(text.ToString(), @"\[img\]([a-zA-Z0-9]+)\:\/\/([a-zA-Z0-9\/\._\-\+?=]+)\[\/img\]", RegexOptions.Singleline))
                     text.Replace(m.Value, "<a title=\"Click to open the image...\" href=\"" + m.Groups[1].Value + "://" + m.Groups[2].Value + "\"><img src=\"" + m.Groups[1].Value + "://" + m.Groups[2].Value + "\" /></a>");
-                foreach (Match m in Regex.Matches(text.ToString(), @"\[img=([0-9]{4}px|[0-9]{3}px|[0-9]{2}px|[0-9]{1}px|[0-9]{4}em|[0-9]{3}em|[0-9]{2}em|[0-9]{1}em)\]([a-zA-Z0-9]+)\:\/\/([a-zA-Z0-9\/\._\-\+]+)\[\/img\]", RegexOptions.Singleline))
+                foreach (Match m in Regex.Matches(text.ToString(), @"\[img=([0-9]{4}px|[0-9]{3}px|[0-9]{2}px|[0-9]{1}px|[0-9]{4}em|[0-9]{3}em|[0-9]{2}em|[0-9]{1}em)\]([a-zA-Z0-9]+)\:\/\/([a-zA-Z0-9\/\._\-\+?=]+)\[\/img\]", RegexOptions.Singleline))
                     text.Replace(m.Value, "<a title=\"Click to open the image...\" href=\"" + m.Groups[2].Value + "://" + m.Groups[3].Value + "\"><img style=\"width: " + m.Groups[1].Value + "; height: " + m.Groups[1].Value + ";\" src=\"" + m.Groups[2].Value + "://" + m.Groups[3].Value + "\" /></a>");
-                foreach (Match m in Regex.Matches(text.ToString(), @"\[img=([0-9]{4}px|[0-9]{3}px|[0-9]{2}px|[0-9]{1}px|[0-9]{4}em|[0-9]{3}em|[0-9]{2}em|[0-9]{1}em),([0-9]{4}px|[0-9]{3}px|[0-9]{2}px|[0-9]{1}px|[0-9]{4}em|[0-9]{3}em|[0-9]{2}em|[0-9]{1}em)\]([a-zA-Z0-9]+)\:\/\/([a-zA-Z0-9\/\._\-\+]+)\[\/img\]", RegexOptions.Singleline))
+                foreach (Match m in Regex.Matches(text.ToString(), @"\[img=([0-9]{4}px|[0-9]{3}px|[0-9]{2}px|[0-9]{1}px|[0-9]{4}em|[0-9]{3}em|[0-9]{2}em|[0-9]{1}em),([0-9]{4}px|[0-9]{3}px|[0-9]{2}px|[0-9]{1}px|[0-9]{4}em|[0-9]{3}em|[0-9]{2}em|[0-9]{1}em)\]([a-zA-Z0-9]+)\:\/\/([a-zA-Z0-9\/\._\-\+?=]+)\[\/img\]", RegexOptions.Singleline))
                     text.Replace(m.Value, "<a title=\"Click to open the image...\" href=\"" + m.Groups[3].Value + "://" + m.Groups[4].Value + "\"><img style=\"width: " + m.Groups[1].Value + "; height: " + m.Groups[2].Value + ";\" src=\"" + m.Groups[3].Value + "://" + m.Groups[4].Value + "\" /></a>");
                 
 				// Finish line break related things
