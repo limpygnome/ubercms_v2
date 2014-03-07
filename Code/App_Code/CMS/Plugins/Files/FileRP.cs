@@ -52,10 +52,10 @@ namespace CMS.Plugins.Files
                 File f;
                 foreach (Match m in Regex.Matches(text.ToString(), @"\[file_link\=(.*?)\]", RegexOptions.Singleline))
                 {
-                    path = Main.formatPath(m.Groups[1].Value);
+                    path = Main.urlDecodePath(Main.formatPath(m.Groups[1].Value));
                     // Load the file information
                     f = File.load(data.Connector, path);
-                    text.Replace(m.Value, "<a href=\"/files/item" + Main.urlEncodePath(path) + "\">" + (f == null ? "(file not found)" : HttpUtility.HtmlEncode(f.Filename) + " (" + BaseUtils.getBytesString(f.Size) + ")") + "</a>");
+                    text.Replace(m.Value, "<a href=\"/files/item" + Main.urlEncodePath(path) + "\">" + (f == null ? "(file '"+path+"' not found)" : HttpUtility.HtmlEncode(f.Filename) + " (" + BaseUtils.getBytesString(f.Size) + ")") + "</a>");
                 }
             }
             if ((renderTypes & RenderType.Objects) == RenderType.Objects)
